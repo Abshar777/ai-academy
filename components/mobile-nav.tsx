@@ -16,12 +16,17 @@ const FREE_SCROLL = 140;
 /** Pixels of travel before a direction change counts. */
 const DIRECTION_THRESHOLD = 6;
 
+// Prefixed with "/" rather than a bare "#...": the header now renders on
+// every route via the root layout, so a bare hash would try to scroll the
+// CURRENT page (e.g. /course) instead of jumping back to the homepage
+// section it actually names.
 const NAV = [
-  { label: "Program", href: "#program" },
-  { label: "What you'll learn", href: "#learn" },
-  { label: "Projects", href: "#projects" },
-  { label: "AI tools", href: "#tools" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Program", href: "/#program" },
+  { label: "What you'll learn", href: "/#learn" },
+  { label: "Projects", href: "/#projects" },
+  { label: "Curriculum", href: "/course" },
+  { label: "AI tools", href: "/#tools" },
+  { label: "Pricing", href: "/#pricing" },
 ];
 
 /** Three rules that rotate into an X. Matches the reference's 15×11 mark. */

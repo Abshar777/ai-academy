@@ -8,12 +8,17 @@ import { DeltaWordmark, DeltaMark } from "./delta-logo";
 import { MobileNav } from "./mobile-nav";
 import { useIntroComplete } from "@/lib/intro";
 
+// Prefixed with "/" rather than a bare "#...": the header now renders on
+// every route via the root layout, so a bare hash would try to scroll the
+// CURRENT page (e.g. /course) instead of jumping back to the homepage
+// section it actually names.
 const NAV = [
-  { label: "Program", href: "#program" },
-  { label: "What you'll learn", href: "#learn" },
-  { label: "Projects", href: "#projects" },
-  { label: "AI tools", href: "#tools" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Program", href: "/#program" },
+  { label: "What you'll learn", href: "/#learn" },
+  { label: "Projects", href: "/#projects" },
+  { label: "Curriculum", href: "/course" },
+  { label: "AI tools", href: "/#tools" },
+  { label: "Pricing", href: "/#pricing" },
 ];
 
 /** Scroll distance before the bar collapses into the floating pill. */

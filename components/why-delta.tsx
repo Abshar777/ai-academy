@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { CheckIcon } from "./check-icon";
@@ -167,6 +168,23 @@ export function WhyDelta() {
               </StaggerItem>
             ))}
           </StaggerGroup>
+
+          <Link
+            href="/course"
+            className="mt-8 inline-flex items-center gap-2 font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] underline decoration-neutral-90/25 underline-offset-4 transition-colors duration-150 hover:decoration-neutral-90"
+          >
+            See the full curriculum, module by module
+            <svg viewBox="0 0 16 16" className="size-4 shrink-0" aria-hidden>
+              <path
+                d="M5 3l6 5-6 5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+          </Link>
         </div>
       </Reveal>
     </section>

@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { ContactProvider } from "@/components/contact-dialog";
+import { AiChatWidget } from "@/components/ai-chat-widget";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
@@ -147,7 +151,14 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
         />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <ContactProvider>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+          <AiChatWidget />
+        </ContactProvider>
+      </body>
     </html>
   );
 }

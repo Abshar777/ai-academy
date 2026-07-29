@@ -1,26 +1,541 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   Fonts — NoiGrotesk (UI / body) and SansPlomb (display).
+
+   NOTE: these are Handshake's licensed brand faces, self-hosted here from
+   public/fonts. Webfont licences are per-domain, so confirm we're covered
+   before this ships anywhere public.
+   ------------------------------------------------------------------------ */
+
+@font-face {
+  font-family: "NoiGrotesk";
+  src: url("/fonts/NoiGrotesk-300.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "NoiGrotesk";
+  src: url("/fonts/NoiGrotesk-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "NoiGrotesk";
+  src: url("/fonts/NoiGrotesk-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "NoiGrotesk";
+  src: url("/fonts/NoiGrotesk-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@font-face {
+  font-family: "SansPlomb";
+  src: url("/fonts/SansPlomb-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "SansPlomb";
+  src: url("/fonts/SansPlomb-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Same cut as SansPlomb, swapped in rather than blocked on. */
+@font-face {
+  font-family: "SansPlombSwap";
+  src: url("/fonts/SansPlomb-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Metric-neutral last resort, matching the source design. */
+@font-face {
+  font-family: "NoiGrotesk Fallback";
+  src: local("Arial");
+}
+@font-face {
+  font-family: "SansPlomb Fallback";
+  src: local("Arial");
+}
+@font-face {
+  font-family: "SansPlombSwap Fallback";
+  src: local("Arial");
+}
+
+@theme {
+  --font-noi-grotesk: "NoiGrotesk", "NoiGrotesk Fallback", sans-serif;
+  --font-sans-plomb: "SansPlomb", "SansPlomb Fallback", sans-serif;
+  --font-sans-plomb-swap: "SansPlombSwap", "SansPlombSwap Fallback", sans-serif;
+
+  --color-lime-30: #d3fb52;
+  --color-lime-40: #c2ea3d;
+
+  /* Neutral ramp. */
+  --color-neutral-10: #f3f4fa;
+  --color-neutral-50: #606384;
+  --color-neutral-70: #3a3c52;
+  --color-neutral-90: #14151c;
+  --color-neutral-100: #000000;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+  color: var(--color-neutral-90);
+  font-family: var(--font-noi-grotesk);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------------------
+   Page surface + fixed nav
+
+   The site is a single light theme — no dark/light switching. The nav's
+   collapse is driven by a `data-condensed` attribute written straight to the
+   DOM, so the transition starts on the same frame as the scroll.
+   ------------------------------------------------------------------------ */
+
+:root {
+  --nav-offset: 3rem;
+  --nav-padding: 0.5rem;
+  --desktop-nav-height: 3.5rem;
+  --desktop-nav-top-offset: 1.5rem;
+  --condensed-nav-width: 48rem;
+  --mobile-nav-height: 3rem;
+  --mobile-nav-offset: 2rem;
+  --mobile-top-offset: 1.5rem;
+}
+
+.page-surface {
+  background-color: #fff;
+  color: var(--color-neutral-90);
+}
+
+.site-nav {
+  color: var(--color-neutral-90);
+}
+
+/* --link-hover-color at 6%, per the reference. */
+.site-nav-link:hover {
+  background-color: rgb(18 18 18 / 0.06);
+}
+
+.site-nav-bar {
+  width: 100%;
+  background-color: transparent;
+  transition:
+    width 400ms cubic-bezier(0.65, 0, 0.1, 1),
+    background-color 400ms cubic-bezier(0.65, 0, 0.1, 1),
+    box-shadow 400ms ease-in-out;
+}
+
+.site-nav[data-condensed="true"] .site-nav-bar {
+  width: 768px;
+  background-color: #fff;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.12);
+}
+
+.site-nav-logo {
+  width: 74px;
+  transition: width 400ms cubic-bezier(0.65, 0, 0.1, 1);
+}
+
+/* Desktop only — the mobile bar keeps its full-width wordmark. */
+.site-nav:not(.mobile-nav)[data-condensed="true"] .site-nav-logo {
+  width: 20px;
+}
+
+/* ---- mobile bar ---------------------------------------------------------
+   Same collapse as the desktop bar — transparent over the hero wash, then a
+   white pill with a shadow once scrolled — but the logo does NOT crossfade to
+   the mark. The mobile bar has room for the full wordmark at every scroll
+   position, and swapping it mid-scroll reads as a glitch on a small screen.
+   The mark-only treatment is desktop-only, where the condensed pill is much
+   narrower than the bar it replaces. */
+
+.mobile-nav .site-nav-logo {
+  width: 85px;
+}
+
+.mobile-nav-bar {
+  background-color: transparent;
+  color: var(--color-neutral-90);
+  box-shadow: 0 0 0 0 rgb(0 0 0 / 0);
+  transition:
+    background-color 400ms cubic-bezier(0.65, 0, 0.1, 1),
+    box-shadow 400ms ease-in-out;
+}
+
+.mobile-nav[data-condensed="true"] .mobile-nav-bar,
+.mobile-nav[data-menu-open="true"] .mobile-nav-bar {
+  background-color: #fff;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-bar {
+    transition: none;
+  }
+}
+
+.site-nav-wordmark,
+.site-nav-mark {
+  transition: opacity 300ms ease-in-out;
+}
+
+/* Scoped away from .mobile-nav: it carries .site-nav too, so an unscoped
+   condensed rule would swap the mobile logo as well. */
+.site-nav-mark,
+.site-nav:not(.mobile-nav)[data-condensed="true"] .site-nav-wordmark {
+  opacity: 0;
+}
+
+.site-nav-wordmark,
+.site-nav:not(.mobile-nav)[data-condensed="true"] .site-nav-mark {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-surface,
+  .site-nav,
+  .site-nav-bar,
+  .site-nav-logo,
+  .site-nav-wordmark,
+  .site-nav-mark {
+    transition: none;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Hero backdrop — a cyan wash at the very top edge dropping to white almost
+   immediately, then white for the rest of the block.
+   ------------------------------------------------------------------------ */
+
+.hero-light-gradient {
+  /* Depth of the cyan wash before it reaches white. Absolute rather than a
+     percentage so it doesn't rescale with the hero's height — dial this one
+     value to make the wash deeper or shallower. */
+  --hero-wash: 360px;
+  background-image: linear-gradient(#7af4ff -60px, #fff var(--hero-wash));
+}
+
+/* ---------------------------------------------------------------------------
+   Logo marquee. The track holds two identical copies, so -50% is one seamless
+   loop. --marquee-duration sets the pace: 12 tiles × 244px ≈ 2928px per copy.
+   ------------------------------------------------------------------------ */
+
+.marquee-track {
+  --marquee-duration: 50s;
+  animation: marquee var(--marquee-duration) linear infinite;
+  will-change: transform;
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Testimonial marquee. Reuses .marquee-track, but pauses on hover and on
+   keyboard focus so a quote can actually be read. */
+.stories-marquee:hover .marquee-track,
+.stories-marquee:focus-within .marquee-track {
+  /* animation-play-state: paused; */
+}
+
+/* Gradient frame behind the approach cards — navy through the brand cyan into
+   lime, with a fine grain so the wide ramp doesn't band. */
+.delta-gradient-frame {
+  position: relative;
+  isolation: isolate;
+  background-image: linear-gradient(
+    115deg,
+    #14151c 0%,
+    #1f6f9e 20%,
+    #7af4ff 44%,
+    #cdf3ff 60%,
+    #d3fb52 100%
+  );
+}
+
+.delta-gradient-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Enquiry dialog. showModal() handles focus trapping and Escape; this is the
+   entrance and the backdrop treatment. */
+.contact-dialog {
+  border: 0;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.18);
+}
+
+.contact-dialog[open] {
+  animation: contact-in 240ms cubic-bezier(0.65, 0, 0.1, 1);
+}
+
+.contact-dialog[open]::backdrop {
+  animation: contact-backdrop-in 240ms ease-out;
+}
+
+@keyframes contact-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes contact-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-dialog[open],
+  .contact-dialog[open]::backdrop {
+    animation: none;
+  }
+}
+
+/* Success toast. Hidden and inert until the enquiry actually sends. */
+.contact-toast {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.25);
+  transition:
+    opacity 260ms cubic-bezier(0.65, 0, 0.1, 1),
+    transform 260ms cubic-bezier(0.65, 0, 0.1, 1),
+    visibility 0s linear 260ms;
+}
+
+.contact-toast[data-open="true"] {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-toast {
+    transition: opacity 120ms linear;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile drawer. The panel fades and lifts, then each row follows on a short
+   stagger so the menu resolves rather than appearing all at once. Closed, it
+   is fully inert — hidden, non-interactive, and off the a11y tree.
+   ------------------------------------------------------------------------ */
+
+.mobile-drawer {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 260ms cubic-bezier(0.65, 0, 0.1, 1),
+    transform 260ms cubic-bezier(0.65, 0, 0.1, 1),
+    visibility 0s linear 260ms;
+}
+
+.mobile-drawer[data-open="true"] {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.mobile-drawer-item {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.mobile-drawer[data-open="true"] .mobile-drawer-item {
+  animation: drawer-item 380ms cubic-bezier(0.65, 0, 0.1, 1) forwards;
+  /* each row trails the one above it */
+  animation-delay: calc(70ms + var(--i, 0) * 45ms);
+}
+
+@keyframes drawer-item {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-drawer {
+    transition: opacity 120ms linear;
+    transform: none;
+  }
+  .mobile-drawer[data-open="true"] .mobile-drawer-item {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Intro curtain, matching the reference.
+
+   Four pills, one word each, converged on a point then springing apart into a
+   loose rotated stack. They hold, collapse back, and the panel wipes upward.
+   Each pill is filled in the panel colour so it occludes the one behind —
+   that is what lets them overlap without showing through.
+
+   One keyframe track per pill covers the whole cycle, because splitting fan-out
+   and collapse across two animations would have the second clobber the first's
+   transform.
+   ------------------------------------------------------------------------ */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: clip;
+  background-color: var(--color-lime-30);
+  /* never blocks the page underneath, exactly as the reference does */
+  pointer-events: none;
+  animation: preloader-wipe 1000ms cubic-bezier(0.77, 0, 0.175, 1) 1900ms
+    forwards;
+}
+
+@keyframes preloader-wipe {
+  to {
+    height: 0vh;
+  }
+}
+
+.preloader-stack {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(80vw, 420px);
+  height: 260px;
+  color: var(--color-neutral-90);
+}
+
+.preloader-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 3px solid var(--color-neutral-90);
+  border-radius: 9999px;
+  /* filled, so each pill hides the one stacked behind it */
+  background-color: var(--color-lime-30);
+  padding: 0.55rem 1.5rem;
+  font-family: var(--font-noi-grotesk);
+  font-size: clamp(1.25rem, 5.5vw, 2rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+  opacity: 0;
+  animation: preloader-stack-cycle 2400ms cubic-bezier(0.455, 0.03, 0.515, 0.955)
+    forwards;
+  /* the bottom pill lands first, the rest follow up the stack */
+  animation-delay: calc(var(--i, 0) * -40ms + 160ms);
+}
+
+@keyframes preloader-stack-cycle {
+  /* converged, invisible */
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.96);
+  }
+  /* compressed stack, now visible */
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+  /* sprung open */
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y))
+      rotate(var(--rot));
+  }
+  /* holds */
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--x), var(--y))
+      rotate(var(--rot));
+  }
+  /* collapses back before the wipe */
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.98);
+  }
+}
+
+.preloader-arc {
+  position: absolute;
+  width: 40px;
+  opacity: 0;
+  animation: preloader-arc-in 300ms ease-out forwards;
+  animation-delay: 760ms;
+}
+
+.preloader-arc-top {
+  top: 18%;
+  left: 4%;
+}
+
+.preloader-arc-bottom {
+  right: 4%;
+  bottom: 18%;
+}
+
+@keyframes preloader-arc-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader {
+    display: none;
+  }
 }

@@ -284,9 +284,19 @@ body {
 .hero-light-gradient {
   /* Depth of the cyan wash before it reaches white. Absolute rather than a
      percentage so it doesn't rescale with the hero's height — dial this one
-     value to make the wash deeper or shallower. */
-  --hero-wash: 360px;
+     value to make the wash deeper or shallower.
+
+     Phones get a deeper wash: the same block is far taller there, so a 360px
+     fade ran out a third of the way down and left the cards stranded on flat
+     white, which is what made the section read as unfinished. */
+  --hero-wash: 620px;
   background-image: linear-gradient(#7af4ff -60px, #fff var(--hero-wash));
+}
+
+@media (min-width: 640px) {
+  .hero-light-gradient {
+    --hero-wash: 360px;
+  }
 }
 
 /* ---------------------------------------------------------------------------

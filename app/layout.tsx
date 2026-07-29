@@ -42,6 +42,16 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" }, // Your 48x48 icon
+    ],
+   
+    other: [
+      { rel: "icon", url: "/favicon.ico", sizes: "32x32" },
+      { rel: "icon", url: "/favicon.ico", sizes: "16x16" },
+    ],
+  },
   openGraph: {
     type: "website",
     url: "/",
@@ -49,6 +59,14 @@ export const metadata: Metadata = {
     title: TITLE,
     description: SITE_DESCRIPTION,
     locale: "en_US",
+    images: [
+      {
+        url: "/favicon.ico",
+        width: 512,
+        height: 512,
+        alt: SITE_NAME,
+      },
+    ],
     // No explicit `images` — Next resolves it from app/opengraph-image.tsx.
   },
   twitter: {

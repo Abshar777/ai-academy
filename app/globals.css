@@ -13,28 +13,28 @@
   src: url("/fonts/NoiGrotesk-300.woff2") format("woff2");
   font-weight: 300;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 @font-face {
   font-family: "NoiGrotesk";
   src: url("/fonts/NoiGrotesk-400.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 @font-face {
   font-family: "NoiGrotesk";
   src: url("/fonts/NoiGrotesk-500.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 @font-face {
   font-family: "NoiGrotesk";
   src: url("/fonts/NoiGrotesk-600.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
 @font-face {
@@ -42,14 +42,14 @@
   src: url("/fonts/SansPlomb-400.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 @font-face {
   font-family: "SansPlomb";
   src: url("/fonts/SansPlomb-600.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
 
 /* Same cut as SansPlomb, swapped in rather than blocked on. */
@@ -61,18 +61,50 @@
   font-display: swap;
 }
 
-/* Metric-neutral last resort, matching the source design. */
+/* Arial standing in for each face, scaled to its metrics.
+
+   These overrides are what make font-display: swap safe here. Untouched,
+   Arial Bold is nearly twice the width of SansPlomb in caps at the same size,
+   so the hero would visibly reflow the moment the real face landed.
+
+   Ratios were measured in-browser against Arial at matched size and weight,
+   using representative strings: caps for the display face (the hero, the
+   footer wordmark and the preview card are all uppercase), mixed case for the
+   body face. A substituted typeface can never match on every string — these
+   minimise the average drift, they don't eliminate it. */
 @font-face {
   font-family: "NoiGrotesk Fallback";
   src: local("Arial");
+  font-weight: 300 400;
+  size-adjust: 102.3%;
+  ascent-override: 83.1%;
+  descent-override: 20.5%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "NoiGrotesk Fallback";
+  src: local("Arial");
+  font-weight: 500 600;
+  size-adjust: 104.9%;
+  ascent-override: 81%;
+  descent-override: 20%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: "SansPlomb Fallback";
   src: local("Arial");
+  size-adjust: 54.3%;
+  ascent-override: 198.2%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: "SansPlombSwap Fallback";
   src: local("Arial");
+  size-adjust: 54.3%;
+  ascent-override: 198.2%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 
 @theme {

@@ -66,7 +66,7 @@ export function ClosingCta() {
           delay={0.35}
           className="mt-5 max-w-xl font-noi-grotesk text-[16px] leading-[1.45] tracking-[-0.015em] text-balance text-neutral-50 sm:mt-6 sm:text-[18px] md:text-[20px]"
         >
-          One plan at AED&nbsp;99 — four applications you deploy yourself, five
+          One&nbsp;plan&nbsp;at&nbsp;AED&nbsp;99 , four applications you deploy yourself, five
           skill areas and twelve AI tools.
         </SplitReveal>
 

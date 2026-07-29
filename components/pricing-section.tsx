@@ -19,6 +19,11 @@ const INCLUDED = [
 
 /**
  * Class preview slot with looping background video.
+ *
+ * The file is only fetched once the card is near the viewport. Autoplaying it
+ * on mount cost 1.7MB of bandwidth during page load — for a card eight screens
+ * down — competing with the fonts and JS in exactly the window where the intro
+ * and hero are trying to animate.
  */
 function ClassPreview() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,31 +32,34 @@ function ClassPreview() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Loop only the first 30 seconds of the video
-    const handleTimeUpdate = () => {
-      if (video.currentTime >= 20) {
-        video.currentTime = 0;
-        video.play().catch(() => {});
-      }
-    };
-
-    video.addEventListener("timeupdate", handleTimeUpdate);
-
-    // Play or pause based on accessibility settings
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let near = false;
+
     const apply = () => {
+      if (!near) return;
       if (query.matches) {
         video.pause();
       } else {
+        // preload="none" means there's nothing buffered yet; play() kicks off
+        // the fetch itself.
         video.play().catch(() => {});
       }
     };
 
-    apply();
+    // A screen of margin, so it's ready by the time it's actually looked at.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        near = entry.isIntersecting;
+        if (near) apply();
+        else video.pause();
+      },
+      { rootMargin: "100% 0px" },
+    );
+    observer.observe(video);
     query.addEventListener("change", apply);
 
     return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
+      observer.disconnect();
       query.removeEventListener("change", apply);
     };
   }, []);
@@ -59,12 +67,15 @@ function ClassPreview() {
   return (
     <div className="group relative flex aspect-4/3 w-full flex-col justify-between overflow-hidden rounded-3xl p-8 md:p-10 border border-neutral-10/20 bg-neutral-10">
       {/* Background Video */}
+      {/* loop, because the clip is now exactly 20s — the old handler that
+          rewound at 20s can never fire on a 20s file. */}
       <video
         ref={videoRef}
         src="/video.mp4"
-        autoPlay
         muted
+        loop
         playsInline
+        preload="none"
         className="absolute inset-0 h-full w-full object-cover"
       />
 

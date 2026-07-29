@@ -1,10 +1,85 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+
+const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
 export const metadata: Metadata = {
-  title: "Delta AI Academy — Build AI powered applications",
-  description:
-    "Build AI powered applications even if you've never coded before. Learn React, React Native, FastAPI and MongoDB with AI assisted tools, and ship three real projects.",
+  // Lets every relative URL below (icons, OG image, canonical) resolve to a
+  // real absolute URL — without it Next can't build the og:image tag at all.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: `%s — ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "Delta AI Academy",
+    "learn to code with AI",
+    "AI coding bootcamp",
+    "vibe coding",
+    "Claude Code course",
+    "Lovable course",
+    "React bootcamp",
+    "React Native course",
+    "build apps without coding",
+  ],
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+    // No explicit `images` — Next resolves it from app/opengraph-image.tsx.
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  formatDetection: {
+    // Stops iOS Safari from auto-linking things like "AED 99" or a stray
+    // phone-shaped number in the copy as a tel: link.
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
+};
+
+/** Organization markup — the only structured data a one-page site needs;
+ *  course/offer schema would be overclaiming without real review/price data
+ *  Google can independently verify. */
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/icons/icon-512.png`,
+  description: SITE_DESCRIPTION,
 };
 
 export default function RootLayout({
@@ -42,6 +117,16 @@ export default function RootLayout({
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"
+        />
+        {/* Pinned-tab icon for older Safari. Deliberately a plain <link> here
+            rather than metadata.icons: setting that field at all — even for
+            an entry it doesn't otherwise reference — tells Next.js the icons
+            are fully hand-specified, and it stops auto-generating the <link>
+            tags for the app/icon.png and app/apple-icon.png conventions. */}
+        <link rel="mask-icon" href="/icons/icon-512.png" color="#14151c" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
         />
       </head>
       <body className="min-h-full">{children}</body>

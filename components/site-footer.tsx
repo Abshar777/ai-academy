@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeltaLogo, DeltaWordmark } from "./delta-logo";
+import { BrochureLink } from "./brochure-link";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -30,17 +31,10 @@ const COLUMNS = [
 
 const LEGAL = ["Privacy policy", "Accessibility", "Terms of service"];
 
-/** Text badge rather than the Apple/Google artwork — same slot, no trademarks. */
-function StoreBadge({ label }: { label: string }) {
-  return (
-    <Link
-      href="#"
-      className="inline-flex h-[46px] w-full items-center justify-center rounded-lg border border-white/40 px-3 text-center text-[13px] leading-tight font-medium transition-colors duration-150 hover:border-white sm:w-[140px]"
-    >
-      {label}
-    </Link>
-  );
-}
+/** Shared sizing for the two footer badges — same slot as store badges would
+ *  occupy, minus the Apple/Google artwork and its trademarks. */
+const BADGE_CLASS =
+  "inline-flex h-[46px] w-full items-center justify-center rounded-lg border border-white/40 px-3 text-center text-[13px] leading-tight font-medium transition-colors duration-150 hover:border-white sm:w-[140px]";
 
 export function SiteFooter() {
   return (
@@ -59,10 +53,15 @@ export function SiteFooter() {
               </SplitReveal>
               <StaggerGroup className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap" delay={0.15}>
                 <StaggerItem distance={16}>
-                  <StoreBadge label="Download brochure" />
+                  <BrochureLink className={BADGE_CLASS}>
+                    Download brochure
+                  </BrochureLink>
                 </StaggerItem>
                 <StaggerItem distance={16}>
-                  <StoreBadge label="Join the program" />
+                  {/* Still a placeholder — no destination decided for this one. */}
+                  <Link href="#" className={BADGE_CLASS}>
+                    Join the program
+                  </Link>
                 </StaggerItem>
               </StaggerGroup>
             </div>
@@ -89,18 +88,25 @@ export function SiteFooter() {
                         {group.heading}
                       </p>
                       <ul className="flex list-none flex-col gap-2">
-                        {group.links.map((link) => (
-                          <li key={link}>
-                            <Link
-                              href="#"
-                              // block so the line-height applies to the row —
-                              // an inline <a> leaves the <li> on its own strut
-                              className="block py-0.5 font-noi-grotesk text-[15px] leading-[1.5] tracking-[-0.015em] text-white transition-colors duration-150 hover:text-lime-30 sm:py-0 sm:text-[16px] sm:leading-[1.4]"
-                            >
-                              {link}
-                            </Link>
-                          </li>
-                        ))}
+                        {group.links.map((link) => {
+                          // block so the line-height applies to the row — an
+                          // inline <a> leaves the <li> on its own strut
+                          const linkClassName =
+                            "block py-0.5 font-noi-grotesk text-[15px] leading-[1.5] tracking-[-0.015em] text-white transition-colors duration-150 hover:text-lime-30 sm:py-0 sm:text-[16px] sm:leading-[1.4]";
+                          return (
+                            <li key={link}>
+                              {link === "Brochure" ? (
+                                <BrochureLink className={linkClassName}>
+                                  {link}
+                                </BrochureLink>
+                              ) : (
+                                <Link href="#" className={linkClassName}>
+                                  {link}
+                                </Link>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   ))}

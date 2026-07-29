@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ContactButton } from "./contact-dialog";
+import { BrochureLink } from "./brochure-link";
 import Link from "next/link";
 import { DeltaWordmark } from "./delta-logo";
 import { useIntroComplete } from "@/lib/intro";
@@ -229,12 +230,9 @@ export function MobileNav() {
           >
             Join now
           </ContactButton>
-          <ContactButton
-            source="mobile-nav"
-            className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-5 text-[16px] leading-none font-medium"
-          >
+          <BrochureLink className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-5 text-[16px] leading-none font-medium">
             Brochure
-          </ContactButton>
+          </BrochureLink>
         </div>
       </div>
     </nav>

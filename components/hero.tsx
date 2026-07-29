@@ -1,4 +1,5 @@
 import { ContactButton } from "./contact-dialog";
+import { BrochureLink } from "./brochure-link";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -23,9 +24,24 @@ type HeroCardProps = {
   variant: "outline" | "solid";
   /** Seconds after the curtain lifts. Cards arrive one after the other. */
   delay: number;
+  /** "brochure" opens the PDF directly; anything else opens the contact form. */
+  action?: "contact" | "brochure";
 };
 
-function HeroCard({ title, body, cta, variant, delay }: HeroCardProps) {
+function HeroCard({
+  title,
+  body,
+  cta,
+  variant,
+  delay,
+  action = "contact",
+}: HeroCardProps) {
+  const ctaClassName =
+    "group inline-flex h-10 items-center justify-center rounded-lg px-4 text-[15px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out sm:text-[16px] " +
+    (variant === "solid"
+      ? "bg-lime-30 text-black hover:bg-lime-40"
+      : "border border-neutral-90 hover:bg-neutral-90/8");
+
   return (
     <Reveal
       hover
@@ -47,17 +63,13 @@ function HeroCard({ title, body, cta, variant, delay }: HeroCardProps) {
         {body}
       </p>
       <div className="mt-auto">
-        <ContactButton
-          source="hero"
-          className={
-            "group inline-flex h-10 items-center justify-center rounded-lg px-4 text-[15px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out sm:text-[16px] " +
-            (variant === "solid"
-              ? "bg-lime-30 text-black hover:bg-lime-40"
-              : "border border-neutral-90 hover:bg-neutral-90/8")
-          }
-        >
-          {cta}
-        </ContactButton>
+        {action === "brochure" ? (
+          <BrochureLink className={ctaClassName}>{cta}</BrochureLink>
+        ) : (
+          <ContactButton source="hero" className={ctaClassName}>
+            {cta}
+          </ContactButton>
+        )}
       </div>
     </Reveal>
   );
@@ -113,12 +125,9 @@ export function Hero() {
             >
               Join now
             </ContactButton>
-            <ContactButton
-              source="hero"
-              className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-90/25 bg-white/60 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] backdrop-blur-sm transition duration-150 ease-in-out active:scale-[0.98]"
-            >
+            <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-90/25 bg-white/60 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] backdrop-blur-sm transition duration-150 ease-in-out active:scale-[0.98]">
               Get the brochure
-            </ContactButton>
+            </BrochureLink>
           </Reveal>
 
           <StaggerGroup
@@ -152,6 +161,7 @@ export function Hero() {
               cta="Get the brochure"
               variant="outline"
               delay={0.85}
+              action="brochure"
             />
           </div>
         </div>

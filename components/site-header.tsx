@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ContactButton } from "./contact-dialog";
+import { BrochureLink } from "./brochure-link";
 import Link from "next/link";
 import { DeltaWordmark, DeltaMark } from "./delta-logo";
 import { MobileNav } from "./mobile-nav";
@@ -75,16 +76,9 @@ export function SiteHeader() {
               </ul>
 
               <div className="flex shrink-0 items-center gap-2">
-                <button
-                onClick={()=>{
-                  if(typeof window!==undefined){
-                    window.open("/DELTA AI ACADEMY BROCHURE.pdf", "_blank");
-                  }
-                }}
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-current px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-current/10"
-              >
-                Brochure
-              </button>
+                <BrochureLink className="inline-flex h-10 items-center justify-center rounded-lg border border-current px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-current/10">
+                  Brochure
+                </BrochureLink>
                 <ContactButton
                 source="nav"
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out hover:bg-lime-40"

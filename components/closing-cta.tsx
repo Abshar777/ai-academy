@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ContactButton } from "./contact-dialog";
+import { BrochureLink } from "./brochure-link";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -78,12 +79,9 @@ export function ClosingCta() {
             >
               Join now
             </ContactButton>
-            <ContactButton
-              source="closing-cta"
-              className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 sm:w-auto text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8"
-            >
+            <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 sm:w-auto text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8">
               Get the brochure
-            </ContactButton>
+            </BrochureLink>
           </div>
         </Reveal>
       </div>

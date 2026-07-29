@@ -75,7 +75,7 @@ export function Hero() {
             as="p"
             start="intro"
             delay={0.5}
-            className="mt-6 max-w-md font-noi-grotesk text-[19px] leading-[1.25] tracking-[-0.015em] text-balance md:mt-10 md:text-[24px] md:leading-[1.1]"
+            className="mt-6 md:max-w-md font-noi-grotesk text-[19px] leading-[1.25] tracking-[-0.015em] text-balance md:mt-10 md:text-[24px] md:leading-[1.1]"
           >
             Even if you&rsquo;ve never coded before. We make AI development
             simple and accessible for beginners.

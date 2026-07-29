@@ -54,7 +54,7 @@ export function Hero() {
         <div className="flex flex-col items-center text-center">
           <Reveal
             as="span"
-            className={`inline-block rounded-full bg-neutral-10 px-5 py-3 text-[16px] leading-[1.5] ${TRAVEL}`}
+            className={`inline-block rounded-full bg-neutral-10 md:px-5 text-xs px-4 py-3 md:py-3 md:text-[16px] leading-[1.5] ${TRAVEL}`}
           >
             Delta AI Academy
           </Reveal>

@@ -4,9 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { ContactButton } from "./contact-dialog";
 import Link from "next/link";
 import { DeltaWordmark } from "./delta-logo";
+import { useIntroComplete } from "@/lib/intro";
 
 /** Matches the desktop bar, so both collapse at the same point. */
 const CONDENSE_AT = 50;
+
+/** Scroll depth before the bar is allowed to hide at all. */
+const FREE_SCROLL = 140;
+
+/** Pixels of travel before a direction change counts. */
+const DIRECTION_THRESHOLD = 6;
 
 const NAV = [
   { label: "Program", href: "#program" },
@@ -65,19 +72,53 @@ function MenuIcon({ open }: { open: boolean }) {
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLElement>(null);
+  const introDone = useIntroComplete();
 
   // Written straight to the DOM so the transition starts on the same frame as
   // the scroll, exactly as the desktop bar does.
   useEffect(() => {
     const nav = ref.current;
     if (!nav) return;
-    const onScroll = () => {
-      nav.dataset.condensed = String(window.scrollY > CONDENSE_AT);
+
+    let lastY = window.scrollY;
+    let queued = false;
+
+    const apply = () => {
+      queued = false;
+      const y = window.scrollY;
+      nav.dataset.condensed = String(y > CONDENSE_AT);
+
+      // Small screens are short, so the bar gets out of the way on the way
+      // down and comes back the moment you head up. Never hides near the top,
+      // and never while the drawer is open.
+      if (nav.dataset.menuOpen !== "true" && y > FREE_SCROLL) {
+        if (y > lastY + DIRECTION_THRESHOLD) nav.dataset.hidden = "true";
+        else if (y < lastY - DIRECTION_THRESHOLD) nav.dataset.hidden = "false";
+      } else {
+        nav.dataset.hidden = "false";
+      }
+
+      // Ignore sub-threshold jitter, so a 1px wobble doesn't flip the bar.
+      if (Math.abs(y - lastY) > DIRECTION_THRESHOLD) lastY = y;
     };
-    onScroll();
+
+    // Coalesced into a frame: scroll fires far more often than we can paint.
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(apply);
+    };
+
+    apply();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Opening the drawer always brings the bar back — its close button lives in
+  // it, so it can never be off-screen while open.
+  useEffect(() => {
+    if (open && ref.current) ref.current.dataset.hidden = "false";
+  }, [open]);
 
   // The drawer covers the viewport, so the page behind it shouldn't scroll.
   useEffect(() => {
@@ -95,6 +136,8 @@ export function MobileNav() {
       aria-label="Main"
       data-condensed="false"
       data-menu-open={open}
+      data-hidden="false"
+      data-entered={introDone}
       className={`site-nav mobile-nav relative z-50 h-full xl:hidden  `}
     >
       {open && <div className="abosulte bg-white w-screen h-screen top-0 left-0"></div>}
@@ -115,15 +158,28 @@ export function MobileNav() {
             </span>
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            className="flex h-4 w-6 items-center justify-end"
-          >
-            <MenuIcon open={open} />
-          </button>
+          <div className="flex items-center gap-4">
+            {/* The one action worth reaching without opening the drawer.
+                Hidden while the drawer is open — it offers the same thing. */}
+            {!open && (
+              <ContactButton
+                source="mobile-nav"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-none font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out active:scale-[0.97]"
+              >
+                Join now
+              </ContactButton>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              className="flex h-4 w-6 items-center justify-end"
+            >
+              <MenuIcon open={open} />
+            </button>
+          </div>
         </div>
       </div>
 

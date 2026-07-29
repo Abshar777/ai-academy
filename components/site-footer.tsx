@@ -21,8 +21,11 @@ const COLUMNS = [
   ],
   [
     { heading: "Academy", links: ["About", "Brochure", "Contact"] },
-    { heading: "Join", links: ["Enrol now", "Talk to our team"] },
+   
   ],
+  [
+     { heading: "Join", links: ["Enrol now", "Talk to our team"] },
+  ]
 ];
 
 const LEGAL = ["Privacy policy", "Accessibility", "Terms of service"];
@@ -32,7 +35,7 @@ function StoreBadge({ label }: { label: string }) {
   return (
     <Link
       href="#"
-      className="inline-flex h-[46px] w-[140px] items-center justify-center rounded-lg border border-white/40 px-3 text-[13px] leading-tight font-medium transition-colors duration-150 hover:border-white"
+      className="inline-flex h-[46px] w-full items-center justify-center rounded-lg border border-white/40 px-3 text-center text-[13px] leading-tight font-medium transition-colors duration-150 hover:border-white sm:w-[140px]"
     >
       {label}
     </Link>
@@ -41,11 +44,11 @@ function StoreBadge({ label }: { label: string }) {
 
 export function SiteFooter() {
   return (
-    <footer className="w-full overflow-hidden rounded-t-3xl  bg-neutral-90 px-4 pt-6  text-white md:p-6">
-      <div className="mx-auto grid w-full pt-8 grid-cols-4 gap-x-4 gap-y-2 md:grid-cols-12">
-        <div className="col-span-full grid grid-cols-1 gap-12 lg:grid-cols-2">
-          <div className="flex flex-col gap-10">
-            <div className="flex flex-col gap-10">
+    <footer className="w-full overflow-hidden rounded-t-3xl bg-neutral-90 px-5 pt-8 text-white sm:px-6 md:p-6">
+      <div className="mx-auto grid w-full grid-cols-4 gap-x-4 gap-y-2 pt-4 md:grid-cols-12 md:pt-8">
+        <div className="col-span-full grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-12">
+          <div className="flex flex-col gap-8 lg:gap-10">
+            <div className="flex flex-col gap-6 sm:gap-10">
               <SplitReveal
                 as="h2"
                 className="font-noi-grotesk text-[28px] leading-[1.1] tracking-[-0.025em] md:text-[40px] md:leading-[1] xl:text-[48px]"
@@ -54,7 +57,7 @@ export function SiteFooter() {
                 <br />
                 applications
               </SplitReveal>
-              <StaggerGroup className="flex flex-wrap gap-3" delay={0.15}>
+              <StaggerGroup className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap" delay={0.15}>
                 <StaggerItem distance={16}>
                   <StoreBadge label="Download brochure" />
                 </StaggerItem>
@@ -66,9 +69,20 @@ export function SiteFooter() {
 
          
           </div>
-   <StaggerGroup className="grid w-full grid-cols-1 gap-x-4 gap-y-10 text-white sm:grid-cols-3 lg:max-w-[688px]" stagger={0.12}>
+   <StaggerGroup className="grid w-full grid-cols-2 gap-x-4 gap-y-8 text-white sm:grid-cols-3 sm:gap-y-10 lg:max-w-[688px]" stagger={0.12}>
               {COLUMNS.map((column, i) => (
-                <StaggerItem key={i} className="flex flex-col gap-10">
+                // Three columns into a two-up grid leaves the last one alone on
+                // its own row; below sm it spans the row and splits internally
+                // so the space is used rather than left blank.
+                <StaggerItem
+                  key={i}
+                  className={
+                    "flex flex-col gap-8 sm:gap-10 " +""
+                    // (i === COLUMNS.length - 1
+                    //   ? "max-sm:col-span-2 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-4"
+                    //   : "")
+                }
+                >
                   {column.map((group) => (
                     <div key={group.heading} className="flex flex-col gap-3">
                       <p className="font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] text-white/45">
@@ -81,7 +95,7 @@ export function SiteFooter() {
                               href="#"
                               // block so the line-height applies to the row —
                               // an inline <a> leaves the <li> on its own strut
-                              className="block font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] text-white transition-colors duration-150 hover:text-lime-30"
+                              className="block py-0.5 font-noi-grotesk text-[15px] leading-[1.5] tracking-[-0.015em] text-white transition-colors duration-150 hover:text-lime-30 sm:py-0 sm:text-[16px] sm:leading-[1.4]"
                             >
                               {link}
                             </Link>

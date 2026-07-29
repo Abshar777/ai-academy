@@ -5,6 +5,7 @@ import { ContactButton } from "./contact-dialog";
 import Link from "next/link";
 import { DeltaWordmark, DeltaMark } from "./delta-logo";
 import { MobileNav } from "./mobile-nav";
+import { useIntroComplete } from "@/lib/intro";
 
 const NAV = [
   { label: "Program", href: "#program" },
@@ -19,6 +20,8 @@ const CONDENSE_AT = 50;
 
 export function SiteHeader() {
   const ref = useRef<HTMLElement>(null);
+  // The bar drops in with the curtain rather than being there already.
+  const introDone = useIntroComplete();
 
   // Written straight to the DOM rather than through state: the width and
   // colour transitions then begin on the same frame as the scroll.
@@ -40,6 +43,7 @@ export function SiteHeader() {
         ref={ref}
         aria-label="Main"
         data-condensed="false"
+        data-entered={introDone}
         className="site-nav fixed inset-x-0 top-(--desktop-nav-top-offset) z-50 hidden h-(--desktop-nav-height) justify-center xl:flex"
       >
         <div className="flex w-[calc(100%-var(--nav-offset))] justify-center">
@@ -71,12 +75,16 @@ export function SiteHeader() {
               </ul>
 
               <div className="flex shrink-0 items-center gap-2">
-                <ContactButton
-                source="nav"
+                <button
+                onClick={()=>{
+                  if(typeof window!==undefined){
+                    window.open("/DELTA AI ACADEMY BROCHURE.pdf", "_blank");
+                  }
+                }}
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-current px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-current/10"
               >
                 Brochure
-              </ContactButton>
+              </button>
                 <ContactButton
                 source="nav"
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out hover:bg-lime-40"

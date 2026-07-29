@@ -1,9 +1,20 @@
 import { ContactButton } from "./contact-dialog";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
+import { StaggerGroup, StaggerItem } from "./stagger";
 
 /** Fade-up travel, per breakpoint. Read by <Reveal>. */
 const TRAVEL = "[--translateY-from:20%] lg:[--translateY-from:40%]";
+
+/**
+ * Phone-only summary strip. Every figure is one the page states and backs up
+ * further down — the projects stack, the tool ticker, the pricing card.
+ */
+const FACTS = [
+  { value: "4", label: "projects" },
+  { value: "12", label: "AI tools" },
+  { value: "AED 99", label: "one plan" },
+];
 
 type HeroCardProps = {
   title: string;
@@ -19,19 +30,27 @@ function HeroCard({ title, body, cta, variant, delay }: HeroCardProps) {
     <Reveal
       hover
       delay={delay}
-      className="flex flex-1 flex-col gap-6 rounded-2xl bg-neutral-10 p-7 text-left [--translateY-from:20%] md:p-10 lg:basis-0"
+      className={
+        "flex flex-1 flex-col gap-4 rounded-2xl p-6 text-left [--translateY-from:20%] sm:gap-6 sm:p-7 md:p-10 lg:basis-0 " +
+        // The two cards were identical grey slabs on the grey wash, which read
+        // as empty placeholders. The primary one now sits on white with the
+        // brand edge; the secondary keeps the tint.
+        (variant === "solid"
+          ? "bg-white ring-1 ring-lime-30 sm:bg-neutral-10 sm:ring-0"
+          : "bg-neutral-10")
+      }
     >
-      <h2 className="font-noi-grotesk text-[26px] leading-[1.1] tracking-[-0.025em] text-pretty md:text-[32px]">
+      <h2 className="font-noi-grotesk text-[22px] leading-[1.1] tracking-[-0.025em] text-pretty sm:text-[26px] md:text-[32px]">
         {title}
       </h2>
-      <p className="font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] text-pretty">
+      <p className="font-noi-grotesk text-[15px] leading-[1.45] tracking-[-0.015em] text-pretty text-neutral-50 sm:text-[16px] sm:leading-[1.4] sm:text-inherit">
         {body}
       </p>
       <div className="mt-auto">
         <ContactButton
           source="hero"
           className={
-            "group inline-flex h-10 items-center justify-center rounded-lg px-4 text-[16px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out " +
+            "group inline-flex h-10 items-center justify-center rounded-lg px-4 text-[15px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out sm:text-[16px] " +
             (variant === "solid"
               ? "bg-lime-30 text-black hover:bg-lime-40"
               : "border border-neutral-90 hover:bg-neutral-90/8")
@@ -50,23 +69,24 @@ export function Hero() {
       id="program"
       className="hero-light-gradient relative isolate overflow-hidden lg:min-h-[1107px]"
     >
-      <section className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 pt-28 pb-16 md:pt-32 lg:gap-20">
+      <section className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-5 pt-24 pb-14 sm:px-6 sm:pt-28 sm:pb-16 md:pt-32 lg:gap-20">
         <div className="flex flex-col items-center text-center">
           <Reveal
             as="span"
-            className={`inline-block rounded-full bg-neutral-10 md:px-5 text-xs px-4 py-3 md:py-3 md:text-[16px] leading-[1.5] ${TRAVEL}`}
+            className={`inline-block rounded-full bg-white/70 px-4 py-2 text-[13px] leading-[1.5] backdrop-blur-sm sm:bg-neutral-10 sm:py-3 sm:text-xs md:px-5 md:py-3 md:text-[16px] ${TRAVEL}`}
           >
             Delta AI Academy
           </Reveal>
 
           {/* Display line unfurls character by character out of its line
-              masks once the curtain lifts. */}
+              masks once the curtain lifts. Sized off the viewport on phones so
+              it fills the width instead of leaving a timid margin. */}
           <SplitReveal
             as="h1"
             unit="chars"
             start="intro"
             delay={0.15}
-            className="max-w-[820px] pb-2 font-sans-plomb text-[52px] leading-[0.92] font-semibold tracking-[-0.015em] uppercase sm:text-[76px] sm:leading-[0.9] md:pb-4 md:text-[110px] lg:text-[120px] xl:text-[150px]"
+            className="mt-5 max-w-[820px] pb-2 font-sans-plomb text-[16vw] leading-[0.88] font-semibold tracking-[-0.02em] uppercase sm:mt-0 sm:text-[76px] sm:leading-[0.9] sm:tracking-[-0.015em] md:pb-4 md:text-[110px] lg:text-[120px] xl:text-[150px]"
           >
             Build AI powered applications
           </SplitReveal>
@@ -75,11 +95,48 @@ export function Hero() {
             as="p"
             start="intro"
             delay={0.5}
-            className="mt-6 md:max-w-md font-noi-grotesk text-[19px] leading-[1.25] tracking-[-0.015em] text-balance md:mt-10 md:text-[24px] md:leading-[1.1]"
+            className="mt-5 max-w-[19rem] font-noi-grotesk text-[17px] leading-[1.35] tracking-[-0.015em] text-balance text-neutral-70 sm:mt-6 sm:max-w-none sm:text-[19px] sm:leading-[1.25] sm:text-inherit md:mt-10 md:max-w-md md:text-[24px] md:leading-[1.1]"
           >
-            Even if you've never coded before. We make AI development
+            Even if you&rsquo;ve never coded before. We make AI development
             simple and accessible for beginners.
           </SplitReveal>
+
+          {/* Phone-only: an action and the headline numbers land above the
+              fold, instead of the fold ending on the body of a grey card. */}
+          <Reveal
+            delay={0.7}
+            className="mt-7 flex w-full max-w-sm flex-col gap-3 [--translateY-from:20%] sm:hidden"
+          >
+            <ContactButton
+              source="hero"
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-neutral-90 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] text-white transition duration-150 ease-in-out active:scale-[0.98]"
+            >
+              Join now
+            </ContactButton>
+            <ContactButton
+              source="hero"
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-90/25 bg-white/60 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] backdrop-blur-sm transition duration-150 ease-in-out active:scale-[0.98]"
+            >
+              Get the brochure
+            </ContactButton>
+          </Reveal>
+
+          <StaggerGroup
+            className="mt-8 grid w-full max-w-sm grid-cols-3 divide-x divide-neutral-90/12 rounded-2xl bg-white/55 py-4 backdrop-blur-sm sm:hidden"
+            stagger={0.08}
+            delay={0.15}
+          >
+            {FACTS.map((fact) => (
+              <StaggerItem key={fact.label} distance={14}>
+                <span className="block font-sans-plomb text-[22px] leading-none font-semibold tracking-[-0.015em]">
+                  {fact.value}
+                </span>
+                <span className="mt-1.5 block font-noi-grotesk text-[13px] leading-[1.2] tracking-[-0.015em] text-neutral-50">
+                  {fact.label}
+                </span>
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
 
           <div className="mt-8 flex w-full flex-col gap-4 md:mt-10 lg:flex-row">
             <HeroCard

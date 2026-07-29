@@ -289,7 +289,7 @@ body {
      Phones get a deeper wash: the same block is far taller there, so a 360px
      fade ran out a third of the way down and left the cards stranded on flat
      white, which is what made the section read as unfinished. */
-  --hero-wash: 620px;
+  --hero-wash: 780px;
   background-image: linear-gradient(#7af4ff -60px, #fff var(--hero-wash));
 }
 

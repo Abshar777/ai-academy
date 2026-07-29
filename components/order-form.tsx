@@ -10,7 +10,10 @@ import {
 } from "@/lib/pricing";
 import { paymentLinkFor } from "@/lib/payment-links";
 import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
+import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
+import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { CheckIcon } from "./check-icon";
+import { VideoPreview } from "./video-preview";
 
 const FIELD =
   "h-12 w-full rounded-lg border border-neutral-90/15 bg-white px-4 font-noi-grotesk text-[16px] tracking-[-0.015em] outline-none transition-colors duration-150 focus:border-neutral-90";
@@ -24,7 +27,7 @@ const INCLUDED = [
   "No prior coding experience needed",
 ];
 
-type Status = "idle" | "sending" | "sent" | "error" | "no-live-link";
+type Status = "idle" | "sending" | "error" | "no-live-link";
 
 export function OrderForm({ initialCountry }: { initialCountry: string }) {
   const [country, setCountry] = useState(() => normalizeCountry(initialCountry));
@@ -34,6 +37,7 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
   const [paymentMethodChoice, setPaymentMethodChoice] = useState<PaymentMethodId>("razorpay");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   // One-time prefill from whichever form (this one, the enquiry modal, or the
   // chat widget) was filled in first — see lib/contact-storage.ts. The
@@ -84,20 +88,36 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
     event.preventDefault();
     if (!validate()) return;
 
+    const contact = { name: name.trim(), email: email.trim(), phone: phone.trim() };
     setStatus("sending");
-    // NOTE: no real backend yet — point this at the real one (or a form
-    // service) alongside the simulated delay below.
-    await new Promise((r) => setTimeout(r, 500));
-    console.info("Order", {
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      country,
-      plan: plan.label,
-      paymentMethod,
-    });
-    saveContactDetails({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+    console.info("Order", { ...contact, country, plan: plan.label, paymentMethod });
+    saveContactDetails(contact);
+    // Fired on form completion, not gated on payment — matches the enquiry
+    // modal and chat form, and still goes out even if checkout below fails.
+    sendWelcomeEmailRequest({ ...contact, country });
 
+    if (paymentMethod === "razorpay" && plan.country === "IN") {
+      await startRazorpayCheckout({ ...contact, country }, {
+        // Full navigation, not a status flag — the thank-you page (with its
+        // own confetti + copy) IS the success state, same as how the
+        // static-link fallback below navigates away on success too. The IDs
+        // in the URL let that page offer an invoice download without us
+        // having to pass payment details through anything less disposable.
+        onSuccess: ({ orderId, paymentId }) => {
+          window.location.href = `/order/thank-you?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}`;
+        },
+        onError: (message) => {
+          setErrorMessage(message);
+          setStatus("error");
+        },
+        onDismiss: () => setStatus("idle"),
+      });
+      return;
+    }
+
+    // NOTE: no real backend yet for these — point this at the real one (or a
+    // form service) alongside the simulated delay below.
+    await new Promise((r) => setTimeout(r, 500));
     const link = paymentLinkFor(paymentMethod);
     if (link) {
       window.location.href = link;
@@ -131,6 +151,8 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
               </li>
             ))}
           </ul>
+
+          <VideoPreview />
 
           <div className="flex flex-col gap-2 border-t border-neutral-90/10 pt-6">
             <label className={LABEL} htmlFor="order-country">
@@ -260,7 +282,7 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
           )}
           {status === "error" && (
             <p role="alert" className={ERROR}>
-              Something went wrong. Please try again.
+              {errorMessage || "Something went wrong. Please try again."}
             </p>
           )}
 

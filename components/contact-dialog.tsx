@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from "react";
 import { saveContactDetails } from "@/lib/contact-storage";
+import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
+import { readCountryCookie } from "@/lib/country-cookie";
 
 type ContactContextValue = { open: (source?: string) => void };
 
@@ -97,6 +99,12 @@ function ContactDialog({
       // Whichever of the three forms on the site gets filled in first,
       // prefills the other two — see lib/contact-storage.ts.
       saveContactDetails({ name, email, phone });
+      // This dialog has no country field of its own — the cookie is a
+      // best-effort hint from whichever of /order or the chat form the
+      // visitor touched first, if any (see lib/country-cookie.ts). Empty
+      // string when unset, which lib/whatsapp.ts treats the same as "no
+      // country available".
+      sendWelcomeEmailRequest({ name, email, phone, country: readCountryCookie() });
       setFieldErrors({});
       form.reset();
       setPaymentMethod("full");

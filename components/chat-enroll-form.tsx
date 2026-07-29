@@ -10,6 +10,8 @@ import {
 } from "@/lib/pricing";
 import { paymentLinkFor } from "@/lib/payment-links";
 import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
+import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
+import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { readCountryCookie } from "@/lib/country-cookie";
 
 /**
@@ -21,7 +23,7 @@ import { readCountryCookie } from "@/lib/country-cookie";
  * component to mismatch against.
  */
 
-type Status = "idle" | "sending" | "no-live-link";
+type Status = "idle" | "sending" | "error" | "no-live-link";
 
 const FIELD =
   "h-10 w-full rounded-lg border border-neutral-90/15 bg-white px-3 font-noi-grotesk text-[14px] tracking-[-0.015em] outline-none transition-colors duration-150 focus:border-neutral-90";
@@ -36,6 +38,7 @@ export function ChatEnrollForm() {
   const [paymentMethodChoice, setPaymentMethodChoice] = useState<PaymentMethodId>("razorpay");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const plan = useMemo(() => planForCountry(country), [country]);
   const paymentMethod = plan.methods.includes(paymentMethodChoice)
@@ -56,19 +59,27 @@ export function ChatEnrollForm() {
     event.preventDefault();
     if (!validate()) return;
 
+    const contact = { name: name.trim(), email: email.trim(), phone: phone.trim() };
     setStatus("sending");
-    await new Promise((r) => setTimeout(r, 400));
-    console.info("Order", {
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      country,
-      plan: plan.label,
-      paymentMethod,
-      source: "chat",
-    });
-    saveContactDetails({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+    console.info("Order", { ...contact, country, plan: plan.label, paymentMethod, source: "chat" });
+    saveContactDetails(contact);
+    sendWelcomeEmailRequest({ ...contact, country });
 
+    if (paymentMethod === "razorpay" && plan.country === "IN") {
+      await startRazorpayCheckout({ ...contact, country }, {
+        onSuccess: ({ orderId, paymentId }) => {
+          window.location.href = `/order/thank-you?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}`;
+        },
+        onError: (message) => {
+          setErrorMessage(message);
+          setStatus("error");
+        },
+        onDismiss: () => setStatus("idle"),
+      });
+      return;
+    }
+
+    await new Promise((r) => setTimeout(r, 400));
     const link = paymentLinkFor(paymentMethod);
     if (link) {
       window.location.href = link;
@@ -162,6 +173,10 @@ export function ChatEnrollForm() {
             </label>
           ))}
         </div>
+      )}
+
+      {status === "error" && (
+        <p className={FIELD_ERROR}>{errorMessage || "Something went wrong. Please try again."}</p>
       )}
 
       <button

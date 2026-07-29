@@ -22,13 +22,18 @@ export type PricingPlan = {
   methods: PaymentMethodId[];
 };
 
-const INDIA: PricingPlan = {
+/** Exported directly (not just through planForCountry) so the Razorpay API
+ *  routes can charge this fixed amount server-side without trusting
+ *  anything the client sends — see app/api/razorpay/create-order/route.ts. */
+export const INDIA_PLAN: PricingPlan = {
   country: "IN",
   amount: 1000,
   currency: "INR",
   label: "₹1,000",
   methods: ["razorpay"],
 };
+
+const INDIA = INDIA_PLAN;
 
 const DEFAULT: PricingPlan = {
   country: "AE",
@@ -61,6 +66,22 @@ export function planForCountry(countryCode: string | undefined | null): PricingP
   if (countryCode === "IN") return INDIA;
   return DEFAULT;
 }
+
+/** ISO country code -> WhatsApp/E.164 dial code, for the countries in
+ *  COUNTRY_OPTIONS. Lets lib/whatsapp.ts turn a locally-formatted number
+ *  (e.g. "0501234567") into E.164 using the country the customer actually
+ *  picked, instead of guessing from the digits alone — which is ambiguous
+ *  between, say, UAE and Saudi Arabia (both "05X-XXXXXXX"). No entry for
+ *  "OTHER" since there's nothing to default to. */
+export const COUNTRY_DIAL_CODES: Record<string, string> = {
+  AE: "+971",
+  SA: "+966",
+  IN: "+91",
+  OM: "+968",
+  KW: "+965",
+  QA: "+974",
+  BH: "+973",
+};
 
 /** Falls back to AE for anything not in the picker (unset cookie, a stray
  *  value, etc.) rather than rendering a blank/invalid select option. */

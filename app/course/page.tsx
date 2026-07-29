@@ -84,6 +84,13 @@ export default function CoursePage() {
           actually work through to a deployed full-stack application, on the one AED&nbsp;99
           plan.
         </Reveal>
+        <Reveal
+          as="span"
+          delay={0.3}
+          className="inline-block rounded-full bg-neutral-10 px-4 py-2 font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-neutral-50 [--translateY-from:15%]"
+        >
+          Taught in English & Malayalam , with live support in Malayalam
+        </Reveal>
       </section>
 
       <section className="mx-auto flex max-w-4xl flex-col gap-6 px-6 pb-20 md:pb-32">
@@ -120,6 +127,13 @@ export default function CoursePage() {
           <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8 sm:w-auto">
             Get the brochure
           </BrochureLink>
+        </Reveal>
+        <Reveal
+          as="p"
+          delay={0.3}
+          className="font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-neutral-50 [--translateY-from:10%]"
+        >
+          Pay in full, or split it with Tabby or Tamara at enrolment. Razorpay accepted too.
         </Reveal>
       </section>
     </main>

@@ -73,7 +73,9 @@ export const FAQ_BOT_ENTRIES: FaqEntry[] = [
   },
   {
     question: "What does it cost?",
-    keywords: ["price", "cost", "fee", "aed", "99", "pay", "payment", "money"],
+    // "pay"/"payment" deliberately left off — those belong to the payment-
+    // methods entry below, and this list already matches fine without them.
+    keywords: ["price", "cost", "fee", "aed", "99", "money"],
     answer:
       "One plan, AED 99 total — every project, every tool, every skill area. No tiers, no subscriptions.",
   },
@@ -137,6 +139,18 @@ export const FAQ_BOT_ENTRIES: FaqEntry[] = [
     answer:
       "Module 4 covers application development fundamentals — website versus mobile, choosing the right technology stack, planning an application, and how backend architecture actually works.",
   },
+  {
+    question: "What language are classes conducted in?",
+    keywords: ["language", "malayalam", "english", "speak", "spoken"],
+    answer:
+      "Classes are conducted in English, with live support also available in Malayalam if you'd prefer it.",
+  },
+  {
+    question: "How can I pay?",
+    keywords: ["pay", "payment", "installment", "instalment", "tabby", "tamara", "razorpay", "emi"],
+    answer:
+      "Pay in full, or split the AED 99 into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
+  },
 ];
 
 const STOPWORDS = new Set([
@@ -164,13 +178,22 @@ export function matchFaq(input: string): FaqEntry | null {
     const haystack = new Set([...tokens(entry.question), ...entry.keywords.map((k) => k.toLowerCase())]);
     let score = 0;
     for (const word of inputTokens) {
-      if (haystack.has(word)) score += 1;
+      // Weighted by word length rather than a flat +1: a generic short verb
+      // ("teach", "pay") sits in several entries' keyword lists, while a rare,
+      // specific word ("malayalam", "razorpay") only means one thing. Without
+      // this, two entries tying on {one generic hit each} fall back to array
+      // order and can surface the wrong answer — e.g. "do you teach in
+      // malayalam" has "teach" (matches the generic teaching-method entry)
+      // and "malayalam" (matches this one); flat scoring ties them 1-1 and
+      // whichever entry happens to be earlier in the list wins regardless of
+      // which word was the actual point of the question.
+      if (haystack.has(word)) score += word.length;
       else {
         // Loose substring match catches simple plurals/typos ("app" vs
         // "apps") without pulling in a real fuzzy-matching dependency.
         for (const h of haystack) {
           if (h.length > 3 && (h.includes(word) || word.includes(h))) {
-            score += 0.5;
+            score += word.length / 2;
             break;
           }
         }
@@ -179,6 +202,8 @@ export function matchFaq(input: string): FaqEntry | null {
     if (!best || score > best.score) best = { entry, score };
   }
 
-  // Below this, the overlap is coincidental rather than a real match.
-  return best && best.score >= 1 ? best.entry : null;
+  // Recalibrated for length-weighted scoring: a bare 2-letter exact hit
+  // (score 2) is still coincidental, so the floor sits just above that — one
+  // real 3+ letter word match, or a longer loose match, clears it.
+  return best && best.score >= 3 ? best.entry : null;
 }

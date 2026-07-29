@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -9,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { saveContactDetails } from "@/lib/contact-storage";
 
 type ContactContextValue = { open: (source?: string) => void };
 
@@ -30,6 +32,20 @@ const LABEL =
 const ERROR =
   "font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-[#c0392b]";
 
+/**
+ * There's no real checkout on this site — no merchant account to charge a
+ * card against. This is what "buy" actually means here: the visitor states
+ * how they'd want to pay, that comes through with the rest of the enquiry,
+ * and the team follows up with the right payment link already in hand
+ * instead of a second round-trip to ask.
+ */
+const PAYMENT_METHODS = [
+  { value: "full", label: "Pay in full" },
+  { value: "tabby", label: "Tabby" },
+  { value: "tamara", label: "Tamara" },
+  { value: "razorpay", label: "Razorpay" },
+] as const;
+
 function ContactDialog({
   dialogRef,
   source,
@@ -44,6 +60,10 @@ function ContactDialog({
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]["value"]>(
+    "full",
+  );
+  const routre=useRouter()
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -74,10 +94,15 @@ function ContactDialog({
       // and delete the simulated delay below.
       await new Promise((r) => setTimeout(r, 600));
       console.info("Enquiry", { ...data, source });
+      // Whichever of the three forms on the site gets filled in first,
+      // prefills the other two — see lib/contact-storage.ts.
+      saveContactDetails({ name, email, phone });
       setFieldErrors({});
       form.reset();
+      setPaymentMethod("full");
       setStatus("idle");
       dialogRef.current?.close();
+      routre.push('/order')
       onSent();
     } catch {
       setStatus("error");
@@ -198,6 +223,31 @@ function ContactDialog({
                 </p>
               ) : null}
             </div>
+
+            {/* <fieldset className="flex flex-col gap-2">
+              <legend className={LABEL}>How would you like to pay?</legend>
+              <div className="flex flex-wrap gap-2">
+                {PAYMENT_METHODS.map((method) => (
+                  <label
+                    key={method.value}
+                    className="cursor-pointer rounded-full border border-neutral-90/15 px-4 py-2 font-noi-grotesk text-[14px] leading-none tracking-[-0.01em] transition-colors duration-150 has-checked:border-neutral-90 has-checked:bg-neutral-90 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-neutral-90 has-focus-visible:ring-offset-2"
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={method.value}
+                      checked={paymentMethod === method.value}
+                      onChange={() => setPaymentMethod(method.value)}
+                      className="sr-only"
+                    />
+                    {method.label}
+                  </label>
+                ))}
+              </div>
+              <p className="font-noi-grotesk text-[13px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
+                No payment happens here — this just tells the team which link to send you.
+              </p>
+            </fieldset> */}
 
             {error ? (
               <p role="alert" className="font-noi-grotesk text-[15px] text-[#c0392b]">

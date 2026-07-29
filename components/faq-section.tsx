@@ -34,6 +34,14 @@ const FAQS = [
     q: "What will I have at the end?",
     a: "A portfolio of real web and mobile applications, a working understanding of AI powered development, production deployment experience, and the confidence to build your own ideas.",
   },
+  {
+    q: "What language are classes conducted in?",
+    a: "Classes are conducted in English, with live support also available in Malayalam if you'd prefer it.",
+  },
+  {
+    q: "How can I pay?",
+    a: "Pay in full, or split the AED 99 into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
+  },
 ];
 
 function Toggle({ open }: { open: boolean }) {

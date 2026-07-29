@@ -61,7 +61,7 @@ function ToolTile({ name, file, colour }: (typeof TOOLS)[number]) {
             className="size-8 object-contain"
           />
         )}
-        <span className="text-center font-noi-grotesk text-[16px] leading-[1.2] tracking-[-0.015em] text-balance">
+        <span className="text-center font-noi-grotesk text-[16px] leading-[1.2] tracking-[-0.015em] text-balance1">
           {name}
         </span>
       </div>
@@ -83,7 +83,7 @@ export function AiTools() {
           <SplitReveal
             as="h2"
             delay={0.15}
-            className="max-w-2xl font-noi-grotesk text-[28px] leading-[1.15] tracking-[-0.025em] text-balance [--translateY-from:20%] md:text-[36px] lg:max-w-none lg:text-center lg:[--translateY-from:40%] xl:text-[40px]"
+            className="max-w-2xl font-noi-grotesk text-[28px] leading-[1.15] tracking-[-0.025em] text-balance1 [--translateY-from:20%] md:text-[36px] lg:max-w-none lg:text-center lg:[--translateY-from:40%] xl:text-[40px]"
           >
             {HEADLINE}
           </SplitReveal>

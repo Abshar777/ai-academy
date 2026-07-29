@@ -42,7 +42,7 @@ function ClassPreview() {
       } else {
         // preload="none" means there's nothing buffered yet; play() kicks off
         // the fetch itself.
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       }
     };
 
@@ -86,7 +86,7 @@ function ClassPreview() {
       />
 
       <span className="relative z-10 font-noi-grotesk text-[16px] leading-[1.4] font-medium tracking-[-0.015em] text-white/90">
-        
+
       </span>
 
       <div className="relative z-10 flex flex-col gap-5">
@@ -121,7 +121,7 @@ export function PricingSection() {
         <SplitReveal
           as="h2"
           delay={0.15}
-          className="font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance [--translateY-from:20%] md:text-[44px] md:leading-[1] lg:text-center lg:[--translateY-from:40%] xl:text-[48px]"
+          className="font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance1 [--translateY-from:20%] md:text-[44px] md:leading-[1] lg:text-center lg:[--translateY-from:40%] xl:text-[48px]"
         >
           One plan. Everything included.
         </SplitReveal>

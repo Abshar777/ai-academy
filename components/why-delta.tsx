@@ -123,7 +123,7 @@ export function WhyDelta() {
         <SplitReveal
           as="h2"
           delay={0.15}
-          className="font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance [--translateY-from:20%] md:text-[44px] md:leading-[1] lg:text-center lg:[--translateY-from:40%] xl:text-[48px]"
+          className="font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance1 [--translateY-from:20%] md:text-[44px] md:leading-[1] lg:text-center lg:[--translateY-from:40%] xl:text-[48px]"
         >
           Why choose Delta AI Academy
         </SplitReveal>

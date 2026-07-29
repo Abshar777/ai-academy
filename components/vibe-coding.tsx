@@ -82,14 +82,14 @@ export function VibeCoding() {
         <SplitReveal
           as="h2"
           delay={0.15}
-          className="max-w-4xl font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance [--translateY-from:20%] md:text-[44px] md:leading-[1] lg:text-center lg:[--translateY-from:40%] xl:text-[48px]"
+          className="max-w-4xl font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance1 [--translateY-from:20%] md:text-[44px] md:leading-[1] lg:text-center lg:[--translateY-from:40%] xl:text-[48px]"
         >
           We don&rsquo;t teach you to write code. We teach you to build with AI.
         </SplitReveal>
         <Reveal
           as="p"
           delay={0.25}
-          className="max-w-2xl font-noi-grotesk text-[20px] leading-[1.35] tracking-[-0.015em] text-balance text-neutral-50 [--translateY-from:20%] lg:text-center"
+          className="max-w-2xl font-noi-grotesk text-[20px] leading-[1.35] tracking-[-0.015em] text-balance1 text-neutral-50 [--translateY-from:20%] lg:text-center"
         >
           No syntax drills, no memorising APIs. You work the way developers
           actually work now — describing what you want and directing an AI agent

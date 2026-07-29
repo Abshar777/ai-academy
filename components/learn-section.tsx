@@ -137,8 +137,8 @@ export function LearnSection() {
                     {topic.tag}
                   </span>
                 </div>
-                <h3 className={`${HEADING} pt-5 text-balance`}>{topic.title}</h3>
-                <p className={`${BODY} text-balance`}>{topic.body}</p>
+                <h3 className={`${HEADING} pt-5 text-balance1`}>{topic.title}</h3>
+                <p className={`${BODY} text-balance1`}>{topic.body}</p>
               </div>
             ))}
           </div>

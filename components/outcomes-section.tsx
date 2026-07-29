@@ -23,7 +23,7 @@ export function OutcomesSection() {
       <div className="col-span-12 py-6 lg:col-span-3 lg:col-start-2 lg:py-0">
         <SplitReveal
           as="h2"
-          className="font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance [--translateY-from:20%] md:text-[44px] md:leading-[1] xl:text-[48px]"
+          className="font-noi-grotesk text-[40px] leading-[1.1] tracking-[-0.025em] text-balance1 [--translateY-from:20%] md:text-[44px] md:leading-[1] xl:text-[48px]"
         >
           What you will achieve
         </SplitReveal>

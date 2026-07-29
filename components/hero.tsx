@@ -95,7 +95,7 @@ export function Hero() {
             as="p"
             start="intro"
             delay={0.5}
-            className="mt-5 max-w-[19rem] font-noi-grotesk text-[17px] leading-[1.35] tracking-[-0.015em] text-balance text-neutral-70 sm:mt-6 sm:max-w-none sm:text-[19px] sm:leading-[1.25] sm:text-inherit md:mt-10 md:max-w-md md:text-[24px] md:leading-[1.1]"
+            className="mt-5 max-w-[19rem] font-noi-grotesk text-[17px] leading-[1.35] tracking-[-0.015em] text-balance1 text-neutral-70 sm:mt-6 sm:max-w-none sm:text-[19px] sm:leading-[1.25] sm:text-inherit md:mt-10 md:max-w-md md:text-[24px] md:leading-[1.1]"
           >
             Even if you&rsquo;ve never coded before. We make AI development
             simple and accessible for beginners.

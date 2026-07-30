@@ -489,6 +489,87 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Free-50 promo banner (components/free-fifty-banner.tsx) — deliberately
+   louder than the rest of the page: a slow-drifting gradient, a pulsing
+   glow behind the badge, and a shimmer sweep across the progress fill. This
+   is the one section whose whole job is to catch a scrolling eye.
+   ------------------------------------------------------------------------ */
+
+.ffb-card {
+  background: linear-gradient(120deg, #14151c 0%, #1f2130 45%, #14151c 100%);
+  background-size: 220% 220%;
+  animation: ffb-drift 7s ease-in-out infinite;
+}
+
+@keyframes ffb-drift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.ffb-glow {
+  position: absolute;
+  inset: -60% -10% auto -10%;
+  height: 160%;
+  background: radial-gradient(circle, rgb(211 251 82 / 0.35) 0%, rgb(211 251 82 / 0) 65%);
+  animation: ffb-pulse 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ffb-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+.ffb-progress-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.ffb-progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
+  animation: ffb-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes ffb-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ffb-card {
+    animation: none;
+  }
+  .ffb-glow {
+    animation: none;
+    opacity: 0.6;
+    transform: none;
+  }
+  .ffb-progress-fill::after {
+    animation: none;
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Intro curtain, matching the reference.
 
    Four pills, one word each, converged on a point then springing apart into a

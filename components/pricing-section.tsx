@@ -8,6 +8,7 @@ import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { CheckIcon } from "./check-icon";
 import { StaggerGroup, StaggerItem } from "./stagger";
+import { FreeFiftyBanner } from "./free-fifty-banner";
 
 /** The actual purchase workflow — there's no live checkout on the site, so
  *  this is what "buying" the course means: a fast lead-and-payment-method
@@ -173,6 +174,8 @@ export function PricingSection() {
           </StaggerItem>
         ))}
       </StaggerGroup>
+
+      <FreeFiftyBanner className="mx-auto mb-10 w-full max-w-6xl lg:mb-16" />
 
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-2 lg:items-stretch">
         <Reveal className="flex [--translateY-from:20%]">

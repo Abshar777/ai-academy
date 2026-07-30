@@ -14,6 +14,7 @@ import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
+import { FreeFiftyBanner } from "./free-fifty-banner";
 
 const FIELD =
   "h-12 w-full rounded-lg border border-neutral-90/15 bg-white px-4 font-noi-grotesk text-[16px] tracking-[-0.015em] outline-none transition-colors duration-150 focus:border-neutral-90";
@@ -132,6 +133,8 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
     <main className="page-surface flex min-h-screen items-start justify-center overflow-x-clip px-6 pt-28 pb-20 md:pt-36 md:pb-32">
       <div className="mx-auto grid w-full max-w-4xl gap-6 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-6 rounded-3xl bg-neutral-10 p-8 md:p-10">
+          <FreeFiftyBanner />
+
           <div className="flex flex-col gap-2">
             <span className="font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
               Full programme

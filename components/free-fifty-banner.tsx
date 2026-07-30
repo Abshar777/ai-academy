@@ -47,6 +47,9 @@ function useCountUp(target: number | null, start: boolean, durationMs = 1400) {
   return value;
 }
 
+
+
+
 function LiveDot() {
   return (
     <span className="relative flex size-1.5">

@@ -108,6 +108,12 @@ export function FreeFiftyBanner({ className = "" }: { className?: string }) {
           )}
         </p>
 
+        {!claimed && (
+          <p className="mt-1 font-noi-grotesk text-[13px] font-medium tracking-[-0.01em] text-lime-30/90">
+            Exclusively for Delta Digital Academy students
+          </p>
+        )}
+
         <p className="mt-1.5 font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-white/60">
           {count === null ? (
             "Loading enrolment count…"

@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ContactProvider } from "@/components/contact-dialog";
 import { AiChatWidget } from "@/components/ai-chat-widget";
+import { EnrollBar } from "@/components/enroll-bar";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
@@ -157,6 +158,7 @@ export default function RootLayout({
           {children}
           <SiteFooter />
           <AiChatWidget />
+          <EnrollBar />
         </ContactProvider>
       </body>
     </html>

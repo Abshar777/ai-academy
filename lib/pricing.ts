@@ -27,9 +27,9 @@ export type PricingPlan = {
  *  anything the client sends — see app/api/razorpay/create-order/route.ts. */
 export const INDIA_PLAN: PricingPlan = {
   country: "IN",
-  amount: 1000,
+  amount: 999,
   currency: "INR",
-  label: "₹1,000",
+  label: "₹999",
   methods: ["razorpay"],
 };
 

@@ -146,7 +146,6 @@ export function MobileNav() {
       data-entered={introDone}
       className={`site-nav mobile-nav relative z-50 h-full xl:hidden  `}
     >
-      {open && <div className="abosulte bg-white w-screen h-screen top-0 left-0"></div>}
       <div className={`mobile-nav-bar fixed top-(--mobile-top-offset) left-1/2 h-(--mobile-nav-height) w-[calc(100vw-var(--mobile-nav-offset))] -translate-x-1/2 rounded-xl p-(--nav-padding) ${open&&"w-full h-full p-4 shadow-none"}`}>
         <div className="flex h-[calc(var(--mobile-nav-height)-var(--nav-padding)*2)] w-full items-center justify-between">
           <Link
@@ -181,7 +180,7 @@ export function MobileNav() {
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
-              className="flex h-4 w-6 items-center justify-end"
+              className="flex h-4 w-6 items-center justify-end transition-transform duration-150 ease-out active:scale-90"
             >
               <MenuIcon open={open} />
             </button>
@@ -207,10 +206,19 @@ export function MobileNav() {
               <Link
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-between py-5 font-noi-grotesk text-[24px] leading-[1.15] tracking-[-0.025em]"
+                className="group flex items-center justify-between py-5 font-noi-grotesk text-[26px] leading-[1.15] tracking-[-0.025em] active:translate-x-1 active:transition-transform active:duration-150"
               >
-                {item.label}
-                <svg viewBox="0 0 16 16" className="size-4 shrink-0 opacity-35" aria-hidden>
+                <span className="flex items-baseline gap-3">
+                  <span className="font-noi-grotesk text-[13px] font-medium tabular-nums text-neutral-90/30">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {item.label}
+                </span>
+                <svg
+                  viewBox="0 0 16 16"
+                  className="size-4 shrink-0 opacity-35 transition-transform duration-200 ease-out group-active:translate-x-1"
+                  aria-hidden
+                >
                   <path
                     d="M5 3l6 5-6 5"
                     stroke="currentColor"

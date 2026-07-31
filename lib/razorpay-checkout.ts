@@ -54,7 +54,13 @@ function loadRazorpayCheckout(): Promise<void> {
   return loadPromise;
 }
 
-export type RazorpayContact = { name: string; email: string; phone: string; country?: string };
+export type RazorpayContact = {
+  name: string;
+  email: string;
+  phone: string;
+  country?: string;
+  couponCode?: string;
+};
 
 export type RazorpayCheckoutCallbacks = {
   onSuccess: (details: { orderId: string; paymentId: string }) => void;

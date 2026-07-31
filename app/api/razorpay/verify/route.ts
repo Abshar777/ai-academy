@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getRazorpayClient } from "@/lib/razorpay";
 import { sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
+import { redeemCoupon } from "@/lib/coupons";
+import { recordEnrollment } from "@/lib/enrollments";
 
 export const runtime = "nodejs";
 
@@ -66,8 +68,36 @@ export async function POST(request: Request) {
     const email = typeof notes.email === "string" ? notes.email : "";
     const phone = typeof notes.phone === "string" ? notes.phone : "";
     const country = typeof notes.country === "string" ? notes.country : undefined;
+    const couponCode = typeof notes.couponCode === "string" ? notes.couponCode : "";
     const amountMinorUnits = Number(order.amount);
     const currency = String(order.currency);
+
+    await recordEnrollment({
+      name,
+      email,
+      phone,
+      country: country ?? "",
+      amountMinorUnits,
+      currency,
+      source: "razorpay",
+      couponCode: couponCode || undefined,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+    });
+
+    // Best-effort usage bookkeeping — the payment already succeeded above,
+    // so a coupon that got exhausted by someone else between create-order
+    // and this verify (a real but narrow race) must not turn an already-
+    // captured payment into an error. The enrollment record above already
+    // carries the coupon code either way.
+    if (couponCode) {
+      const redeemed = await redeemCoupon(couponCode);
+      if (!redeemed) {
+        console.error(
+          `[coupons] Payment ${razorpay_payment_id} used coupon ${couponCode} but it could not be marked redeemed (already exhausted?) — usage count may be off.`,
+        );
+      }
+    }
 
     if (email) {
       const result = await sendInvoiceEmail({

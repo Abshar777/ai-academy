@@ -72,6 +72,37 @@ export function CouponManager({ initialCoupons }: { initialCoupons: PlainCoupon[
     }
   }
 
+  function copyAllGenerated() {
+    navigator.clipboard?.writeText(justGenerated.join("\n"));
+  }
+
+  /** Client-side CSV — opens directly in Excel/Sheets/Numbers, no server
+   *  route or extra dependency needed for what's fundamentally a table
+   *  dump. Exports whatever's currently in `coupons` (every batch, not
+   *  just the last-generated one), matching the on-screen table below. */
+  function exportCsv() {
+    const headers = ["Code", "Discount", "Max Uses", "Used", "Note", "Created", "Active"];
+    const rows = coupons.map((c) => [
+      c.code,
+      formatDiscount(c),
+      String(c.maxUses),
+      String(c.usedCount),
+      c.note ?? "",
+      new Date(c.createdAt).toISOString(),
+      c.active ? "Yes" : "No",
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `delta-coupons-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function toggleActive(code: string, active: boolean) {
     setCoupons((prev) => prev.map((c) => (c.code === code ? { ...c, active } : c)));
     const res = await fetch(`/api/admin/coupons/${encodeURIComponent(code)}`, {
@@ -186,9 +217,18 @@ export function CouponManager({ initialCoupons }: { initialCoupons: PlainCoupon[
 
         {justGenerated.length > 0 && (
           <div className="col-span-2 flex flex-col gap-2 rounded-lg bg-lime-30/15 p-4 sm:col-span-5">
-            <span className="font-noi-grotesk text-[13px] font-medium text-neutral-90">
-              Generated {justGenerated.length} code{justGenerated.length === 1 ? "" : "s"}:
-            </span>
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-noi-grotesk text-[13px] font-medium text-neutral-90">
+                Generated {justGenerated.length} code{justGenerated.length === 1 ? "" : "s"}:
+              </span>
+              <button
+                type="button"
+                onClick={copyAllGenerated}
+                className="shrink-0 rounded-md bg-white px-2.5 py-1 font-noi-grotesk text-[12px] font-medium text-neutral-90 ring-1 ring-neutral-90/15 transition hover:ring-neutral-90/30"
+              >
+                Copy all
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {justGenerated.map((code) => (
                 <button
@@ -209,48 +249,62 @@ export function CouponManager({ initialCoupons }: { initialCoupons: PlainCoupon[
       {coupons.length === 0 ? (
         <p className="font-noi-grotesk text-[14px] text-neutral-50">No coupons yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-white">
-          <table className="w-full min-w-[720px] border-collapse font-noi-grotesk text-[14px]">
-            <thead>
-              <tr className="border-b border-neutral-90/8 text-left text-neutral-50">
-                <th className="px-4 py-3 font-medium">Code</th>
-                <th className="px-4 py-3 font-medium">Discount</th>
-                <th className="px-4 py-3 font-medium">Uses</th>
-                <th className="px-4 py-3 font-medium">Note</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coupons.map((c) => (
-                <tr key={c.code} className="border-b border-neutral-90/6 last:border-0">
-                  <td className="px-4 py-3 tabular-nums">{c.code}</td>
-                  <td className="px-4 py-3">{formatDiscount(c)}</td>
-                  <td className="px-4 py-3 tabular-nums">
-                    {c.usedCount} / {c.maxUses}
-                  </td>
-                  <td className="px-4 py-3 text-neutral-50">{c.note ?? "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-50">
-                    {new Date(c.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => toggleActive(c.code, !c.active)}
-                      className={
-                        "rounded-full px-2.5 py-1 text-[12px] font-medium " +
-                        (c.active
-                          ? "bg-lime-30/25 text-neutral-90 hover:bg-lime-30/40"
-                          : "bg-neutral-90/8 text-neutral-50 hover:bg-neutral-90/15")
-                      }
-                    >
-                      {c.active ? "Active" : "Disabled"}
-                    </button>
-                  </td>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-noi-grotesk text-[14px] font-medium text-neutral-90">
+              All coupons ({coupons.length})
+            </span>
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-neutral-90 px-3 font-noi-grotesk text-[13px] font-medium transition duration-150 hover:bg-neutral-90/8"
+            >
+              Export to Excel (CSV)
+            </button>
+          </div>
+          <div className="overflow-x-auto rounded-2xl bg-white">
+            <table className="w-full min-w-[720px] border-collapse font-noi-grotesk text-[14px]">
+              <thead>
+                <tr className="border-b border-neutral-90/8 text-left text-neutral-50">
+                  <th className="px-4 py-3 font-medium">Code</th>
+                  <th className="px-4 py-3 font-medium">Discount</th>
+                  <th className="px-4 py-3 font-medium">Uses</th>
+                  <th className="px-4 py-3 font-medium">Note</th>
+                  <th className="px-4 py-3 font-medium">Created</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {coupons.map((c) => (
+                  <tr key={c.code} className="border-b border-neutral-90/6 last:border-0">
+                    <td className="px-4 py-3 tabular-nums">{c.code}</td>
+                    <td className="px-4 py-3">{formatDiscount(c)}</td>
+                    <td className="px-4 py-3 tabular-nums">
+                      {c.usedCount} / {c.maxUses}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-50">{c.note ?? "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-neutral-50">
+                      {new Date(c.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(c.code, !c.active)}
+                        className={
+                          "rounded-full px-2.5 py-1 text-[12px] font-medium " +
+                          (c.active
+                            ? "bg-lime-30/25 text-neutral-90 hover:bg-lime-30/40"
+                            : "bg-neutral-90/8 text-neutral-50 hover:bg-neutral-90/15")
+                        }
+                      >
+                        {c.active ? "Active" : "Disabled"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

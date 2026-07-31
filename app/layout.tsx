@@ -1,11 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { ContactProvider } from "@/components/contact-dialog";
-import { AiChatWidget } from "@/components/ai-chat-widget";
-import { EnrollBar } from "@/components/enroll-bar";
+import { SiteChrome } from "@/components/site-chrome";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
@@ -154,11 +151,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full">
         <ContactProvider>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-          <AiChatWidget />
-          <EnrollBar />
+          <SiteChrome>{children}</SiteChrome>
         </ContactProvider>
       </body>
     </html>

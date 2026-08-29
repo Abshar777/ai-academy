@@ -47,7 +47,12 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [paymentMethodChoice, setPaymentMethodChoice] = useState<PaymentMethodId>("razorpay");
+  // Defaults to whichever method actually works for the visitor's starting
+  // country (Abzer for the Middle East set, Razorpay for India) rather than
+  // a hardcoded choice that's a dead end for most countries.
+  const [paymentMethodChoice, setPaymentMethodChoice] = useState<PaymentMethodId>(
+    () => planForCountry(normalizeCountry(initialCountry)).methods[0],
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -89,6 +94,11 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
     // Persisted so a reload (or the next visit) keeps a manual override
     // rather than snapping back to the geo-detected default.
     document.cookie = `country=${next}; path=/; max-age=${60 * 60 * 24 * 30}`;
+    // Re-derive rather than leaving the old choice selected — "Razorpay"
+    // carried over from India would otherwise sit checked (and non-
+    // functional) after switching to the UAE, since it's still a listed
+    // method there, just not a working one.
+    setPaymentMethodChoice(planForCountry(next).methods[0]);
     // A coupon's discounted amount is priced per-country (see
     // /api/coupon/validate) — clearing it here rather than trying to keep
     // it in sync avoids showing a stale discount against the new price.
@@ -192,6 +202,36 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
         },
         onDismiss: () => setStatus("idle"),
       });
+      return;
+    }
+
+    if (paymentMethod === "abzer") {
+      try {
+        const res = await fetch("/api/abzer/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...contact, country, couponCode: appliedCoupon?.code }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.checkoutUrl) {
+          setErrorMessage(data?.error ?? "Could not start checkout. Please try again.");
+          setStatus("error");
+          return;
+        }
+        // Stashed so /order/payment-return knows which order to poll once
+        // Abzer sends the buyer back — its own redirect doesn't reliably
+        // carry this as a query param.
+        sessionStorage.setItem("abzerPendingOrderId", data.orderId);
+        // Full redirect to Abzer's hosted payment page — there's no in-page
+        // modal for this gateway. Abzer sends the buyer back to
+        // /order/payment-return once they're done; the actual payment
+        // confirmation arrives separately via webhook (see
+        // app/api/abzer/webhook), never from this redirect.
+        window.location.href = data.checkoutUrl;
+      } catch {
+        setErrorMessage("Could not start checkout. Please try again.");
+        setStatus("error");
+      }
       return;
     }
 

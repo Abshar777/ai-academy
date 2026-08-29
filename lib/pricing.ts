@@ -8,10 +8,24 @@
  *
  * Every other country falls back to the AED plan with Tabby, Tamara and
  * Razorpay all offered — Razorpay stays available outside India too since it
- * settles internationally, not just in INR.
+ * settles internationally, not just in INR. A defined set of Middle East
+ * countries also get Abzer Pay (AED, hosted-redirect) — see lib/abzer.ts —
+ * the only one of these four that's actually wired to a real gateway for
+ * non-India countries; Tabby/Tamara/Razorpay there still just route to a
+ * static payment link or a "team will follow up" fallback.
  */
 
-export type PaymentMethodId = "razorpay" | "tabby" | "tamara";
+export type PaymentMethodId = "razorpay" | "tabby" | "tamara" | "abzer";
+
+/** Countries where Abzer Pay is offered, per product decision — not every
+ *  non-India country, just this named Middle East set. "OTHER" deliberately
+ *  stays off this list. Exported so the create-order API route can re-check
+ *  this server-side rather than trusting a country the client sends. */
+const ABZER_COUNTRIES = new Set(["AE", "SA", "OM", "KW", "QA", "BH"]);
+
+export function isAbzerCountry(countryCode: string | undefined | null): boolean {
+  return Boolean(countryCode && ABZER_COUNTRIES.has(countryCode));
+}
 
 export type PricingPlan = {
   country: string;
@@ -35,7 +49,10 @@ export const INDIA_PLAN: PricingPlan = {
 
 const INDIA = INDIA_PLAN;
 
-const DEFAULT: PricingPlan = {
+/** Exported (as DEFAULT_PLAN) so the Abzer API route can charge this fixed
+ *  amount server-side without trusting anything the client sends — see
+ *  app/api/abzer/create-order/route.ts. */
+export const DEFAULT_PLAN: PricingPlan = {
   country: "AE",
   amount: 99,
   currency: "AED",
@@ -43,10 +60,13 @@ const DEFAULT: PricingPlan = {
   methods: ["tabby", "tamara", "razorpay"],
 };
 
+const DEFAULT = DEFAULT_PLAN;
+
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodId, string> = {
   razorpay: "Razorpay",
   tabby: "Tabby",
   tamara: "Tamara",
+  abzer: "Abzer Pay",
 };
 
 /** A short list of countries worth naming in the picker — not exhaustive;
@@ -64,6 +84,12 @@ export const COUNTRY_OPTIONS: { code: string; name: string }[] = [
 
 export function planForCountry(countryCode: string | undefined | null): PricingPlan {
   if (countryCode === "IN") return INDIA;
+  if (countryCode && ABZER_COUNTRIES.has(countryCode)) {
+    // Abzer first — it's the only method here that actually completes a
+    // payment; Tabby/Tamara/Razorpay stay listed but fall through to the
+    // static-link/"team will follow up" path, same as today.
+    return { ...DEFAULT, methods: ["abzer", ...DEFAULT.methods] };
+  }
   return DEFAULT;
 }
 

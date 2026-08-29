@@ -26,15 +26,24 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Total enrolled" value={String(stats.total)} />
         <StatCard label="Paid (Razorpay)" value={String(stats.paidCount)} />
+        <StatCard label="Paid (Abzer)" value={String(stats.abzerPaidCount)} />
         <StatCard label="Free (coupon)" value={String(stats.freeCount)} />
         <StatCard
           label="Revenue (INR)"
           value={(stats.totalRevenueMinorUnits / 100).toLocaleString("en-IN", {
             style: "currency",
             currency: "INR",
+            maximumFractionDigits: 0,
+          })}
+        />
+        <StatCard
+          label="Revenue (AED)"
+          value={(stats.abzerRevenueMinorUnits / 100).toLocaleString("en-AE", {
+            style: "currency",
+            currency: "AED",
             maximumFractionDigits: 0,
           })}
         />

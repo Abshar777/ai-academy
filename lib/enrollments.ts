@@ -1,3 +1,4 @@
+import type { Collection } from "mongodb";
 import { getDb } from "./mongodb";
 
 /**
@@ -9,7 +10,7 @@ import { getDb } from "./mongodb";
  * enrollment would be invisible to anything that only queried Razorpay.
  */
 
-export type EnrollmentSource = "razorpay" | "coupon";
+export type EnrollmentSource = "razorpay" | "abzer" | "coupon";
 
 export type Enrollment = {
   name: string;
@@ -22,6 +23,11 @@ export type Enrollment = {
   couponCode?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  /** Abzer's own request UUID and webhook receipt id — kept separate from
+   *  the razorpay* fields above rather than overloading them, since they're
+   *  a different gateway's identifiers. */
+  abzerOrderId?: string;
+  abzerReceiptId?: string;
   createdAt: Date;
 };
 
@@ -55,34 +61,41 @@ export type EnrollmentStats = {
   total: number;
   paidCount: number;
   freeCount: number;
-  /** Summed across "razorpay"-source enrollments only — the only ones with
-   *  a real charged amount, and always INR (see lib/razorpay.ts). */
+  abzerPaidCount: number;
+  /** Summed across "razorpay"-source enrollments only — always INR (see
+   *  lib/razorpay.ts). Kept separate from Abzer's AED total below rather
+   *  than summed together, since they're different currencies. */
   totalRevenueMinorUnits: number;
+  /** Summed across "abzer"-source enrollments only — always AED. */
+  abzerRevenueMinorUnits: number;
 };
+
+async function sumAmount(coll: Collection<Enrollment>, source: EnrollmentSource): Promise<number> {
+  const agg = await coll
+    .aggregate<{ _id: null; total: number }>([
+      { $match: { source } },
+      { $group: { _id: null, total: { $sum: "$amountMinorUnits" } } },
+    ])
+    .toArray();
+  return agg[0]?.total ?? 0;
+}
 
 export async function getEnrollmentStats(): Promise<EnrollmentStats | null> {
   const db = await getDb();
   if (!db) return null;
   const coll = db.collection<Enrollment>(COLLECTION);
 
-  const [total, paidCount, freeCount, revenueAgg] = await Promise.all([
-    coll.countDocuments(),
-    coll.countDocuments({ source: "razorpay" }),
-    coll.countDocuments({ source: "coupon" }),
-    coll
-      .aggregate<{ _id: null; total: number }>([
-        { $match: { source: "razorpay" } },
-        { $group: { _id: null, total: { $sum: "$amountMinorUnits" } } },
-      ])
-      .toArray(),
-  ]);
+  const [total, paidCount, freeCount, abzerPaidCount, totalRevenueMinorUnits, abzerRevenueMinorUnits] =
+    await Promise.all([
+      coll.countDocuments(),
+      coll.countDocuments({ source: "razorpay" }),
+      coll.countDocuments({ source: "coupon" }),
+      coll.countDocuments({ source: "abzer" }),
+      sumAmount(coll, "razorpay"),
+      sumAmount(coll, "abzer"),
+    ]);
 
-  return {
-    total,
-    paidCount,
-    freeCount,
-    totalRevenueMinorUnits: revenueAgg[0]?.total ?? 0,
-  };
+  return { total, paidCount, freeCount, abzerPaidCount, totalRevenueMinorUnits, abzerRevenueMinorUnits };
 }
 
 export async function listEnrollments({

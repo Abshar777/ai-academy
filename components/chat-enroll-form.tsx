@@ -35,7 +35,9 @@ export function ChatEnrollForm() {
   const [name, setName] = useState(saved?.name ?? "");
   const [email, setEmail] = useState(saved?.email ?? "");
   const [phone, setPhone] = useState(saved?.phone ?? "");
-  const [paymentMethodChoice, setPaymentMethodChoice] = useState<PaymentMethodId>("razorpay");
+  const [paymentMethodChoice, setPaymentMethodChoice] = useState<PaymentMethodId>(
+    () => planForCountry(normalizeCountry(readCountryCookie())).methods[0],
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -76,6 +78,28 @@ export function ChatEnrollForm() {
         },
         onDismiss: () => setStatus("idle"),
       });
+      return;
+    }
+
+    if (paymentMethod === "abzer") {
+      try {
+        const res = await fetch("/api/abzer/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...contact, country }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.checkoutUrl) {
+          setErrorMessage(data?.error ?? "Could not start checkout. Please try again.");
+          setStatus("error");
+          return;
+        }
+        sessionStorage.setItem("abzerPendingOrderId", data.orderId);
+        window.location.href = data.checkoutUrl;
+      } catch {
+        setErrorMessage("Could not start checkout. Please try again.");
+        setStatus("error");
+      }
       return;
     }
 
@@ -143,7 +167,10 @@ export function ChatEnrollForm() {
 
       <select
         value={country}
-        onChange={(e) => setCountry(e.target.value)}
+        onChange={(e) => {
+          setCountry(e.target.value);
+          setPaymentMethodChoice(planForCountry(e.target.value).methods[0]);
+        }}
         aria-label="Country"
         className={FIELD}
       >

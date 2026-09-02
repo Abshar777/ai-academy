@@ -43,11 +43,21 @@ export function EnrollBar() {
           transition={{ type: "spring", stiffness: 300, damping: 32 }}
           className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-90/95 shadow-[0_-16px_48px_-16px_rgba(0,0,0,0.55)] backdrop-blur-md"
         >
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 py-3 pr-24 pl-5 sm:gap-6 sm:py-4 sm:pr-28 sm:pl-6 lg:pr-32">
-            <span className="flex min-w-0 flex-col leading-tight">
-              <span className="font-noi-grotesk text-[11px] font-medium tracking-[-0.01em] text-white/55 sm:text-[12px]">
-                Full programme
-              </span>
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-4 py-3 pr-24 pl-5 sm:justify-between sm:gap-6 sm:py-4 sm:pr-28 sm:pl-6 lg:pr-32">
+            <span className="hidden min-w-0 truncate font-sans-plomb text-[19px] leading-none font-semibold tracking-[-0.015em] text-white sm:block lg:text-[22px]">
+              Delta AI Academy — Full Programme
+            </span>
+
+            <div className="flex shrink-0 items-center gap-4 sm:gap-6">
+              <Link
+                href="/order"
+                className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-lime-30 px-6 font-noi-grotesk text-[14px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-12 sm:px-8 sm:text-[15px]"
+              >
+                Enroll now
+              </Link>
+
+              <span aria-hidden className="hidden h-8 w-px bg-white/15 sm:block" />
+
               <span className="flex items-baseline gap-1.5 sm:gap-2.5">
                 {plan.originalLabel && (
                   <span className="font-noi-grotesk text-[11px] font-medium tracking-[-0.01em] text-white/40 line-through sm:text-[16px]">
@@ -58,13 +68,7 @@ export function EnrollBar() {
                   {plan.label}
                 </span>
               </span>
-            </span>
-            <Link
-              href="/order"
-              className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-lime-30 px-6 font-noi-grotesk text-[14px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-12 sm:px-8 sm:text-[15px]"
-            >
-              Enroll now
-            </Link>
+            </div>
           </div>
         </motion.div>
       )}

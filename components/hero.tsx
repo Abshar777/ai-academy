@@ -1,11 +1,10 @@
+import type { ReactNode } from "react";
 import { ContactButton } from "./contact-dialog";
 import { BrochureLink } from "./brochure-link";
+import { NextWebinarBadge } from "./next-webinar-badge";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
-
-/** Fade-up travel, per breakpoint. Read by <Reveal>. */
-const TRAVEL = "[--translateY-from:20%] lg:[--translateY-from:40%]";
 
 /**
  * Phone-only summary strip. Every figure is one the page states and backs up
@@ -27,15 +26,6 @@ const TRUST_STATS = [
   { value: "4.9/5", label: "Rating" },
 ];
 
-function LiveDot() {
-  return (
-    <span className="relative flex size-1.5">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-40 opacity-75" />
-      <span className="relative inline-flex size-1.5 rounded-full bg-lime-40" />
-    </span>
-  );
-}
-
 type HeroCardProps = {
   title: string;
   body: string;
@@ -45,6 +35,9 @@ type HeroCardProps = {
   delay: number;
   /** "brochure" opens the PDF directly; anything else opens the contact form. */
   action?: "contact" | "brochure";
+  /** Extra content between the body copy and the CTA — used to slot the
+   *  next-webinar badge into the "Start building today" card only. */
+  extra?: ReactNode;
 };
 
 function HeroCard({
@@ -54,6 +47,7 @@ function HeroCard({
   variant,
   delay,
   action = "contact",
+  extra,
 }: HeroCardProps) {
   const ctaClassName =
     "group inline-flex h-10 items-center justify-center rounded-lg px-4 text-[15px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out sm:text-[16px] " +
@@ -81,6 +75,7 @@ function HeroCard({
       <p className="font-noi-grotesk text-[15px] leading-[1.45] tracking-[-0.015em] text-pretty text-neutral-50 sm:text-[16px] sm:leading-[1.4] sm:text-inherit">
         {body}
       </p>
+      {extra}
       <div className="mt-auto">
         {action === "brochure" ? (
           <BrochureLink className={ctaClassName}>{cta}</BrochureLink>
@@ -102,23 +97,6 @@ export function Hero() {
     >
       <section className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-5 pt-24 pb-14 sm:px-6 sm:pt-28 sm:pb-16 md:pt-32 lg:gap-20">
         <div className="flex flex-col items-center text-center">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Reveal
-              as="span"
-              className={`inline-block rounded-full bg-white/70 px-4 py-2 text-[13px] leading-[1.5] backdrop-blur-sm sm:bg-neutral-10 sm:py-3 sm:text-xs md:px-5 md:py-3 md:text-[16px] ${TRAVEL}`}
-            >
-              Delta AI Academy
-            </Reveal>
-            <Reveal
-              as="span"
-              delay={0.05}
-              className={`inline-flex items-center gap-1.5 rounded-full bg-white/70 px-4 py-2 text-[13px] leading-[1.5] backdrop-blur-sm sm:bg-neutral-10 sm:py-3 sm:text-xs md:px-5 md:py-3 md:text-[16px] ${TRAVEL}`}
-            >
-              <LiveDot />
-              Weekly live webinars
-            </Reveal>
-          </div>
-
           {/* Display line unfurls character by character out of its line
               masks once the curtain lifts. Sized off the viewport on phones so
               it fills the width instead of leaving a timid margin. */}
@@ -204,6 +182,7 @@ export function Hero() {
               cta="Join now"
               variant="solid"
               delay={0.75}
+              extra={<NextWebinarBadge className="self-start" />}
             />
             <HeroCard
               title="Talk to our team"

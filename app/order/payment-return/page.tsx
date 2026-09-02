@@ -44,7 +44,10 @@ export default function PaymentReturnPage() {
 
         if (data?.status === "paid") {
           sessionStorage.removeItem("abzerPendingOrderId");
-          window.location.href = "/order/thank-you";
+          const params = data.receiptId
+            ? `?orderId=${encodeURIComponent(orderId!)}&paymentId=${encodeURIComponent(data.receiptId)}`
+            : "";
+          window.location.href = `/order/thank-you${params}`;
           return;
         }
         if (data?.status === "not_found") {

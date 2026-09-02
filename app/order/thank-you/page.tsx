@@ -8,13 +8,15 @@ export const metadata: Metadata = {
 };
 
 /**
- * Landed on only after a real, verified Razorpay payment — see the
- * onSuccess callback in order-form.tsx / chat-enroll-form.tsx, which only
- * fires once app/api/razorpay/verify has confirmed the signature. No
- * amount/personal specifics are rendered on this page itself (that's in the
- * invoice email the verify step already sent) — orderId/paymentId only pass
- * through the URL as opaque tokens for the download button below, which
- * re-fetches and re-verifies against Razorpay itself (see app/api/invoice).
+ * Landed on only after a real, verified payment — either Razorpay's
+ * onSuccess callback in order-form.tsx / chat-enroll-form.tsx (fires once
+ * app/api/razorpay/verify has confirmed the signature), or Abzer's
+ * app/order/payment-return page (fires once its webhook has fulfilled the
+ * order). No amount/personal specifics are rendered on this page itself
+ * (that's in the invoice email the fulfillment step already sent) —
+ * orderId/paymentId only pass through the URL as opaque tokens for the
+ * download button below, which re-fetches and re-verifies against the
+ * matching gateway itself (see app/api/invoice).
  */
 export default async function ThankYouPage({
   searchParams,

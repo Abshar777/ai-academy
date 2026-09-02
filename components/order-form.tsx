@@ -270,9 +270,16 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
                 </span>
               </div>
             ) : (
-              <span className="font-sans-plomb text-[56px] leading-[0.9] font-semibold tracking-[-0.015em]">
-                {plan.label}
-              </span>
+              <div className="flex flex-wrap items-baseline gap-3">
+                {plan.originalLabel && (
+                  <span className="font-sans-plomb text-[28px] leading-[0.9] font-semibold tracking-[-0.015em] text-neutral-50 line-through">
+                    {plan.originalLabel}
+                  </span>
+                )}
+                <span className="font-sans-plomb text-[56px] leading-[0.9] font-semibold tracking-[-0.015em]">
+                  {plan.label}
+                </span>
+              </div>
             )}
           </div>
 

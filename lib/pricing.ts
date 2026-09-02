@@ -33,6 +33,10 @@ export type PricingPlan = {
   currency: string;
   /** For display — e.g. "AED 99", "₹1,000". */
   label: string;
+  /** Struck-through reference price shown next to `label` as a launch-offer
+   *  anchor (e.g. "AED 4,000") — display only, never charged or trusted
+   *  server-side. Optional: not every plan has one. */
+  originalLabel?: string;
   methods: PaymentMethodId[];
 };
 
@@ -57,6 +61,7 @@ export const DEFAULT_PLAN: PricingPlan = {
   amount: 99,
   currency: "AED",
   label: "AED 99",
+  originalLabel: "AED 4,000",
   methods: ["tabby", "tamara", "razorpay"],
 };
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FAQ_BOT_ENTRIES, matchFaq } from "@/lib/faq-bot";
+import { useEnrollBarVisible } from "@/lib/use-enroll-bar-visible";
 import { ChatEnrollForm } from "./chat-enroll-form";
 
 /**
@@ -74,6 +75,7 @@ function CloseIcon() {
 }
 
 export function AiChatWidget() {
+  const enrollBarVisible = useEnrollBarVisible();
   const [isFocus,setFocus]=useState(true)
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
@@ -156,7 +158,18 @@ export function AiChatWidget() {
     // subtree) would win the stacking fight and poke through the top of the
     // chat regardless of DOM order, since an explicit z-index always beats
     // paint order between sibling stacking contexts.
-    <div className="fixed right-4 bottom-4 z-[51] flex flex-col items-end sm:right-6 sm:bottom-6">
+    //
+    // bottom offset lifts to clear enroll-bar.tsx's full-width bar rather
+    // than the two stacking on top of each other — see
+    // lib/use-enroll-bar-visible.ts, the shared show/hide state. Only moves
+    // the closed toggle button and the desktop (sm:static) panel; the
+    // mobile panel is its own fixed inset-0 layer and ignores this.
+    <div
+      className={
+        "fixed right-4 z-[51] flex flex-col items-end transition-[bottom] duration-300 ease-in-out sm:right-6 " +
+        (enrollBarVisible ? "bottom-[80px] sm:bottom-[100px]" : "bottom-4 sm:bottom-6")
+      }
+    >
       <AnimatePresence>
         {open && (
           <motion.div

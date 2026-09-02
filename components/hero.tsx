@@ -17,6 +17,15 @@ const FACTS = [
   { value: "AED 99", label: "one plan" },
 ];
 
+function LiveDot() {
+  return (
+    <span className="relative flex size-1.5">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-40 opacity-75" />
+      <span className="relative inline-flex size-1.5 rounded-full bg-lime-40" />
+    </span>
+  );
+}
+
 type HeroCardProps = {
   title: string;
   body: string;
@@ -83,12 +92,22 @@ export function Hero() {
     >
       <section className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-5 pt-24 pb-14 sm:px-6 sm:pt-28 sm:pb-16 md:pt-32 lg:gap-20">
         <div className="flex flex-col items-center text-center">
-          <Reveal
-            as="span"
-            className={`inline-block rounded-full bg-white/70 px-4 py-2 text-[13px] leading-[1.5] backdrop-blur-sm sm:bg-neutral-10 sm:py-3 sm:text-xs md:px-5 md:py-3 md:text-[16px] ${TRAVEL}`}
-          >
-            Delta AI Academy
-          </Reveal>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Reveal
+              as="span"
+              className={`inline-block rounded-full bg-white/70 px-4 py-2 text-[13px] leading-[1.5] backdrop-blur-sm sm:bg-neutral-10 sm:py-3 sm:text-xs md:px-5 md:py-3 md:text-[16px] ${TRAVEL}`}
+            >
+              Delta AI Academy
+            </Reveal>
+            <Reveal
+              as="span"
+              delay={0.05}
+              className={`inline-flex items-center gap-1.5 rounded-full bg-white/70 px-4 py-2 text-[13px] leading-[1.5] backdrop-blur-sm sm:bg-neutral-10 sm:py-3 sm:text-xs md:px-5 md:py-3 md:text-[16px] ${TRAVEL}`}
+            >
+              <LiveDot />
+              Weekly live webinars
+            </Reveal>
+          </div>
 
           {/* Display line unfurls character by character out of its line
               masks once the curtain lifts. Sized off the viewport on phones so

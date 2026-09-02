@@ -20,5 +20,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ status: "not_found" });
   }
 
-  return NextResponse.json({ status: order.status });
+  // receiptId doubles as the second factor for /api/invoice, same trust
+  // model as Razorpay's orderId+paymentId pair — see that route.
+  return NextResponse.json({ status: order.status, receiptId: order.receiptId });
 }

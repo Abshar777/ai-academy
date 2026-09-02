@@ -188,6 +188,14 @@ export function PricingSection() {
               <span className="font-noi-grotesk text-[18px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
                 Full programme
               </span>
+              <Reveal className="flex items-baseline gap-3 [--translateY-from:20%]">
+                <span className="font-sans-plomb text-[24px] leading-[0.9] font-semibold tracking-[-0.015em] text-neutral-50 line-through sm:text-[32px] xl:text-[36px]">
+                  AED&nbsp;4,000
+                </span>
+                <span className="rounded-full bg-lime-30/30 px-2.5 py-1 font-noi-grotesk text-[12px] leading-none font-medium tracking-[-0.01em] text-[#5d7a00] sm:text-[13px]">
+                  97% off
+                </span>
+              </Reveal>
               <SplitReveal
                 as="p"
                 unit="chars"

@@ -17,6 +17,16 @@ const FACTS = [
   { value: "AED 99", label: "one plan" },
 ];
 
+/** Trust bar under the hero pitch — illustrative placeholder figures, not
+ *  numbers this codebase tracks anywhere (unlike the FACTS strip above, or
+ *  the real enrolled-count in free-fifty-banner.tsx). Swap for real figures
+ *  once there's traction to report. */
+const TRUST_STATS = [
+  { value: "10M+", label: "Active Learners" },
+  { value: "160+", label: "Countries" },
+  { value: "4.9/5", label: "Rating" },
+];
+
 function LiveDot() {
   return (
     <span className="relative flex size-1.5">
@@ -131,6 +141,27 @@ export function Hero() {
             Even if you&rsquo;ve never coded before. We make AI development
             simple and accessible for beginners.
           </SplitReveal>
+
+          <StaggerGroup
+            className="mt-8 grid w-full max-w-md grid-cols-3 divide-x divide-white/15 rounded-2xl bg-neutral-90 py-5 sm:mt-10 sm:max-w-lg sm:py-6"
+            stagger={0.08}
+            delay={0.6}
+          >
+            {TRUST_STATS.map((stat) => (
+              <StaggerItem
+                key={stat.label}
+                distance={14}
+                className="flex flex-col items-center gap-1"
+              >
+                <span className="font-sans-plomb text-[20px] leading-none font-semibold tracking-[-0.015em] text-white sm:text-[28px]">
+                  {stat.value}
+                </span>
+                <span className="font-noi-grotesk text-[11px] leading-[1.2] tracking-[-0.015em] text-white/55 sm:text-[13px]">
+                  {stat.label}
+                </span>
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
 
           {/* Phone-only: an action and the headline numbers land above the
               fold, instead of the fold ending on the body of a grey card. */}

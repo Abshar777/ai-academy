@@ -72,7 +72,7 @@ export default function CoursePage() {
         <SplitReveal
           as="h1"
           delay={0.1}
-          className="max-w-3xl font-noi-grotesk text-[36px] leading-[1.1] tracking-[-0.025em] text-balance md:text-center md:text-[52px] md:leading-[1.05]"
+          className="max-w-3xl font-noi-grotesk text-[36px] leading-[1.1] tracking-[-0.025em]  md:text-center md:text-[52px] md:leading-[1.05]"
         >
           Everything you&rsquo;ll learn, module by module
         </SplitReveal>
@@ -103,7 +103,7 @@ export default function CoursePage() {
       <section className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-6 pb-24 text-center md:pb-32">
         <SplitReveal
           as="h2"
-          className="max-w-lg font-noi-grotesk text-[28px] leading-[1.15] tracking-[-0.025em] text-balance md:text-[34px]"
+          className="max-w-lg font-noi-grotesk text-[28px] leading-[1.15] tracking-[-0.025em]  md:text-[34px]"
         >
           Same curriculum, one price
         </SplitReveal>

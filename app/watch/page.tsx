@@ -18,7 +18,7 @@ export default function WatchPage() {
           <span className="mx-auto inline-block rounded-full bg-neutral-10 px-5 py-2.5 font-noi-grotesk text-[14px] leading-[1.5]">
             Free episode
           </span>
-          <h1 className="font-noi-grotesk text-[32px] leading-[1.1] tracking-[-0.025em] text-balance md:text-[40px]">
+          <h1 className="font-noi-grotesk text-[32px] leading-[1.1] tracking-[-0.025em]  md:text-[40px]">
             {EPISODE_TITLE}
           </h1>
           <p className="mx-auto max-w-xl font-noi-grotesk text-[16px] leading-[1.45] tracking-[-0.015em] text-pretty text-neutral-50 md:text-[18px]">

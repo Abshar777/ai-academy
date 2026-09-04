@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ContactButton } from "./contact-dialog";
+import { PlanPrice } from "./plan-price";
 import { BrochureLink } from "./brochure-link";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
@@ -62,14 +63,19 @@ export function ClosingCta() {
           {" "}No coding experience needed.
         </SplitReveal>
 
-        <SplitReveal
+        {/* Reveal, not SplitReveal: GSAP's SplitText rewrites this paragraph
+            into per-line wrappers on mount, and the price inside resolves a
+            tick later from the country cookie — which left the split copy
+            frozen on the server-rendered currency. A fade-up survives the
+            swap; a line-split does not. */}
+        <Reveal
           as="p"
           delay={0.35}
-          className="mt-5 max-w-xl font-noi-grotesk text-[16px] leading-[1.45] tracking-[-0.015em] text-balance1 text-neutral-50 sm:mt-6 sm:text-[18px] md:text-[20px]"
+          className="mt-5 max-w-xl font-noi-grotesk text-[16px] leading-[1.45] tracking-[-0.015em] text-balance1 text-neutral-50 [--translateY-from:20%] sm:mt-6 sm:text-[18px] md:text-[20px]"
         >
-          One&nbsp;plan&nbsp;at&nbsp;AED&nbsp;99 , four applications you deploy yourself, five
+          One&nbsp;plan&nbsp;at&nbsp;<PlanPrice />, four applications you deploy yourself, five
           skill areas and twelve AI tools.
-        </SplitReveal>
+        </Reveal>
 
         <Reveal delay={0.45} className="mt-8 w-full max-w-sm [--translateY-from:20%] sm:w-auto sm:max-w-none">
           <div className="flex flex-col gap-3 sm:flex-row">

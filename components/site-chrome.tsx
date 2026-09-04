@@ -6,6 +6,7 @@ import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
 import { AiChatWidget } from "./ai-chat-widget";
 import { EnrollBar } from "./enroll-bar";
+import { SitePopups } from "./site-popups";
 
 /**
  * Marketing-site chrome (nav, footer, chat widget, enroll bar) — hidden on
@@ -24,6 +25,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       <SiteFooter />
       <AiChatWidget />
       <EnrollBar />
+      <SitePopups />
     </>
   );
 }

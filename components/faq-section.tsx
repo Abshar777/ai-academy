@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
+import { usePlanLabel, withPlanPrice } from "@/lib/use-plan-price";
 
 /**
  * Answers are drawn from the brochure's own claims — the stack, the projects,
@@ -40,7 +41,7 @@ const FAQS = [
   },
   {
     q: "How can I pay?",
-    a: "Pay in full, or split the AED 99 into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
+    a: "Pay in full, or split the {price} into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
   },
 ];
 
@@ -77,6 +78,7 @@ function Toggle({ open }: { open: boolean }) {
 
 export function FaqSection() {
   const [open, setOpen] = useState<number | null>(0);
+  const planLabel = usePlanLabel();
 
   return (
     <section
@@ -124,7 +126,7 @@ export function FaqSection() {
                 >
                   <div className="overflow-hidden">
                     <p className="pb-6 font-noi-grotesk text-[16px] leading-[1.5] tracking-[-0.015em] opacity-70">
-                      {item.a}
+                      {withPlanPrice(item.a, planLabel)}
                     </p>
                   </div>
                 </div>

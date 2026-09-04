@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { ContactButton } from "./contact-dialog";
 import { BrochureLink } from "./brochure-link";
-import { NextWebinarBadge } from "./next-webinar-badge";
+import { PlanPrice } from "./plan-price";
+import { WebinarCta } from "./webinar-cta";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -10,20 +11,11 @@ import { StaggerGroup, StaggerItem } from "./stagger";
  * Phone-only summary strip. Every figure is one the page states and backs up
  * further down — the projects stack, the tool ticker, the pricing card.
  */
-const FACTS = [
+const FACTS: { value: ReactNode; label: string }[] = [
   { value: "4", label: "projects" },
   { value: "12", label: "AI tools" },
-  { value: "AED 99", label: "one plan" },
-];
-
-/** Trust bar under the hero pitch — illustrative placeholder figures, not
- *  numbers this codebase tracks anywhere (unlike the FACTS strip above, or
- *  the real enrolled-count in free-fifty-banner.tsx). Swap for real figures
- *  once there's traction to report. */
-const TRUST_STATS = [
-  { value: "10M+", label: "Active Learners" },
-  { value: "160+", label: "Countries" },
-  { value: "4.9/5", label: "Rating" },
+  // Country-aware, so this can't quote AED to a visitor /order bills in INR.
+  { value: <PlanPrice />, label: "one plan" },
 ];
 
 type HeroCardProps = {
@@ -120,26 +112,12 @@ export function Hero() {
             simple and accessible for beginners.
           </SplitReveal>
 
-          <StaggerGroup
-            className="mt-8 grid w-full max-w-md grid-cols-3 divide-x divide-white/15 rounded-2xl bg-neutral-90 py-5 sm:mt-10 sm:max-w-lg sm:py-6"
-            stagger={0.08}
+          <Reveal
             delay={0.6}
+            className="mt-8 flex w-full justify-center [--translateY-from:20%] sm:mt-10"
           >
-            {TRUST_STATS.map((stat) => (
-              <StaggerItem
-                key={stat.label}
-                distance={14}
-                className="flex flex-col items-center gap-1"
-              >
-                <span className="font-sans-plomb text-[20px] leading-none font-semibold tracking-[-0.015em] text-white sm:text-[28px]">
-                  {stat.value}
-                </span>
-                <span className="font-noi-grotesk text-[11px] leading-[1.2] tracking-[-0.015em] text-white/55 sm:text-[13px]">
-                  {stat.label}
-                </span>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
+            <WebinarCta />
+          </Reveal>
 
           {/* Phone-only: an action and the headline numbers land above the
               fold, instead of the fold ending on the body of a grey card. */}
@@ -182,7 +160,7 @@ export function Hero() {
               cta="Join now"
               variant="solid"
               delay={0.75}
-              extra={<NextWebinarBadge className="self-start" />}
+              // extra={<NextWebinarBadge className="self-start" />}
             />
             <HeroCard
               title="Talk to our team"

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CURRICULUM, CURRICULUM_TOPIC_COUNT } from "@/lib/curriculum";
 import { CheckIcon } from "@/components/check-icon";
+import { PlanPrice } from "@/components/plan-price";
 import { ContactButton } from "@/components/contact-dialog";
 import { BrochureLink } from "@/components/brochure-link";
 import { Reveal } from "@/components/reveal";
@@ -81,7 +82,7 @@ export default function CoursePage() {
           className="max-w-xl font-noi-grotesk text-[18px] leading-[1.4] tracking-[-0.015em] text-pretty text-neutral-50 [--translateY-from:20%] md:text-center md:text-[20px]"
         >
           {CURRICULUM.length} modules, {CURRICULUM_TOPIC_COUNT} topics — from how AI models
-          actually work through to a deployed full-stack application, on the one AED&nbsp;99
+          actually work through to a deployed full-stack application, on the one <PlanPrice />
           plan.
         </Reveal>
         <Reveal
@@ -111,7 +112,7 @@ export default function CoursePage() {
           delay={0.1}
           className="max-w-md font-noi-grotesk text-[17px] leading-[1.4] tracking-[-0.015em] text-neutral-50 [--translateY-from:15%]"
         >
-          Every module above is included in the AED&nbsp;99 plan — no tiers, nothing locked
+          Every module above is included in the <PlanPrice /> plan — no tiers, nothing locked
           behind an upgrade.
         </Reveal>
         <Reveal

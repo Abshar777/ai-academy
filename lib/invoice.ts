@@ -1,4 +1,5 @@
 import PDFDocument from "pdfkit";
+import { PROGRAMME_NAME } from "./site";
 
 /**
  * One-page PDF receipt for a completed Razorpay payment — see
@@ -44,7 +45,7 @@ export function generateInvoicePdf(details: InvoiceDetails): Promise<Buffer> {
 
     doc.strokeColor("#dddddd").moveTo(50, doc.y).lineTo(545, doc.y).stroke();
     doc.moveDown(0.5);
-    doc.fontSize(12).fillColor("#111111").text("Delta AI Academy — Full Programme");
+    doc.fontSize(12).fillColor("#111111").text(PROGRAMME_NAME);
     doc.moveDown(0.5);
     doc.strokeColor("#dddddd").moveTo(50, doc.y).lineTo(545, doc.y).stroke();
     doc.moveDown(1);

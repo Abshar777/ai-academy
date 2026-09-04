@@ -3,6 +3,7 @@ import { AiTools } from "@/components/ai-tools";
 import { ProjectsSection } from "@/components/projects-section";
 import { WhyDelta } from "@/components/why-delta";
 import { CertificateSection } from "@/components/certificate-section";
+import { MentorsSection } from "@/components/mentors-section";
 import { VibeCoding } from "@/components/vibe-coding";
 import { CurriculumPreview } from "@/components/curriculum-preview";
 import { Testimonials } from "@/components/testimonials";
@@ -29,6 +30,7 @@ export default function Home() {
         </div>
         <div className="mx-auto flex w-full max-w-[1440px] flex-col px-6 py-8 lg:px-36 lg:py-12">
           <WhyDelta />
+          <MentorsSection />
           <CertificateSection />
           <PricingSection />
           <Testimonials />

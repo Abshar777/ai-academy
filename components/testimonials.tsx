@@ -33,13 +33,6 @@ const STORIES = [
   },
   {
     quote:
-      "Going from the web app to the same thing in React Native took days, not months. Seeing it run on my own phone was the moment it clicked.",
-    name: "Abshar",
-    role: "Cohort 2026",
-    avatar: "/avatars/abshar.jpg",
-  },
-  {
-    quote:
       "The backend was the part I was dreading. Building the API alongside the app made it far less abstract than I expected.",
     name: "Nithin",
     role: "Cohort 2026",

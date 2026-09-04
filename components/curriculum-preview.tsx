@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CURRICULUM, CURRICULUM_TOPIC_COUNT } from "@/lib/curriculum";
+import { PlanPrice } from "./plan-price";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -79,7 +80,7 @@ export function CurriculumPreview() {
           className="max-w-xl font-noi-grotesk text-[18px] leading-[1.35] tracking-[-0.015em] text-pretty text-neutral-50 [--translateY-from:20%] lg:text-center"
         >
           {CURRICULUM.length} modules, {CURRICULUM_TOPIC_COUNT} topics — every one of them
-          included in the one AED&nbsp;99 plan.
+          included in the one <PlanPrice /> plan.
         </Reveal>
       </div>
 

@@ -73,7 +73,7 @@ export default async function OpengraphImage() {
             }}
           >
             Even if you&rsquo;ve never coded before &mdash; 4 real projects,
-            12 AI tools, one plan at AED&nbsp;99.
+            12 AI tools, one all-inclusive plan.
           </span>
         </div>
       </div>

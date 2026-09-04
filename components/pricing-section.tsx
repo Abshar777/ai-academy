@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ContactButton } from "./contact-dialog";
@@ -9,6 +9,10 @@ import { SplitReveal } from "./split-reveal";
 import { CheckIcon } from "./check-icon";
 import { StaggerGroup, StaggerItem } from "./stagger";
 import { FreeFiftyBanner } from "./free-fifty-banner";
+import { PROGRAMME_NAME } from "@/lib/site";
+import { discountPercent, normalizeCountry, planForCountry } from "@/lib/pricing";
+import { readCountryCookie } from "@/lib/country-cookie";
+import { useEpisode } from "./episode-dialog";
 
 /** The actual purchase workflow — there's no live checkout on the site, so
  *  this is what "buying" the course means: a fast lead-and-payment-method
@@ -51,6 +55,7 @@ const INCLUDED = [
  * and hero are trying to animate.
  */
 function ClassPreview() {
+  const { open: openEpisode } = useEpisode();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -90,7 +95,14 @@ function ClassPreview() {
   }, []);
 
   return (
-    <div className="group relative flex aspect-4/3 w-full flex-col justify-between overflow-hidden rounded-3xl p-8 md:p-10 border border-neutral-10/20 bg-neutral-10">
+    // A button, not a decorative card: the play affordance promised a class,
+    // so pressing it opens the free episode rather than doing nothing.
+    <button
+      type="button"
+      onClick={() => openEpisode({ autoPlay: true })}
+      aria-label="Watch a class — play the free episode"
+      className="group relative flex aspect-4/3 w-full flex-col justify-between overflow-hidden rounded-3xl p-8 text-left md:p-10 border border-neutral-10/20 bg-neutral-10"
+    >
       {/* Background Video */}
       {/* loop, because the clip is now exactly 20s — the old handler that
           rewound at 20s can never fire on a 20s file. */}
@@ -129,11 +141,24 @@ function ClassPreview() {
           before you join
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
 export function PricingSection() {
+  // Same country-aware pricing the enrolment surfaces use, so the headline
+  // price here can't quote a different currency to the one /order charges.
+  // Deferred out of the effect body (see enroll-bar.tsx): the cookie only
+  // exists client-side, so the first client render has to match the
+  // server-rendered default before swapping.
+  const [country, setCountry] = useState("");
+  useEffect(() => {
+    const id = window.setTimeout(() => setCountry(readCountryCookie()), 0);
+    return () => window.clearTimeout(id);
+  }, []);
+  const plan = planForCountry(normalizeCountry(country));
+  const saving = discountPercent(plan);
+
   return (
     <section id="pricing" className="py-20 lg:py-32">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 pb-16 lg:items-center">
@@ -186,23 +211,33 @@ export function PricingSection() {
           <div className="flex flex-1 flex-col gap-8 rounded-3xl bg-neutral-10 p-8 md:p-10">
             <div className="flex flex-col gap-4">
               <span className="font-noi-grotesk text-[18px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
-                Full programme
+                {PROGRAMME_NAME}
               </span>
-              <Reveal className="flex items-baseline gap-3 [--translateY-from:20%]">
-                <span className="font-sans-plomb text-[24px] leading-[0.9] font-semibold tracking-[-0.015em] text-neutral-50 line-through sm:text-[32px] xl:text-[36px]">
-                  AED&nbsp;4,000
-                </span>
-                <span className="rounded-full bg-lime-30/30 px-2.5 py-1 font-noi-grotesk text-[12px] leading-none font-medium tracking-[-0.01em] text-[#5d7a00] sm:text-[13px]">
-                  97% off
-                </span>
-              </Reveal>
+              {/* Only shown for plans that actually carry a reference price
+                  — no invented "was" figure for the ones that don't. */}
+              {plan.originalLabel && (
+                <Reveal className="flex items-baseline gap-3 [--translateY-from:20%]">
+                  <span className="font-sans-plomb text-[24px] leading-[0.9] font-semibold tracking-[-0.015em] text-neutral-50 line-through sm:text-[32px] xl:text-[36px]">
+                    {plan.originalLabel}
+                  </span>
+                  {saving !== null && (
+                    <span className="rounded-full bg-lime-30/30 px-2.5 py-1 font-noi-grotesk text-[12px] leading-none font-medium tracking-[-0.01em] text-[#5d7a00] sm:text-[13px]">
+                      {saving}% off
+                    </span>
+                  )}
+                </Reveal>
+              )}
+              {/* Keyed so a currency swap after the cookie read remounts the
+                  block — GSAP SplitText has already split the old text by
+                  then and won't pick the change up on its own. */}
               <SplitReveal
+                key={plan.label}
                 as="p"
                 unit="chars"
                 stagger={0.04}
                 className="flex items-baseline gap-3 font-sans-plomb text-[56px] leading-[0.9] font-semibold tracking-[-0.015em] sm:text-[72px] xl:text-[88px]"
               >
-                AED&nbsp;99
+                {plan.label}
               </SplitReveal>
               <SplitReveal
                 as="p"

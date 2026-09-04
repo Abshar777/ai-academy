@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FAQ_BOT_ENTRIES, matchFaq } from "@/lib/faq-bot";
 import { useEnrollBarVisible } from "@/lib/use-enroll-bar-visible";
+import { usePlanLabel, withPlanPrice } from "@/lib/use-plan-price";
 import { ChatEnrollForm } from "./chat-enroll-form";
 
 /**
@@ -76,6 +77,7 @@ function CloseIcon() {
 
 export function AiChatWidget() {
   const enrollBarVisible = useEnrollBarVisible();
+  const planLabel = usePlanLabel();
   const [isFocus,setFocus]=useState(true)
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
@@ -167,7 +169,7 @@ export function AiChatWidget() {
     <div
       className={
         "fixed right-4 z-[51] flex flex-col items-end transition-[bottom] duration-300 ease-in-out sm:right-6 " +
-        (enrollBarVisible ? "bottom-[80px] sm:bottom-[100px]" : "bottom-4 sm:bottom-6")
+        (enrollBarVisible ? "bottom-[80px] sm:bottom-6" : "bottom-4 sm:bottom-6")
       }
     >
       <AnimatePresence>
@@ -243,7 +245,7 @@ export function AiChatWidget() {
                             : "rounded-bl-md bg-neutral-10 text-neutral-90")
                         }
                       >
-                        {m.content}
+                        {withPlanPrice(m.content, planLabel)}
                       </p>
                     </li>
                   ),

@@ -1,4 +1,5 @@
-import { DeltaMark, DeltaWordmark } from "./delta-logo";
+import { PROGRAMME_NAME } from "@/lib/site";
+import { DeltaLogo, DeltaMark } from "./delta-logo";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 
@@ -41,7 +42,9 @@ function CertificateCard() {
       </div>
 
       <div className="relative flex flex-col items-center gap-5 text-center sm:gap-6">
-        <DeltaWordmark className="h-6 w-auto sm:h-7" />
+        {/* Full stacked lockup (public/brand/delta-logo.png), not the nav's
+            wordmark — a certificate wants the complete mark. */}
+        <DeltaLogo className="h-12 w-auto sm:h-14" />
 
         <div className="flex flex-col gap-2">
           <span className="font-noi-grotesk text-[11px] font-medium tracking-[0.25em] text-neutral-50 uppercase sm:text-[12px]">
@@ -57,8 +60,9 @@ function CertificateCard() {
         </span>
 
         <p className="max-w-md font-noi-grotesk text-[14px] leading-[1.55] tracking-[-0.015em] text-pretty text-neutral-50 sm:text-[15px]">
-          has successfully completed the Delta AI Academy programme, building four deployed
-          applications across full-stack, mobile, backend and database development.
+          has successfully completed <span className="text-neutral-90">{PROGRAMME_NAME}</span> at
+          Delta AI Academy, building four deployed applications across full-stack, mobile,
+          backend and database development.
         </p>
 
         <div className="mt-2 flex w-full items-end justify-between gap-4 border-t border-neutral-90/10 pt-6 text-left sm:mt-4">

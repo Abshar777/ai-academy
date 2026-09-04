@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ContactButton } from "./contact-dialog";
 import { BrochureLink } from "./brochure-link";
 import Link from "next/link";
-import { DeltaWordmark } from "./delta-logo";
+import { DeltaLogo, DeltaWordmark } from "./delta-logo";
 import { useIntroComplete } from "@/lib/intro";
 
 /** Matches the desktop bar, so both collapse at the same point. */
@@ -145,22 +145,32 @@ export function MobileNav() {
       data-hidden="false"
       data-entered={introDone}
       className={`site-nav mobile-nav relative z-50 h-full xl:hidden  `}
+      // Open, the header carries the full stacked lockup instead of the
+      // wordmark, which needs more height than the collapsed bar has. Both
+      // the header row and the drawer's top edge are derived from this var,
+      // so overriding it here moves them together — hardcoding a taller row
+      // alone would leave the drawer painting over the logo.
+      style={open ? ({ "--mobile-nav-height": "5rem" } as CSSProperties) : undefined}
     >
       <div className={`mobile-nav-bar fixed top-(--mobile-top-offset) left-1/2 h-(--mobile-nav-height) w-[calc(100vw-var(--mobile-nav-offset))] -translate-x-1/2 rounded-xl p-(--nav-padding) ${open&&"w-full h-full p-4 shadow-none"}`}>
         <div className="flex h-[calc(var(--mobile-nav-height)-var(--nav-padding)*2)] w-full items-center justify-between">
           <Link
             href="/"
             aria-label="Delta AI Academy home"
-            className="relative flex h-8 items-center"
+            className={"relative flex items-center " + (open ? "h-12" : "h-8")}
           >
-            {/* Full wordmark at every scroll position — no crossfade to the
-                mark here, unlike the desktop bar. */}
-            <span className="site-nav-logo relative flex h-8 items-center overflow-hidden">
-              <DeltaWordmark
-                className="site-nav-wordmark absolute left-0 h-8 w-[85px] object-contain"
-                priority={false}
-              />
-            </span>
+            {/* Open, there's room for the full stacked lockup; collapsed into
+                the bar there is only height for the wordmark. */}
+            {open ? (
+              <DeltaLogo className="h-12 w-auto object-contain" />
+            ) : (
+              <span className="site-nav-logo relative flex h-8 items-center overflow-hidden">
+                <DeltaWordmark
+                  className="site-nav-wordmark absolute left-0 h-8 w-[85px] object-contain"
+                  priority={false}
+                />
+              </span>
+            )}
           </Link>
 
           <div className="flex items-center gap-4">

@@ -1,5 +1,7 @@
 "use client";
 
+import { PROGRAMME_NAME } from "@/lib/site";
+
 /**
  * Client-side driver for real Razorpay Checkout — India plan only (see the
  * currency note on lib/razorpay.ts). Everywhere else keeps using the static
@@ -97,7 +99,7 @@ export async function startRazorpayCheckout(
       currency: order.currency,
       order_id: order.orderId,
       name: "Delta AI Academy",
-      description: "Full programme",
+      description: PROGRAMME_NAME,
       prefill: { name: contact.name, email: contact.email, contact: contact.phone },
       theme: { color: "#171717" },
       handler: async (response) => {

@@ -1,24 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatWebinarDate, formatWebinarTime, nextWebinarDate } from "@/lib/next-webinar";
 
 /**
- * "Next webinar: Sat, 6 Sep 2026 · 11:00 AM" — computed client-side rather
- * than in the (server-rendered) Hero component, since a `new Date()` read
- * during a server render can get baked into a statically-optimized page and
- * never update. Deferred out of the effect body (same pattern as
- * order-form.tsx's saved-contact prefill) so the first client render still
- * matches the server's date-less markup for hydration.
+ * "Next webinar: Sat, 6 Sep 2026 · 11:00 AM" — the compact version of the
+ * hero's booking card (components/webinar-cta.tsx), reading the same session
+ * from lib/next-webinar.ts so the two never quote different dates.
+ *
+ * Computed client-side rather than in the (server-rendered) Hero component,
+ * since a `new Date()` read during a server render can get baked into a
+ * statically-optimized page and never update. Deferred out of the effect
+ * body (same pattern as order-form.tsx's saved-contact prefill) so the first
+ * client render still matches the server's date-less markup for hydration.
  */
-
-function nextSaturday11am(): Date {
-  const now = new Date();
-  const daysUntilSaturday = (6 - now.getDay() + 7) % 7;
-  const date = new Date(now);
-  date.setDate(now.getDate() + daysUntilSaturday);
-  date.setHours(11, 0, 0, 0);
-  return date;
-}
 
 function LiveDot() {
   return (
@@ -34,18 +29,8 @@ export function NextWebinarBadge({ className = "" }: { className?: string }) {
 
   useEffect(() => {
     const id = window.setTimeout(() => {
-      const date = nextSaturday11am();
-      const formatted = date.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-      const time = date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-      setLabel(`${formatted} · ${time}`);
+      const date = nextWebinarDate();
+      setLabel(`${formatWebinarDate(date)} · ${formatWebinarTime(date)}`);
     }, 0);
     return () => window.clearTimeout(id);
   }, []);

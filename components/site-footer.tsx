@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { CONTACT_CALL_URL, CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/site";
 import { DeltaLogo, DeltaWordmark } from "./delta-logo";
 import { BrochureLink } from "./brochure-link";
+import { PhoneIcon, WhatsAppIcon } from "./contact-icons";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -66,7 +68,29 @@ export function SiteFooter() {
               </StaggerGroup>
             </div>
 
-         
+            <div className="flex flex-col gap-3">
+              <span className="font-noi-grotesk text-[12px] leading-none font-medium tracking-[0.12em] text-white/45 uppercase">
+                Talk to us
+              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <a
+                  href={CONTACT_CALL_URL}
+                  className="inline-flex items-center gap-2 font-noi-grotesk text-[20px] leading-none font-semibold tracking-[-0.015em] transition-colors duration-150 hover:text-lime-30 md:text-[24px]"
+                >
+                  <PhoneIcon className="size-4 shrink-0" />
+                  {CONTACT_PHONE_DISPLAY}
+                </a>
+                <a
+                  href={CONTACT_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-lime-30 px-4 font-noi-grotesk text-[13px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40"
+                >
+                  <WhatsAppIcon className="size-3.5" />
+                  WhatsApp
+                </a>
+              </div>
+            </div>
           </div>
    <StaggerGroup className="grid w-full grid-cols-2 gap-x-4 gap-y-8 text-white sm:grid-cols-3 sm:gap-y-10 lg:max-w-[688px]" stagger={0.12}>
               {COLUMNS.map((column, i) => (

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { ContactProvider } from "@/components/contact-dialog";
+import { EpisodeProvider } from "@/components/episode-dialog";
 import { SiteChrome } from "@/components/site-chrome";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
@@ -151,7 +152,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full">
         <ContactProvider>
-          <SiteChrome>{children}</SiteChrome>
+          <EpisodeProvider>
+            <SiteChrome>{children}</SiteChrome>
+          </EpisodeProvider>
         </ContactProvider>
       </body>
     </html>

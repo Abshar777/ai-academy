@@ -77,7 +77,7 @@ export const FAQ_BOT_ENTRIES: FaqEntry[] = [
     // methods entry below, and this list already matches fine without them.
     keywords: ["price", "cost", "fee", "aed", "99", "money"],
     answer:
-      "One plan, AED 99 total — every project, every tool, every skill area. No tiers, no subscriptions.",
+      "One plan, {price} total — every project, every tool, every skill area. No tiers, no subscriptions.",
   },
   {
     question: "What will I have at the end?",
@@ -149,7 +149,7 @@ export const FAQ_BOT_ENTRIES: FaqEntry[] = [
     question: "How can I pay?",
     keywords: ["pay", "payment", "installment", "instalment", "tabby", "tamara", "razorpay", "emi"],
     answer:
-      "Pay in full, or split the AED 99 into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
+      "Pay in full, or split the {price} into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
   },
 ];
 

@@ -15,6 +15,7 @@ import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
 import { FreeFiftyBanner } from "./free-fifty-banner";
+import { PROGRAMME_NAME } from "@/lib/site";
 
 const FIELD =
   "h-12 w-full rounded-lg border border-neutral-90/15 bg-white px-4 font-noi-grotesk text-[16px] tracking-[-0.015em] outline-none transition-colors duration-150 focus:border-neutral-90";
@@ -256,7 +257,7 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
 
           <div className="flex flex-col gap-2">
             <span className="font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
-              Full programme
+              {PROGRAMME_NAME}
             </span>
             {appliedCoupon ? (
               <div className="flex flex-wrap items-baseline gap-3">

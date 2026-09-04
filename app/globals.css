@@ -554,6 +554,53 @@ body {
   }
 }
 
+/* The hero's next-webinar CTA (components/webinar-cta.tsx) deliberately
+   reuses .ffb-card above rather than defining its own treatment, so the
+   site's two promo blocks can never drift apart. */
+
+/* ---------------------------------------------------------------------------
+   Episode player volume slider (components/video-player.tsx). A range input
+   draws nothing useful by default once appearance is stripped, so the track
+   and thumb are drawn here — Tailwind can't reach the ::-webkit pseudo
+   elements.
+   ------------------------------------------------------------------------ */
+
+.video-volume {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.video-volume::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.video-volume::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.video-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 999px;
+  background: var(--color-lime-30);
+}
+
+.video-volume::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-lime-30);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ffb-card {
     animation: none;

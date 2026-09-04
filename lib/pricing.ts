@@ -34,11 +34,21 @@ export type PricingPlan = {
   /** For display — e.g. "AED 99", "₹1,000". */
   label: string;
   /** Struck-through reference price shown next to `label` as a launch-offer
-   *  anchor (e.g. "AED 4,000") — display only, never charged or trusted
-   *  server-side. Optional: not every plan has one. */
+   *  anchor — display only, never charged or trusted server-side. Optional:
+   *  not every plan has one. */
   originalLabel?: string;
+  /** The same figure as a number, so the discount badge can be derived
+   *  instead of hardcoded (and can't drift from the prices it describes). */
+  originalAmount?: number;
   methods: PaymentMethodId[];
 };
+
+/** Whole-percent saving off the reference price, or null when a plan has no
+ *  reference price to discount from. */
+export function discountPercent(plan: PricingPlan): number | null {
+  if (!plan.originalAmount || plan.originalAmount <= plan.amount) return null;
+  return Math.round((1 - plan.amount / plan.originalAmount) * 100);
+}
 
 /** Exported directly (not just through planForCountry) so the Razorpay API
  *  routes can charge this fixed amount server-side without trusting
@@ -48,6 +58,8 @@ export const INDIA_PLAN: PricingPlan = {
   amount: 999,
   currency: "INR",
   label: "₹999",
+  originalLabel: "₹4,000",
+  originalAmount: 4000,
   methods: ["razorpay"],
 };
 
@@ -61,7 +73,11 @@ export const DEFAULT_PLAN: PricingPlan = {
   amount: 99,
   currency: "AED",
   label: "AED 99",
-  originalLabel: "AED 4,000",
+  // The same ₹4,000 reference price as the India plan, converted at roughly
+  // ₹22.7 to the dirham and rounded down to a clean figure. Adjust both this
+  // and originalAmount together if the rate moves.
+  originalLabel: "AED 175",
+  originalAmount: 175,
   methods: ["tabby", "tamara", "razorpay"],
 };
 
@@ -114,9 +130,15 @@ export const COUNTRY_DIAL_CODES: Record<string, string> = {
   BH: "+973",
 };
 
-/** Falls back to AE for anything not in the picker (unset cookie, a stray
- *  value, etc.) rather than rendering a blank/invalid select option. */
+/** Falls back to India for anything not in the picker rather than rendering
+ *  a blank/invalid select option. That covers the case where geo detection
+ *  gave us nothing — an unset/empty `country` cookie, which is what happens
+ *  in local dev and whenever the edge network can't place the request (see
+ *  middleware.ts) — so an unplaced visitor is quoted INR.
+ *
+ *  Note this is only the *default* selection: explicitly picking "Other" in
+ *  the country picker still resolves to the AED plan via planForCountry. */
 export function normalizeCountry(code: string): string {
   const known = COUNTRY_OPTIONS.some((c) => c.code === code);
-  return known ? code : "AE";
+  return known ? code : "IN";
 }

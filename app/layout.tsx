@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { ContactProvider } from "@/components/contact-dialog";
@@ -8,8 +9,6 @@ import { SiteChrome } from "@/components/site-chrome";
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
 export const metadata: Metadata = {
-  // Lets every relative URL below (icons, OG image, canonical) resolve to a
-  // real absolute URL — without it Next can't build the og:image tag at all.
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
@@ -46,10 +45,7 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico" }, // Your 48x48 icon
-    ],
-   
+    icon: [{ url: "/favicon.ico" }],
     other: [
       { rel: "icon", url: "/favicon.ico", sizes: "32x32" },
       { rel: "icon", url: "/favicon.ico", sizes: "16x16" },
@@ -70,7 +66,6 @@ export const metadata: Metadata = {
         alt: SITE_NAME,
       },
     ],
-    // No explicit `images` — Next resolves it from app/opengraph-image.tsx.
   },
   twitter: {
     card: "summary_large_image",
@@ -78,8 +73,6 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   formatDetection: {
-    // Stops iOS Safari from auto-linking things like "AED 99" or a stray
-    // phone-shaped number in the copy as a tel: link.
     telephone: false,
   },
 };
@@ -91,9 +84,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-/** Organization markup — the only structured data a one-page site needs;
- *  course/offer schema would be overclaiming without real review/price data
- *  Google can independently verify. */
 const ORGANIZATION_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
@@ -111,13 +101,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <head>
-        {/* Without these the browser doesn't discover the faces until it has
-            parsed the CSS and laid out text that needs them — measured at
-            ~1.4s in, which is most of the way to the curtain lifting. These
-            are the three used above the fold; the rest can wait.
-
-            crossOrigin is required even same-origin: fonts are fetched in CORS
-            mode, and a preload without it is simply fetched twice. */}
         <link
           rel="preload"
           href="/fonts/SansPlomb-600.woff2"
@@ -125,6 +108,7 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
+
         <link
           rel="preload"
           href="/fonts/NoiGrotesk-400.woff2"
@@ -132,6 +116,7 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
+
         <link
           rel="preload"
           href="/fonts/NoiGrotesk-500.woff2"
@@ -139,18 +124,37 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        {/* Pinned-tab icon for older Safari. Deliberately a plain <link> here
-            rather than metadata.icons: setting that field at all — even for
-            an entry it doesn't otherwise reference — tells Next.js the icons
-            are fully hand-specified, and it stops auto-generating the <link>
-            tags for the app/icon.png and app/apple-icon.png conventions. */}
-        <link rel="mask-icon" href="/icons/icon-512.png" color="#14151c" />
+
+        <link
+          rel="mask-icon"
+          href="/icons/icon-512.png"
+          color="#14151c"
+        />
+
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(ORGANIZATION_JSON_LD),
+          }}
         />
       </head>
+
       <body className="min-h-full">
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-BCH1QGTJKD"
+          strategy="afterInteractive"
+        />
+
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-BCH1QGTJKD');
+          `}
+        </Script>
+
         <ContactProvider>
           <EpisodeProvider>
             <SiteChrome>{children}</SiteChrome>

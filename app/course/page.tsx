@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { CURRICULUM, CURRICULUM_TOPIC_COUNT } from "@/lib/curriculum";
 import { CheckIcon } from "@/components/check-icon";
 import { PlanPrice } from "@/components/plan-price";
-import { ContactButton } from "@/components/contact-dialog";
 import { BrochureLink } from "@/components/brochure-link";
 import { Reveal } from "@/components/reveal";
 import { SplitReveal } from "@/components/split-reveal";
@@ -119,12 +119,12 @@ export default function CoursePage() {
           delay={0.2}
           className="mt-2 flex w-full max-w-sm flex-col gap-3 [--translateY-from:15%] sm:w-auto sm:flex-row"
         >
-          <ContactButton
-            source="course-page"
+          <Link
+            href="/order"
             className="inline-flex h-12 w-full items-center justify-center rounded-full bg-neutral-90 px-8 text-[16px] leading-none font-medium tracking-[-0.015em] text-white transition duration-150 ease-in-out hover:scale-[1.02] hover:bg-neutral-100 sm:w-auto"
           >
             Join now
-          </ContactButton>
+          </Link>
           <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8 sm:w-auto">
             Get the brochure
           </BrochureLink>

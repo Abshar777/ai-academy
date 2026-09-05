@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ContactButton } from "./contact-dialog";
 import { BrochureLink } from "./brochure-link";
 import Link from "next/link";
 import { DeltaWordmark, DeltaMark } from "./delta-logo";
@@ -84,12 +83,12 @@ export function SiteHeader() {
                 <BrochureLink className="inline-flex h-10 items-center justify-center rounded-lg border border-current px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-current/10">
                   Brochure
                 </BrochureLink>
-                <ContactButton
-                source="nav"
+                <Link
+                href="/order"
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out hover:bg-lime-40"
               >
                 Join now
-              </ContactButton>
+              </Link>
               </div>
             </div>
           </div>

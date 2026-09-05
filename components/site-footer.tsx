@@ -60,8 +60,7 @@ export function SiteFooter() {
                   </BrochureLink>
                 </StaggerItem>
                 <StaggerItem distance={16}>
-                  {/* Still a placeholder — no destination decided for this one. */}
-                  <Link href="#" className={BADGE_CLASS}>
+                  <Link href="/order" className={BADGE_CLASS}>
                     Join the program
                   </Link>
                 </StaggerItem>

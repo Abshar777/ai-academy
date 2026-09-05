@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ContactButton } from "./contact-dialog";
+import Link from "next/link";
 import { BrochureLink } from "./brochure-link";
 import { PlanPrice } from "./plan-price";
 import { WebinarCta } from "./webinar-cta";
@@ -25,8 +25,8 @@ type HeroCardProps = {
   variant: "outline" | "solid";
   /** Seconds after the curtain lifts. Cards arrive one after the other. */
   delay: number;
-  /** "brochure" opens the PDF directly; anything else opens the contact form. */
-  action?: "contact" | "brochure";
+  /** "brochure" opens the PDF directly; anything else goes to checkout. */
+  action?: "order" | "brochure";
   /** Extra content between the body copy and the CTA — used to slot the
    *  next-webinar badge into the "Start building today" card only. */
   extra?: ReactNode;
@@ -38,7 +38,7 @@ function HeroCard({
   cta,
   variant,
   delay,
-  action = "contact",
+  action = "order",
   extra,
 }: HeroCardProps) {
   const ctaClassName =
@@ -72,9 +72,9 @@ function HeroCard({
         {action === "brochure" ? (
           <BrochureLink className={ctaClassName}>{cta}</BrochureLink>
         ) : (
-          <ContactButton source="hero" className={ctaClassName}>
+          <Link href="/order" className={ctaClassName}>
             {cta}
-          </ContactButton>
+          </Link>
         )}
       </div>
     </Reveal>
@@ -125,12 +125,12 @@ export function Hero() {
             delay={0.7}
             className="mt-7 flex w-full max-w-sm flex-col gap-3 [--translateY-from:20%] sm:hidden"
           >
-            <ContactButton
-              source="hero"
+            <Link
+              href="/order"
               className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-neutral-90 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] text-white transition duration-150 ease-in-out active:scale-[0.98]"
             >
               Join now
-            </ContactButton>
+            </Link>
             <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-90/25 bg-white/60 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] backdrop-blur-sm transition duration-150 ease-in-out active:scale-[0.98]">
               Get the brochure
             </BrochureLink>

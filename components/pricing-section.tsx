@@ -271,10 +271,9 @@ export function PricingSection() {
             </StaggerGroup>
 
             <div className="mt-auto flex flex-col gap-3 sm:flex-row">
-              {/* Only this "Join now" goes to /order — every other one on the
-                  site still opens the enquiry modal. This is the one button
-                  next to an actual price, so it's the one that should behave
-                  like a real "buy" action. */}
+              {/* Every "Join now" on the site goes straight to /order now —
+                  the enquiry modal is reserved for "Talk to our team", which
+                  is the button that actually wants a conversation. */}
               <Link
                 href="/order"
                 className="inline-flex h-12 shrink-0 items-center justify-center rounded-lg bg-neutral-90 sm:flex-1 px-5 text-[18px] leading-none font-medium text-white transition duration-150 ease-in-out hover:bg-neutral-70"

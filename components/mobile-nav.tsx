@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ContactButton } from "./contact-dialog";
 import { BrochureLink } from "./brochure-link";
 import Link from "next/link";
 import { DeltaLogo, DeltaWordmark } from "./delta-logo";
@@ -177,12 +176,12 @@ export function MobileNav() {
             {/* The one action worth reaching without opening the drawer.
                 Hidden while the drawer is open — it offers the same thing. */}
             {!open && (
-              <ContactButton
-                source="mobile-nav"
+              <Link
+                href="/order"
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-none font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out active:scale-[0.97]"
               >
                 Join now
-              </ContactButton>
+              </Link>
             )}
 
             <button
@@ -247,12 +246,13 @@ export function MobileNav() {
           className="mobile-drawer-item mt-10 flex flex-col gap-3"
           style={{ ["--i" as string]: String(NAV.length) }}
         >
-          <ContactButton
-            source="mobile-nav"
+          <Link
+            href="/order"
+            onClick={() => setOpen(false)}
             className="inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-5 text-[16px] leading-none font-medium text-white"
           >
             Join now
-          </ContactButton>
+          </Link>
           <BrochureLink className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-5 text-[16px] leading-none font-medium">
             Brochure
           </BrochureLink>

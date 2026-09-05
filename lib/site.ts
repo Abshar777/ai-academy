@@ -19,7 +19,7 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   VERCEL_PRODUCTION_URL ??
   VERCEL_DEPLOYMENT_URL ??
-  "https://ai-academy-virid.vercel.app";
+  "https://www.deltaaiacademy.ai";
 
 export const SITE_NAME = "Delta AI Academy";
 

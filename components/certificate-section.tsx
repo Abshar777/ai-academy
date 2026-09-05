@@ -1,23 +1,95 @@
+import { CURRICULUM_TOPIC_COUNT } from "@/lib/curriculum";
 import { PROGRAMME_NAME } from "@/lib/site";
-import { DeltaLogo, DeltaMark } from "./delta-logo";
+import { DeltaWordmark } from "./delta-logo";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 
 /**
- * Trust/value section: every graduate gets a completion certificate, not
- * just four deployed apps. The card below is an illustrative sample (marked
- * "Sample" on the ribbon) — the name, cohort and certificate ID are
- * placeholders, not a real issued certificate.
+ * Trust/value section: every graduate gets a completion certificate, not just
+ * four deployed apps.
+ *
+ * The card is an illustrative sample — the name, date and certificate ID are
+ * placeholders, which the caption under it says plainly. The lesson count is
+ * real, read from lib/curriculum.ts so it can't drift from the syllabus.
  */
 
-function CertificateSeal() {
+const SAMPLE_ISSUE_DATE = "15 June 2026";
+const SAMPLE_CERTIFICATE_ID = "DAA-2026-4C81-7F30-92B5";
+
+/** Round stamp on the ribbon: brand text curved around a starburst. */
+function CertificateSeal({ className = "" }: { className?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="flex size-14 items-center justify-center rounded-full bg-neutral-90 ring-4 ring-lime-30/40 sm:size-16">
-        <DeltaMark variant="white" className="h-6 w-auto sm:h-7" />
-      </div>
-      <span className="font-noi-grotesk text-[10px] leading-[1.2] font-medium tracking-[0.1em] text-neutral-50 uppercase sm:text-[11px]">
-        Verified
+    <svg viewBox="0 0 120 120" className={className} aria-hidden>
+      <defs>
+        <path id="seal-arc" d="M60 60 m-42 0 a42 42 0 1 1 84 0 a42 42 0 1 1 -84 0" />
+      </defs>
+
+      <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.55" />
+      <circle cx="60" cy="60" r="47" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.35" />
+
+      <text
+        fill="currentColor"
+        fontSize="9.5"
+        letterSpacing="2.4"
+        fontWeight="600"
+        opacity="0.85"
+      >
+        <textPath href="#seal-arc" startOffset="0%">
+          DELTA AI ACADEMY · CERTIFIED · DELTA AI ACADEMY · CERTIFIED ·
+        </textPath>
+      </text>
+
+      {/* Starburst, echoing the mark's radial motif. */}
+      <g stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+        {Array.from({ length: 12 }).map((_, i) => {
+          const angle = (i * Math.PI) / 6;
+          const inner = 8;
+          const outer = 19;
+          return (
+            <line
+              key={i}
+              x1={60 + Math.cos(angle) * inner}
+              y1={60 + Math.sin(angle) * inner}
+              x2={60 + Math.cos(angle) * outer}
+              y2={60 + Math.sin(angle) * outer}
+            />
+          );
+        })}
+      </g>
+      <circle cx="60" cy="60" r="5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Hand-drawn signature line above the founder's title. */
+function Signature({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 150 46" className={className} fill="none" aria-hidden>
+      <path
+        d="M4 33c10-4 16-19 22-25 5-5 7-2 5 5-3 10-11 24-6 26 4 2 11-10 15-17 3-5 5-4 4 2-1 7-4 14 0 15 5 1 12-13 16-19 2-4 4-3 3 2-2 8-3 13 1 14 6 2 15-9 21-16"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M96 30c9 3 24 4 38-2"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MetaField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="font-noi-grotesk text-[11px] leading-none tracking-[-0.01em] text-neutral-50 sm:text-[12px]">
+        {label}
+      </span>
+      <span className="font-noi-grotesk text-[14px] leading-none font-semibold tracking-[-0.015em] text-neutral-90 sm:text-[16px]">
+        {value}
       </span>
     </div>
   );
@@ -25,67 +97,81 @@ function CertificateSeal() {
 
 function CertificateCard() {
   return (
-    <div className="relative mx-auto w-full max-w-[720px] overflow-hidden rounded-2xl bg-white p-6 shadow-[0_32px_70px_-28px_rgba(0,0,0,0.28)] ring-1 ring-neutral-90/8 sm:p-10 md:p-12">
-      {/* Inner rule — the classic certificate double-border, offset from the
-          card edge so the ribbon in the corner can sit on top of it. */}
+    <div className="relative mx-auto w-full max-w-[860px] overflow-hidden rounded-2xl bg-[#faf8f4] shadow-[0_32px_70px_-28px_rgba(20,21,28,0.3)] ring-1 ring-neutral-90/8">
+      {/* The classic inset rule, held clear of the ribbon on the right. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-3 rounded-xl border border-neutral-90/12 sm:inset-4"
+        className="pointer-events-none absolute inset-2.5 rounded-xl border border-neutral-90/10 sm:inset-3.5"
       />
 
-      {/* Marks this as illustrative rather than a real issued certificate. */}
+      {/* Vertical brand ribbon, notched at the foot. Hangs from the top edge
+          the way a real seal ribbon would. */}
       <div
         aria-hidden
-        className="absolute top-6 -right-11 w-40 rotate-45 bg-neutral-90 py-1 text-center font-noi-grotesk text-[10px] font-semibold tracking-[0.25em] text-white uppercase sm:top-7 sm:-right-12 sm:w-44"
+        className="absolute top-0 right-8 z-10 flex w-[78px] flex-col items-center gap-3 bg-lime-30 px-2 pt-4 pb-9 text-neutral-90 sm:right-14 sm:w-[104px] sm:gap-4 sm:pt-6 sm:pb-12"
+        style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%)" }}
       >
-        Sample
+        <span className="text-center font-noi-grotesk text-[9px] leading-[1.3] font-semibold tracking-[0.06em] sm:text-[11px]">
+          Delta official
+          <br />
+          certificate
+        </span>
+        <CertificateSeal className="size-[52px] sm:size-[68px]" />
       </div>
 
-      <div className="relative flex flex-col items-center gap-5 text-center sm:gap-6">
-        {/* Full stacked lockup (public/brand/delta-logo.png), not the nav's
-            wordmark — a certificate wants the complete mark. */}
-        <DeltaLogo className="h-12 w-auto sm:h-14" />
+      {/* Certificate ID, set vertically down the outer edge. Only from `sm`:
+          rotated, the string is taller than a phone-width card, so it ends up
+          clipped and running through the body copy. Phones get it as a plain
+          line in the footer instead. */}
+      <span
+        aria-hidden
+        className="absolute top-1/2 right-3 hidden origin-center -translate-y-1/2 rotate-90 font-noi-grotesk text-[10px] leading-none tracking-[0.08em] whitespace-nowrap text-neutral-50 sm:block"
+      >
+        Certificate ID: {SAMPLE_CERTIFICATE_ID}
+      </span>
 
-        <div className="flex flex-col gap-2">
-          <span className="font-noi-grotesk text-[11px] font-medium tracking-[0.25em] text-neutral-50 uppercase sm:text-[12px]">
-            Certificate of Completion
-          </span>
-          <p className="font-noi-grotesk text-[15px] tracking-[-0.015em] text-neutral-50 sm:text-[16px]">
-            This certifies that
+      <div className="relative flex flex-col gap-6 px-6 py-7 pr-[124px] sm:gap-8 sm:px-10 sm:py-10 sm:pr-[190px]">
+        {/* self-start matters: as a flex item in a column, the default
+            align-items:stretch would blow the logo out to the card's full
+            width and w-auto can't hold it back. */}
+        <DeltaWordmark className="h-6 w-auto self-start sm:h-7" priority={false} />
+
+        <div className="flex flex-col gap-2 sm:gap-3">
+          <p className="font-noi-grotesk text-[13px] leading-[1.4] tracking-[-0.015em] text-neutral-50 sm:text-[15px]">
+            <span className="font-semibold text-neutral-90">Your Name</span> successfully
+            completed
+          </p>
+
+          <h3 className="font-noi-grotesk text-[24px] leading-[1.1] font-semibold tracking-[-0.025em] text-neutral-90 sm:text-[34px]">
+            {PROGRAMME_NAME}
+          </h3>
+
+          <p className="max-w-md font-noi-grotesk text-[12.5px] leading-[1.6] tracking-[-0.01em] text-neutral-50 sm:text-[14px]">
+            By completing this programme, the learner has demonstrated practical skills in
+            AI-assisted software development and shipped four deployed applications across
+            full-stack, mobile, backend and database work.
           </p>
         </div>
 
-        <span className="border-b-2 border-lime-30 px-4 pb-2 font-sans-plomb text-[32px] leading-none tracking-[-0.015em] text-pretty sm:text-[42px]">
-          Your Name
-        </span>
-
-        <p className="max-w-md font-noi-grotesk text-[14px] leading-[1.55] tracking-[-0.015em] text-pretty text-neutral-50 sm:text-[15px]">
-          has successfully completed <span className="text-neutral-90">{PROGRAMME_NAME}</span> at
-          Delta AI Academy, building four deployed applications across full-stack, mobile,
-          backend and database development.
-        </p>
-
-        <div className="mt-2 flex w-full items-end justify-between gap-4 border-t border-neutral-90/10 pt-6 text-left sm:mt-4">
-          <div className="flex flex-col gap-1">
-            <span className="font-sans-plomb text-[14px] leading-[1.1] tracking-[-0.015em] sm:text-[15px]">
-              Cohort 2026
-            </span>
-            <span className="font-noi-grotesk text-[11px] leading-[1.2] tracking-[-0.01em] text-neutral-50 sm:text-[12px]">
-              Issue date
-            </span>
+        <div className="flex items-end justify-between gap-4 border-t border-neutral-90/10 pt-5 sm:pt-6">
+          <div className="flex items-end gap-4 sm:gap-7">
+            <MetaField label="Course length" value={`${CURRICULUM_TOPIC_COUNT} lessons`} />
+            <span aria-hidden className="h-8 w-px shrink-0 bg-neutral-90/12" />
+            <MetaField label="Date of issue" value={SAMPLE_ISSUE_DATE} />
           </div>
 
-          <CertificateSeal />
-
-          <div className="flex flex-col items-end gap-1 text-right">
-            <span className="font-sans-plomb text-[14px] leading-[1.1] tracking-[-0.015em] sm:text-[15px]">
+          <div className="hidden flex-col items-center gap-1 sm:flex">
+            <Signature className="h-9 w-[120px] text-[#1c3faa]" />
+            <span className="w-full border-t border-neutral-90/25 pt-1.5 text-center font-noi-grotesk text-[11px] leading-none tracking-[-0.01em] text-neutral-50">
               Delta AI Academy
-            </span>
-            <span className="font-noi-grotesk text-[11px] leading-[1.2] tracking-[-0.01em] text-neutral-50 sm:text-[12px]">
-              Issuing organisation
             </span>
           </div>
         </div>
+
+        {/* The ID the edge can't carry on a narrow card. */}
+        <span className="font-noi-grotesk text-[10px] leading-none tracking-[0.06em] text-neutral-50 sm:hidden">
+          Certificate ID: {SAMPLE_CERTIFICATE_ID}
+        </span>
       </div>
     </div>
   );
@@ -123,7 +209,8 @@ export function CertificateSection() {
       </Reveal>
 
       <p className="mx-auto mt-4 max-w-6xl text-center font-noi-grotesk text-[13px] tracking-[-0.01em] text-neutral-50">
-        Sample certificate — yours is issued with your name and cohort on completion.
+        Sample certificate — yours is issued with your name, date and a unique certificate ID on
+        completion.
       </p>
     </section>
   );

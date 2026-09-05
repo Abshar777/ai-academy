@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     const amountMinorUnits = Number(order.amount);
     const currency = String(order.currency);
 
-    await recordEnrollment({
+    const { created } = await recordEnrollment({
       name,
       email,
       phone,
@@ -84,6 +84,19 @@ export async function POST(request: Request) {
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
     });
+
+    // The webhook (app/api/razorpay/webhook) covers the same payment and can
+    // land first. Everything below is a one-time side effect, so it only runs
+    // for whichever path actually created the row — otherwise a customer gets
+    // two invoices and the coupon is counted twice.
+    if (!created) {
+      return NextResponse.json({
+        verified: true,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        invoiceSent: false,
+      });
+    }
 
     // Best-effort usage bookkeeping — the payment already succeeded above,
     // so a coupon that got exhausted by someone else between create-order

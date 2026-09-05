@@ -33,19 +33,78 @@ export type Enrollment = {
 
 const COLLECTION = "enrollments";
 
-/** Never throws — enrollment logging is best-effort bookkeeping, not the
- *  thing that makes a payment or free redemption real. A Mongo hiccup here
- *  must not turn an already-successful enrollment into an error response. */
-export async function recordEnrollment(data: Omit<Enrollment, "createdAt">): Promise<void> {
+let indexesEnsured = false;
+
+/** Partial unique index on the Razorpay payment id — the hard guarantee that
+ *  one payment can only ever produce one enrollment, even if the browser
+ *  callback (app/api/razorpay/verify) and the webhook
+ *  (app/api/razorpay/webhook) race each other. Partial, because coupon and
+ *  Abzer rows have no razorpayPaymentId and several nulls would collide
+ *  under a plain unique index. */
+async function collection(): Promise<Collection<Enrollment> | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const coll = db.collection<Enrollment>(COLLECTION);
+  if (!indexesEnsured) {
+    indexesEnsured = true;
+    await coll
+      .createIndex(
+        { razorpayPaymentId: 1 },
+        { unique: true, partialFilterExpression: { razorpayPaymentId: { $type: "string" } } },
+      )
+      .catch((err) => {
+        console.error("[enrollments] Failed to ensure unique index on razorpayPaymentId", err);
+      });
+  }
+  return coll;
+}
+
+/**
+ * Never throws — enrollment logging is best-effort bookkeeping, not the thing
+ * that makes a payment or free redemption real. A Mongo hiccup here must not
+ * turn an already-successful enrollment into an error response.
+ *
+ * Returns whether this call actually created the row. A Razorpay payment can
+ * arrive twice (the browser callback and the webhook, in either order, plus
+ * webhook retries), so callers use `created` to decide whether to fire the
+ * one-time side effects — redeeming the coupon, emailing the invoice,
+ * messaging on WhatsApp — rather than doing them again for a duplicate.
+ */
+export async function recordEnrollment(
+  data: Omit<Enrollment, "createdAt">,
+): Promise<{ created: boolean }> {
   try {
-    const db = await getDb();
-    if (!db) {
+    const coll = await collection();
+    if (!coll) {
       console.info("[enrollments] MongoDB not configured — skipping record for", data.email);
-      return;
+      return { created: false };
     }
-    await db.collection<Enrollment>(COLLECTION).insertOne({ ...data, createdAt: new Date() });
+
+    const row = { ...data, createdAt: new Date() };
+
+    // Anything without a payment id (coupon, and Abzer — already de-duped
+    // upstream by the atomic pending -> paid flip in lib/abzer-orders.ts)
+    // has nothing to key on, so it inserts straight.
+    if (!data.razorpayPaymentId) {
+      await coll.insertOne(row);
+      return { created: true };
+    }
+
+    // $setOnInsert so a second arrival is a no-op rather than an overwrite.
+    const result = await coll.updateOne(
+      { razorpayPaymentId: data.razorpayPaymentId },
+      { $setOnInsert: row },
+      { upsert: true },
+    );
+    return { created: result.upsertedCount > 0 };
   } catch (err) {
+    // A duplicate-key error means the index did its job and another caller
+    // won the race — that's the expected outcome, not a failure.
+    if (typeof err === "object" && err !== null && (err as { code?: number }).code === 11000) {
+      return { created: false };
+    }
     console.error("[enrollments] Failed to record enrollment", err);
+    return { created: false };
   }
 }
 

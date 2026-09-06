@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { VideoPlayer } from "./video-player";
 import type { EpisodeLanguage } from "@/lib/episode";
 
@@ -23,33 +23,38 @@ type FreeEpisodeResponse = {
  * to the player would show a broken video, which reads as a broken site. If
  * the API can't be reached, this says so instead.
  */
+/** A URL that keeps failing won't be fixed by asking again; two re-mints is
+ *  enough to cover an expiry and a hiccup without spinning. */
+const MAX_REMINTS = 2;
+
 export function FreeEpisodePlayer({ className = "" }: { className?: string }) {
   const [sources, setSources] = useState<Sources | null>(null);
   const [failed, setFailed] = useState(false);
+  const remints = useRef(0);
+
+  const load = useCallback(async () => {
+    try {
+      // Same-origin: the server fetches and caches it (app/api/episode/free).
+      const res = await fetch("/api/episode/free");
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as FreeEpisodeResponse;
+      const resolved: Sources = {};
+      for (const [lang, value] of Object.entries(data.sources ?? {})) {
+        if (value?.url) resolved[lang as EpisodeLanguage] = value.url;
+      }
+      if (Object.keys(resolved).length) setSources(resolved);
+      else setFailed(true);
+    } catch {
+      setFailed(true);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // Same-origin: the server fetches and caches it (app/api/episode/free).
-        const res = await fetch("/api/episode/free");
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as FreeEpisodeResponse;
-        const resolved: Sources = {};
-        for (const [lang, value] of Object.entries(data.sources ?? {})) {
-          if (value?.url) resolved[lang as EpisodeLanguage] = value.url;
-        }
-        if (cancelled) return;
-        if (Object.keys(resolved).length) setSources(resolved);
-        else setFailed(true);
-      } catch {
-        if (!cancelled) setFailed(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    // Deferred a tick — load() sets state once its request resolves, and the
+    // lint rule flags a setState the effect body can reach synchronously.
+    const id = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(id);
+  }, [load]);
 
   if (failed) {
     return (
@@ -71,5 +76,15 @@ export function FreeEpisodePlayer({ className = "" }: { className?: string }) {
     return <div className={`aspect-video w-full animate-pulse rounded-2xl bg-neutral-90/10 ${className}`} aria-busy />;
   }
 
-  return <VideoPlayer sources={sources} className={className} />;
+  return (
+    <VideoPlayer
+      sources={sources}
+      className={className}
+      onMediaError={() => {
+        if (remints.current >= MAX_REMINTS) return setFailed(true);
+        remints.current += 1;
+        void load();
+      }}
+    />
+  );
 }

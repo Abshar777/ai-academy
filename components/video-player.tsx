@@ -100,6 +100,18 @@ function FullscreenIcon({ active, className = "size-5" }: { active: boolean; cla
   );
 }
 
+const WATERMARK_MOVE_MS = 30_000;
+
+/** Clear of the language toggle (top-right) and the control bar (bottom). */
+const WATERMARK_SPOTS = [
+  { top: "14%", left: "6%" },
+  { top: "24%", left: "56%" },
+  { top: "44%", left: "28%" },
+  { top: "58%", left: "8%" },
+  { top: "36%", left: "66%" },
+  { top: "60%", left: "54%" },
+];
+
 export function VideoPlayer({
   initialLanguage = "en",
   className = "",
@@ -109,6 +121,8 @@ export function VideoPlayer({
   onPosition,
   onFinished,
   onLanguageChange,
+  onMediaError,
+  watermark,
 }: {
   initialLanguage?: EpisodeLanguage;
   className?: string;
@@ -126,6 +140,16 @@ export function VideoPlayer({
   onPosition?: (seconds: number, language: EpisodeLanguage) => void;
   onFinished?: (language: EpisodeLanguage) => void;
   onLanguageChange?: (language: EpisodeLanguage) => void;
+  /** Playback failed — usually a signed URL that expired while the tab sat
+   *  paused. The parent mints a fresh one and passes it back in `sources`. */
+  onMediaError?: () => void;
+  /**
+   * Drawn faintly over the picture, repositioning as it plays. Not a lock —
+   * anyone can delete the node — but it survives a screen recording, which is
+   * the one leak path nothing here can block, and makes that recording
+   * traceable to the account it was played on.
+   */
+  watermark?: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -154,6 +178,18 @@ export function VideoPlayer({
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [chromeVisible, setChromeVisible] = useState(true);
+
+  // Moves so it can't be cropped out of a recording, and cycles clear of the
+  // language toggle and the control bar rather than sitting under either.
+  const [watermarkSpot, setWatermarkSpot] = useState(0);
+  useEffect(() => {
+    if (!watermark) return;
+    const id = window.setInterval(
+      () => setWatermarkSpot((i) => (i + 1) % WATERMARK_SPOTS.length),
+      WATERMARK_MOVE_MS,
+    );
+    return () => window.clearInterval(id);
+  }, [watermark]);
 
   const showChrome = useCallback(() => {
     setChromeVisible(true);
@@ -209,11 +245,28 @@ export function VideoPlayer({
     onLanguageChange?.(next);
   }
 
+  /**
+   * Reloads whenever the file behind the current language changes — a language
+   * swap, or a re-minted URL after the old one expired.
+   *
+   * Keyed on the URL rather than the language so both cases go through one
+   * path, and the viewer keeps their place either way: a refresh mid-episode
+   * that dropped them back to zero would be worse than the expiry it fixes.
+   */
+  const currentSrc = sources[language] ?? "";
+  const loadedSrc = useRef<string | null>(null);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !currentSrc || loadedSrc.current === currentSrc) return;
+    const isSwap = loadedSrc.current !== null;
+    loadedSrc.current = currentSrc;
+    // changeLanguage has already captured the position; a URL refresh has not.
+    if (isSwap && !resumeAt.current) {
+      resumeAt.current = { time: video.currentTime, playing: !video.paused };
+    }
     video.load();
-  }, [language]);
+  }, [currentSrc]);
 
   const onLoadedMetadata = () => {
     const video = videoRef.current;
@@ -314,6 +367,17 @@ export function VideoPlayer({
         playsInline
         autoPlay={autoPlay}
         preload="metadata"
+        // Takes the obvious routes to a local copy off the table: no "Save
+        // video as" in the right-click menu, no download button if a browser
+        // falls back to native controls (some mobile ones do in fullscreen),
+        // and no picture-in-picture window with its own controls.
+        //
+        // These are speed bumps, not protection — the real gate is that the
+        // URL is signed and expires (see academy-api/src/media/r2.ts). Anyone
+        // reading the DOM still has the URL until it does.
+        controlsList="nodownload noplaybackrate noremoteplayback"
+        disablePictureInPicture
+        onContextMenu={(e) => e.preventDefault()}
         onClick={togglePlay}
         onDoubleClick={toggleFullscreen}
         onLoadedMetadata={onLoadedMetadata}
@@ -342,9 +406,23 @@ export function VideoPlayer({
           setVolume(e.currentTarget.volume);
           setMuted(e.currentTarget.muted);
         }}
+        onError={() => {
+          setWaiting(false);
+          onMediaError?.();
+        }}
       >
-        <source src={sources[language] ?? ""} type="video/mp4" />
+        <source src={currentSrc} type="video/mp4" />
       </video>
+
+      {watermark && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute font-noi-grotesk text-[11px] leading-none tracking-[0.06em] text-white/30 mix-blend-difference transition-[top,left] duration-1000 ease-in-out select-none sm:text-[12px]"
+          style={WATERMARK_SPOTS[watermarkSpot]}
+        >
+          {watermark}
+        </span>
+      )}
 
       {/* Centre affordance — the whole point of the first frame. */}
       {(!started || !playing) && (

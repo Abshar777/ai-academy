@@ -64,6 +64,9 @@ export type PlayResponse = {
   title: Localized;
   isFree: boolean;
   sources: Partial<Record<Lang, { url: string; durationSec: number }>>;
+  /** Seconds the signed URLs remain valid. Callers re-mint before this runs
+   *  out rather than letting playback die mid-episode. */
+  expiresIn?: number;
 };
 
 /** Set beside the httpOnly session cookie, carrying nothing but the fact that

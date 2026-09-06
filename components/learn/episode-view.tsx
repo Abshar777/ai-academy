@@ -17,6 +17,10 @@ import {
   type PlayResponse,
 } from "@/lib/academy-api";
 
+/** A URL that keeps failing won't be fixed by asking again; two re-mints cover
+ *  an expiry and a hiccup without spinning on a genuinely broken file. */
+const MAX_REMINTS = 2;
+
 /** Position is written at most this often while playing — often enough that
  *  closing the tab loses seconds, rare enough not to hammer the API. */
 const SAVE_EVERY_MS = 15_000;
@@ -89,29 +93,46 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
   // Playback URLs are a separate, gated request — the contents list above is
   // public, the files are not.
   const episodeId = located?.episode.id;
-  useEffect(() => {
+
+  const loadPlayback = useCallback(async () => {
     if (!episodeId) return;
-    let cancelled = false;
-    (async () => {
-      const res = await apiFetch(`/episodes/${episodeId}/play`);
-      if (cancelled) return;
-      if (res.ok) {
-        setPlay((await res.json()) as PlayResponse);
-        setBlocked("none");
-      } else {
-        setPlay(null);
-        setBlocked(res.status === 401 ? "sign-in" : "purchase");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    const res = await apiFetch(`/episodes/${episodeId}/play`);
+    if (res.ok) {
+      setPlay((await res.json()) as PlayResponse);
+      setBlocked("none");
+    } else {
+      setPlay(null);
+      setBlocked(res.status === 401 ? "sign-in" : "purchase");
+    }
   }, [episodeId, apiFetch]);
+
+  useEffect(() => {
+    // Deferred a tick: react-hooks/set-state-in-effect flags a setState the
+    // effect body can reach synchronously, and loadPlayback sets state once
+    // its request resolves. Same pattern used elsewhere in this codebase.
+    const id = window.setTimeout(() => void loadPlayback(), 0);
+    return () => window.clearTimeout(id);
+  }, [loadPlayback]);
+
+  /**
+   * Signed URLs last an hour, which is shorter than plenty of viewing
+   * sessions — someone who pauses over lunch would come back to a video that
+   * refuses to seek. Re-minting a couple of minutes early keeps that invisible:
+   * the player swaps the file underneath and holds the viewer's position.
+   */
+  useEffect(() => {
+    const ttl = play?.expiresIn;
+    if (!ttl) return;
+    const delay = Math.max(30_000, (ttl - 120) * 1000);
+    const id = window.setTimeout(() => void loadPlayback(), delay);
+    return () => window.clearTimeout(id);
+  }, [play, loadPlayback]);
 
   // Latest position, kept in a ref so the unmount save reads the current value
   // without re-subscribing on every tick.
   const position = useRef({ seconds: 0, lang: lang as Lang });
   const lastSaveAt = useRef(0);
+  const remints = useRef(0);
 
   const save = useCallback(
     (seconds: number, language: Lang, completed = false) => {
@@ -199,6 +220,16 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
           onPosition={onPosition}
           onFinished={(language) => save(position.current.seconds, language, true)}
           onLanguageChange={(next) => setLangOverride(next)}
+          // A URL that expired while the tab slept — mint another and carry on.
+          onMediaError={() => {
+            if (remints.current >= MAX_REMINTS) return;
+            remints.current += 1;
+            void loadPlayback();
+          }}
+          // Marks a screen recording with the account it was played on. The
+          // one leak path signed URLs can't touch is a camera or a capture
+          // tool, and this is what makes that traceable.
+          watermark={user?.email}
           className="shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
         />
       ) : (

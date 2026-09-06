@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * path, and a last-known-good URL to fall back on while the API is down.
  */
 
-const REFRESH_AFTER_MS = 60 * 60 * 1000;
+const MAX_CACHE_MS = 30 * 60 * 1000;
 
 /** Leaves room to start playing before the signature runs out — a URL handed
  *  out with seconds left would fail mid-load. */
@@ -38,7 +38,9 @@ export async function GET() {
   const baseUrl = process.env.ACADEMY_API_URL?.replace(/\/$/, "");
   const now = Date.now();
 
-  if (cached && now - cached.fetchedAt < REFRESH_AFTER_MS) {
+  // Held for half the signature's life, capped — never long enough to hand
+  // out a URL with only seconds left on it.
+  if (cached && now - cached.fetchedAt < Math.min(MAX_CACHE_MS, (cached.expiresIn / 2) * 1000)) {
     return NextResponse.json(cached.body);
   }
 
@@ -51,7 +53,7 @@ export async function GET() {
       if (response.ok) {
         const body = (await response.json()) as FreeEpisode;
         if (body.sources && Object.keys(body.sources).length) {
-          cached = { body, fetchedAt: now, expiresIn: Number(body.expiresIn) || 21_600 };
+          cached = { body, fetchedAt: now, expiresIn: Number(body.expiresIn) || 3_600 };
           return NextResponse.json(body);
         }
       }
@@ -72,3 +74,4 @@ export async function GET() {
 
   return NextResponse.json({ error: "The episode is not available right now." }, { status: 503 });
 }
+

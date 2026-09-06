@@ -229,7 +229,7 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
           // Marks a screen recording with the account it was played on. The
           // one leak path signed URLs can't touch is a camera or a capture
           // tool, and this is what makes that traceable.
-          watermark={user?.email}
+          watermark={[user?.email, user?.phone].filter(Boolean).join(" · ")}
           className="shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
         />
       ) : (

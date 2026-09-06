@@ -23,6 +23,7 @@ export type AcademyUser = {
   id: string;
   email: string;
   name?: string;
+  phone?: string;
   preferredLang: Lang;
 };
 

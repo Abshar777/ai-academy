@@ -339,6 +339,7 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
               </p>
             )}
           </form>
+          <VideoPreview />
 
           <ul className="flex list-none flex-col gap-3">
             {INCLUDED.map((item) => (
@@ -351,28 +352,9 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
             ))}
           </ul>
 
-          <VideoPreview />
+          
 
-          <div className="flex flex-col gap-2 border-t border-neutral-90/10 pt-6">
-            <label className={LABEL} htmlFor="order-country">
-              Country
-            </label>
-            <select
-              id="order-country"
-              value={country}
-              onChange={(e) => handleCountryChange(e.target.value)}
-              className={FIELD}
-            >
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <p className="font-noi-grotesk text-[13px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
-              Sets your price and which payment methods are available.
-            </p>
-          </div>
+         
         </div>
 
         <form
@@ -448,6 +430,26 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
                 {fieldErrors.phone}
               </p>
             )}
+          </div>
+           <div className="flex flex-col gap-2 border-t border-neutral-90/10 pt-6">
+            <label className={LABEL} htmlFor="order-country">
+              Country
+            </label>
+            <select
+              id="order-country"
+              value={country}
+              onChange={(e) => handleCountryChange(e.target.value)}
+              className={FIELD}
+            >
+              {COUNTRY_OPTIONS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <p className="font-noi-grotesk text-[13px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
+              Sets your price and which payment methods are available.
+            </p>
           </div>
 
           <fieldset className="flex flex-col gap-2">

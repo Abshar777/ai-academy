@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type HlsType from "hls.js";
 import {
   EPISODE_LANGUAGES,
   EPISODE_SOURCES,
@@ -98,6 +99,12 @@ function FullscreenIcon({ active, className = "size-5" }: { active: boolean; cla
       />
     </svg>
   );
+}
+
+/** Cloudflare Stream serves an HLS manifest; R2 serves the file itself. The
+ *  extension is unambiguous, so it decides which path to take. */
+function isHls(url: string): boolean {
+  return url.split("?")[0]?.endsWith(".m3u8") ?? false;
 }
 
 const WATERMARK_MOVE_MS = 30_000;
@@ -256,6 +263,8 @@ export function VideoPlayer({
   const currentSrc = sources[language] ?? "";
   const loadedSrc = useRef<string | null>(null);
 
+  const hlsRef = useRef<HlsType | null>(null);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !currentSrc || loadedSrc.current === currentSrc) return;
@@ -265,8 +274,50 @@ export function VideoPlayer({
     if (isSwap && !resumeAt.current) {
       resumeAt.current = { time: video.currentTime, playing: !video.paused };
     }
-    video.load();
-  }, [currentSrc]);
+
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+
+    // A Cloudflare Stream manifest rather than a file. Safari plays HLS
+    // natively; everywhere else needs hls.js, which is loaded on demand so the
+    // marketing pages don't carry it for a video they may never open.
+    if (!isHls(currentSrc)) {
+      video.load();
+      return;
+    }
+
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = currentSrc;
+      video.load();
+      return;
+    }
+
+    let cancelled = false;
+    void import("hls.js").then(({ default: Hls }) => {
+      if (cancelled || !videoRef.current) return;
+      if (!Hls.isSupported()) {
+        // No Media Source Extensions — nothing left to try.
+        setWaiting(false);
+        onMediaError?.();
+        return;
+      }
+      const hls = new Hls({ enableWorker: true });
+      hlsRef.current = hls;
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        // Only fatal errors are worth surfacing; hls.js recovers from the rest
+        // on its own, and reporting those would re-mint a URL for nothing.
+        if (data.fatal) onMediaError?.();
+      });
+      hls.loadSource(currentSrc);
+      hls.attachMedia(videoRef.current);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSrc, onMediaError]);
+
+  useEffect(() => () => hlsRef.current?.destroy(), []);
 
   const onLoadedMetadata = () => {
     const video = videoRef.current;
@@ -411,7 +462,7 @@ export function VideoPlayer({
           onMediaError?.();
         }}
       >
-        <source src={currentSrc} type="video/mp4" />
+        {!isHls(currentSrc) && <source src={currentSrc} type="video/mp4" />}
       </video>
 
       {watermark && (

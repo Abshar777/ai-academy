@@ -69,8 +69,12 @@ export function ChatEnrollForm() {
 
     if (paymentMethod === "razorpay" && plan.country === "IN") {
       await startRazorpayCheckout({ ...contact, country }, {
-        onSuccess: ({ orderId, paymentId }) => {
-          window.location.href = `/order/thank-you?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}`;
+        onSuccess: ({ orderId, paymentId, handoffToken }) => {
+          const query = new URLSearchParams({ orderId, paymentId });
+          // Passed straight through to the thank-you page, which hands it to
+          // /learn so the buyer lands inside the course already signed in.
+          if (handoffToken) query.set("ht", handoffToken);
+          window.location.href = `/order/thank-you?${query.toString()}`;
         },
         onError: (message) => {
           setErrorMessage(message);

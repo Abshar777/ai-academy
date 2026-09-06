@@ -5,6 +5,7 @@ import { sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 import { redeemCoupon } from "@/lib/coupons";
 import { recordEnrollment } from "@/lib/enrollments";
+import { grantCourseAccess } from "@/lib/course-access";
 
 export const runtime = "nodejs";
 
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
   // already verified above, so a broken SMTP config or a Razorpay lookup
   // hiccup shouldn't turn a successful payment into a failed response.
   let invoiceSent = false;
+  let handoffToken: string | null = null;
   try {
     const order = await getRazorpayClient().orders.fetch(razorpay_order_id);
     const notes = (order.notes ?? {}) as Record<string, unknown>;
@@ -85,6 +87,21 @@ export async function POST(request: Request) {
       razorpayPaymentId: razorpay_payment_id,
     });
 
+    // Granted before the duplicate check below, not after: the webhook may
+    // have recorded this payment already, but this is the browser that is
+    // sitting on the page right now, and it still needs a ticket to sign in
+    // with. The grant itself is idempotent, so calling it twice is free.
+    if (email) {
+      ({ handoffToken } = await grantCourseAccess({
+        email,
+        name,
+        phone,
+        country,
+        source: "razorpay",
+        orderRef: `razorpay:${razorpay_payment_id}`,
+      }));
+    }
+
     // The webhook (app/api/razorpay/webhook) covers the same payment and can
     // land first. Everything below is a one-time side effect, so it only runs
     // for whichever path actually created the row — otherwise a customer gets
@@ -95,6 +112,7 @@ export async function POST(request: Request) {
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
         invoiceSent: false,
+        handoffToken,
       });
     }
 
@@ -143,5 +161,6 @@ export async function POST(request: Request) {
     paymentId: razorpay_payment_id,
     orderId: razorpay_order_id,
     invoiceSent,
+    handoffToken,
   });
 }

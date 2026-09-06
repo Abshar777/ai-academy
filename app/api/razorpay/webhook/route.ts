@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { recordEnrollment } from "@/lib/enrollments";
+import { grantCourseAccess } from "@/lib/course-access";
 import { redeemCoupon } from "@/lib/coupons";
 import { sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
@@ -117,6 +118,20 @@ export async function POST(request: Request) {
     if (!created) {
       console.info(`[razorpay] webhook for ${paymentId} — already recorded, nothing to do`);
       return ok();
+    }
+
+    // No browser to hand back to here — this path exists precisely for when
+    // the buyer's browser never returned — so the ticket is discarded. The
+    // access is what matters; they sign in with an emailed code.
+    if (email) {
+      await grantCourseAccess({
+        email,
+        name,
+        phone,
+        country,
+        source: "razorpay",
+        orderRef: `razorpay:${paymentId}`,
+      });
     }
 
     if (couponCode) {

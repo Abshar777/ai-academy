@@ -194,8 +194,12 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
         // static-link fallback below navigates away on success too. The IDs
         // in the URL let that page offer an invoice download without us
         // having to pass payment details through anything less disposable.
-        onSuccess: ({ orderId, paymentId }) => {
-          window.location.href = `/order/thank-you?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}`;
+        onSuccess: ({ orderId, paymentId, handoffToken }) => {
+          const query = new URLSearchParams({ orderId, paymentId });
+          // Passed straight through to the thank-you page, which hands it to
+          // /learn so the buyer lands inside the course already signed in.
+          if (handoffToken) query.set("ht", handoffToken);
+          window.location.href = `/order/thank-you?${query.toString()}`;
         },
         onError: (message) => {
           setErrorMessage(message);

@@ -3,6 +3,7 @@ import { isValidEmail, isValidName, isValidPhone } from "@/lib/contact-validatio
 import { planForCountry } from "@/lib/pricing";
 import { computeDiscountedAmount, lookupCoupon, redeemCoupon } from "@/lib/coupons";
 import { recordEnrollment } from "@/lib/enrollments";
+import { grantCourseAccess } from "@/lib/course-access";
 import { sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 
@@ -74,6 +75,17 @@ export async function POST(request: Request) {
     couponCode: redeemed.code,
   });
 
+  // redeemCoupon above already refuses a second redemption, so the coupon and
+  // the address together identify this enrolment uniquely.
+  const { handoffToken } = await grantCourseAccess({
+    email,
+    name,
+    phone,
+    country,
+    source: "coupon",
+    orderRef: `coupon:${redeemed.code}:${email}`,
+  });
+
   // Best-effort confirmation — a free enrolment is still a real one, so it
   // gets the same receipt + WhatsApp notify as a paid one, just at ₹0.
   let emailSent = false;
@@ -105,5 +117,5 @@ export async function POST(request: Request) {
     ),
   ]);
 
-  return NextResponse.json({ enrolled: true, emailSent });
+  return NextResponse.json({ enrolled: true, emailSent, handoffToken });
 }

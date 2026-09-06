@@ -65,7 +65,10 @@ export type RazorpayContact = {
 };
 
 export type RazorpayCheckoutCallbacks = {
-  onSuccess: (details: { orderId: string; paymentId: string }) => void;
+  /** `handoffToken` is the one-time ticket that signs the buyer into the
+   *  course. Null when the course API was unreachable — the enrolment still
+   *  stands, they just sign in with an emailed code instead. */
+  onSuccess: (details: { orderId: string; paymentId: string; handoffToken: string | null }) => void;
   onError: (message: string) => void;
   /** Visitor closed the modal without paying — not an error, just back to idle. */
   onDismiss: () => void;
@@ -114,7 +117,11 @@ export async function startRazorpayCheckout(
             callbacks.onError("Payment could not be verified. Please contact support.");
             return;
           }
-          callbacks.onSuccess({ orderId: verified.orderId, paymentId: verified.paymentId });
+          callbacks.onSuccess({
+            orderId: verified.orderId,
+            paymentId: verified.paymentId,
+            handoffToken: typeof verified.handoffToken === "string" ? verified.handoffToken : null,
+          });
         } catch {
           callbacks.onError("Payment could not be verified. Please contact support.");
         }

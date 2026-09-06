@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAbzerOrder, markAbzerOrderPaid } from "@/lib/abzer-orders";
 import { recordEnrollment } from "@/lib/enrollments";
+import { grantCourseAccess } from "@/lib/course-access";
 import { sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 import { redeemCoupon } from "@/lib/coupons";
@@ -86,6 +87,20 @@ export async function POST(request: Request) {
       abzerOrderId: order.abzerRequestId,
       abzerReceiptId: receiptId,
     });
+
+    // Keyed on Abzer's own request id rather than the receipt, which is not
+    // always present. Like the Razorpay webhook there is no browser waiting
+    // here, so the returned ticket is discarded.
+    if (order.email) {
+      await grantCourseAccess({
+        email: order.email,
+        name: order.name,
+        phone: order.phone,
+        country: order.country,
+        source: "abzer",
+        orderRef: `abzer:${order.abzerRequestId}`,
+      });
+    }
 
     // Best-effort bookkeeping — the payment already succeeded above, so a
     // coupon that got exhausted by someone else in the meantime must not

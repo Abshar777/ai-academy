@@ -21,9 +21,15 @@ export const metadata: Metadata = {
 export default async function ThankYouPage({
   searchParams,
 }: {
-  searchParams: Promise<{ orderId?: string; paymentId?: string }>;
+  searchParams: Promise<{ orderId?: string; paymentId?: string; ht?: string }>;
 }) {
-  const { orderId, paymentId } = await searchParams;
+  const { orderId, paymentId, ht } = await searchParams;
+  // The one-time ticket from the purchase bridge. /learn spends it on arrival
+  // and strips it from the URL, so the buyer lands inside the course already
+  // signed in. Absent when the course API was unreachable — they can still get
+  // in with an emailed code, so the link is offered either way.
+  const courseHref = ht ? `/learn?ht=${encodeURIComponent(ht)}` : "/learn";
+
   const invoiceHref =
     orderId && paymentId
       ? `/api/invoice?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}`
@@ -60,16 +66,16 @@ export default async function ThankYouPage({
 
       <div className="mt-2 flex flex-col gap-3 sm:flex-row">
         <Link
-          href="/"
-          className="inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-6 font-noi-grotesk text-[16px] leading-none font-medium text-white transition duration-150 ease-in-out hover:bg-neutral-70"
+          href={courseHref}
+          className="inline-flex h-12 items-center justify-center rounded-lg bg-lime-30 px-6 font-noi-grotesk text-[16px] leading-none font-medium text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40"
         >
-          Back to home
+          Start the course
         </Link>
         <Link
-          href="/course"
+          href="/"
           className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-6 font-noi-grotesk text-[16px] leading-none font-medium transition duration-150 ease-in-out hover:bg-neutral-90/8"
         >
-          View the curriculum
+          Back to home
         </Link>
         {invoiceHref && (
           <a

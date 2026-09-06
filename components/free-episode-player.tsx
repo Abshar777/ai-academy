@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { VideoPlayer } from "./video-player";
-import { ACADEMY_API_URL } from "@/lib/academy-api";
 import type { EpisodeLanguage } from "@/lib/episode";
 
 type Sources = Partial<Record<EpisodeLanguage, string>>;
@@ -15,9 +14,10 @@ type FreeEpisodeResponse = {
  * The free episode.
  *
  * The R2 bucket holding every course video is private, so the URLs in
- * lib/episode.ts no longer play on their own — they answer 401. The signed URL
- * comes from the course API instead, with no account needed, because the
- * episode really is free.
+ * lib/episode.ts no longer play on their own — they answer 401. A signed URL
+ * comes from this site's own /api/episode/free, which fetches and caches it
+ * from the course API server-side, so the homepage isn't making a
+ * cross-origin call per visitor for something that changes once an hour.
  *
  * There is deliberately no fallback to those stored URLs: handing a dead one
  * to the player would show a broken video, which reads as a broken site. If
@@ -31,7 +31,8 @@ export function FreeEpisodePlayer({ className = "" }: { className?: string }) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${ACADEMY_API_URL}/episodes/free`);
+        // Same-origin: the server fetches and caches it (app/api/episode/free).
+        const res = await fetch("/api/episode/free");
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as FreeEpisodeResponse;
         const resolved: Sources = {};

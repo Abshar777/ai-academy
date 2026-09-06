@@ -104,18 +104,46 @@ export function VideoPlayer({
   initialLanguage = "en",
   className = "",
   autoPlay = false,
+  sources = EPISODE_SOURCES,
+  startAt = 0,
+  onPosition,
+  onFinished,
+  onLanguageChange,
 }: {
   initialLanguage?: EpisodeLanguage;
   className?: string;
   autoPlay?: boolean;
+  /**
+   * Which file to play per language. Defaults to the free episode the
+   * marketing site gives away, so /watch and the homepage dialog keep working
+   * unchanged; the course view passes the episode it's showing.
+   */
+  sources?: Partial<Record<EpisodeLanguage, string>>;
+  /** Resume point in seconds, applied once the first file reports metadata. */
+  startAt?: number;
+  /** Called as playback advances, for saving progress. Throttle in the parent —
+   *  this fires as often as the browser updates currentTime. */
+  onPosition?: (seconds: number, language: EpisodeLanguage) => void;
+  onFinished?: (language: EpisodeLanguage) => void;
+  onLanguageChange?: (language: EpisodeLanguage) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<number | undefined>(undefined);
   /** Position/play state carried across a language swap. */
   const resumeAt = useRef<{ time: number; playing: boolean } | null>(null);
+  const resumedOnce = useRef(false);
 
-  const [language, setLanguage] = useState<EpisodeLanguage>(initialLanguage);
+  // An episode may exist in one language only. The toggle still shows both, so
+  // the gap reads as a gap rather than a missing feature, but the absent one
+  // can't be selected — and the opening language falls back to whichever
+  // recording exists.
+  const available = EPISODE_LANGUAGES.filter((option) => Boolean(sources[option.id]));
+  const openingLanguage = sources[initialLanguage]
+    ? initialLanguage
+    : (available[0]?.id ?? initialLanguage);
+
+  const [language, setLanguage] = useState<EpisodeLanguage>(openingLanguage);
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
   const [waiting, setWaiting] = useState(false);
@@ -175,8 +203,10 @@ export function VideoPlayer({
   function changeLanguage(next: EpisodeLanguage) {
     const video = videoRef.current;
     if (!video || next === language) return;
+    if (!sources[next]) return;
     resumeAt.current = { time: video.currentTime, playing: !video.paused };
     setLanguage(next);
+    onLanguageChange?.(next);
   }
 
   useEffect(() => {
@@ -189,6 +219,14 @@ export function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
     setDuration(video.duration);
+
+    // First load only: a saved position resumes where they stopped. Guarded so
+    // a language swap uses its own captured time rather than jumping back.
+    if (!resumedOnce.current) {
+      resumedOnce.current = true;
+      if (startAt > 0 && startAt < video.duration - 5) video.currentTime = startAt;
+    }
+
     const resume = resumeAt.current;
     if (resume) {
       video.currentTime = Math.min(resume.time, video.duration || resume.time);
@@ -279,7 +317,10 @@ export function VideoPlayer({
         onClick={togglePlay}
         onDoubleClick={toggleFullscreen}
         onLoadedMetadata={onLoadedMetadata}
-        onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => {
+          setCurrent(e.currentTarget.currentTime);
+          onPosition?.(e.currentTarget.currentTime, language);
+        }}
         onProgress={onProgress}
         onWaiting={() => setWaiting(true)}
         onCanPlay={() => setWaiting(false)}
@@ -295,13 +336,14 @@ export function VideoPlayer({
         onEnded={() => {
           setPlaying(false);
           setChromeVisible(true);
+          onFinished?.(language);
         }}
         onVolumeChange={(e) => {
           setVolume(e.currentTarget.volume);
           setMuted(e.currentTarget.muted);
         }}
       >
-        <source src={EPISODE_SOURCES[language]} type="video/mp4" />
+        <source src={sources[language] ?? ""} type="video/mp4" />
       </video>
 
       {/* Centre affordance — the whole point of the first frame. */}
@@ -328,22 +370,28 @@ export function VideoPlayer({
           chromeShown ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        {EPISODE_LANGUAGES.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => changeLanguage(option.id)}
-            aria-pressed={language === option.id}
-            title={option.label}
-            className={`rounded-full px-3 py-1 font-noi-grotesk text-[12px] leading-none font-semibold tracking-[0.04em] transition-colors duration-150 ${
-              language === option.id
-                ? "bg-lime-30 text-neutral-90"
-                : "text-white/70 hover:text-white"
-            }`}
-          >
-            {option.short}
-          </button>
-        ))}
+        {EPISODE_LANGUAGES.map((option) => {
+          const missing = !sources[option.id];
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => changeLanguage(option.id)}
+              disabled={missing}
+              aria-pressed={language === option.id}
+              title={missing ? `${option.label} isn't available for this episode yet` : option.label}
+              className={`rounded-full px-3 py-1 font-noi-grotesk text-[12px] leading-none font-semibold tracking-[0.04em] transition-colors duration-150 ${
+                missing
+                  ? "cursor-not-allowed text-white/25 line-through"
+                  : language === option.id
+                    ? "bg-lime-30 text-neutral-90"
+                    : "text-white/70 hover:text-white"
+              }`}
+            >
+              {option.short}
+            </button>
+          );
+        })}
       </div>
 
       {/* Control bar */}

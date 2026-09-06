@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { hasSessionHint } from "@/lib/academy-api";
 import { EPISODE_PAGE_PATH } from "@/lib/episode";
 import { WEBINAR_BOOKING_URL, formatWebinarDate, nextWebinarDate } from "@/lib/next-webinar";
 import { useEpisode } from "./episode-dialog";
@@ -15,9 +16,11 @@ import { useEpisode } from "./episode-dialog";
  * enquiry dialog uses — it gives focus trapping and Escape for free.
  *
  * Nothing is persisted: every page load runs the sequence again, so a
- * returning visitor sees it every time. They are suppressed only on the
- * routes where an interruption would be in the way (checkout, the watch
- * page itself, admin).
+ * returning visitor sees it every time. They are suppressed on the routes
+ * where an interruption would be in the way (checkout, the watch page itself,
+ * admin, the course), and for anyone with a session — offering a free taster
+ * to someone who already bought the programme reads as not knowing who they
+ * are.
  */
 
 const FIRST_POPUP_DELAY_MS = 3000;
@@ -28,7 +31,8 @@ function isSuppressed(pathname: string | null): boolean {
   return (
     pathname.startsWith("/order") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith(EPISODE_PAGE_PATH)
+    pathname.startsWith(EPISODE_PAGE_PATH) ||
+    pathname.startsWith("/learn")
   );
 }
 
@@ -54,7 +58,17 @@ function CloseButton({ onClick }: { onClick: () => void }) {
 
 export function SitePopups() {
   const pathname = usePathname();
-  const suppressed = isSuppressed(pathname);
+
+  // Read after mount rather than during render: the server has no way to know,
+  // and a cookie read in the render pass would disagree with the markup it
+  // hydrates into. Deferred a tick, matching the pattern used elsewhere here.
+  const [hasSession, setHasSession] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setHasSession(hasSessionHint()), 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  const suppressed = isSuppressed(pathname) || hasSession;
   const episode = useEpisode();
   const seminarRef = useRef<HTMLDialogElement>(null);
   const [webinarDate, setWebinarDate] = useState("");
@@ -120,7 +134,7 @@ export function SitePopups() {
     // detached node would silently stop driving the hand-off on the way back.
   }, [suppressed, episode]);
 
-  if (isSuppressed(pathname)) return null;
+  if (suppressed) return null;
 
   return (
     <>

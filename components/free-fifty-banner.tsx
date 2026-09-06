@@ -4,19 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 
 /**
- * "First 50 students get free access" promo — pricing-section.tsx (homepage)
- * and order-form.tsx (/order). The enrolled count is real, fetched from
- * app/api/students-count (captured Razorpay payments), not a fabricated
- * number — this is a banner only for now, checkout still charges normally;
- * the free seats are honored manually outside this codebase.
+ * The one card on the page whose entire job is to catch a scrolling thumb and
+ * make it stop — pricing-section.tsx (homepage) and order-form.tsx (/order).
  *
- * Deliberately louder than the rest of the UI — a dark glowing card, a
- * scroll-triggered scale-in, a count-up on the number, and a shimmer sweep
- * on the progress bar — this is the one section whose entire job is to
- * catch a scrolling thumb and make it stop.
+ * It used to run a "first 50 students free" countdown; the pitch is now the
+ * argument itself, which doesn't expire and doesn't need honouring by hand.
+ * The export keeps its old name so the two callers don't have to change.
+ *
+ * The enrolled count underneath is real — fetched from app/api/students-count,
+ * which reads captured payments — and appears only once it is worth showing.
+ * A claim about learning to build lands harder next to the number of people
+ * already doing it; next to a number in single figures it lands worse than
+ * saying nothing, so it stays hidden until it helps.
  */
 
-const FREE_SEATS = 50;
+/** Below this, the count argues against the copy rather than for it. It
+ *  appears on its own once real enrolments pass the line. */
+const MIN_COUNT_TO_SHOW = 25;
 
 /** Counts 0 -> target once, starting only when the caller flips `start` to
  *  true (gated on scroll-into-view — see useInView below — rather than on
@@ -81,9 +85,6 @@ export function FreeFiftyBanner({ className = "" }: { className?: string }) {
   }, []);
 
   const displayed = useCountUp(count, inView || Boolean(reducedMotion));
-  const spotsLeft = count === null ? null : Math.max(0, FREE_SEATS - count);
-  const claimed = spotsLeft === 0;
-  const pct = count === null ? 0 : Math.min(100, (displayed / FREE_SEATS) * 100);
 
   return (
     <motion.div
@@ -93,52 +94,28 @@ export function FreeFiftyBanner({ className = "" }: { className?: string }) {
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
       className={`ffb-card relative overflow-hidden rounded-2xl p-5 text-white shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] sm:p-6 ${className}`}
     >
-      {/* <div className="ffb-glow" aria-hidden /> */}
-
-      <div className="relative z-10">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 font-noi-grotesk text-[11px] font-medium tracking-[-0.01em] text-lime-30 ring-1 ring-white/15">
+      <div className="relative z-10 flex flex-col items-start gap-3">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 font-noi-grotesk text-[11px] font-medium tracking-[0.08em] text-lime-30 uppercase ring-1 ring-white/15">
           <LiveDot />
-          Launch offer
+          Learn. Build. Ship.
         </span>
 
-        <p className="mt-3 font-sans-plomb text-[24px] leading-[1.05] font-semibold tracking-[-0.015em] sm:text-[30px]">
-          {claimed ? (
-            "Free seats claimed — join the next cohort"
-          ) : (
-            <>
-              First <span className="text-lime-30">50 students</span> get free access
-            </>
-          )}
+        <h2 className="max-w-[22ch] font-sans-plomb text-[26px] leading-[1.02] font-semibold tracking-[-0.015em] text-balance uppercase sm:text-[34px] md:text-[40px]">
+          You don&rsquo;t need a big course to become a{" "}
+          <span className="text-lime-30">developer</span>.
+        </h2>
+
+        <p className="font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] text-white/70 sm:text-[18px]">
+          Everything you need to build is here.
         </p>
 
-        {!claimed && (
-          <p className="mt-1 font-noi-grotesk text-[13px] font-medium tracking-[-0.01em] text-lime-30/90">
-            Exclusively for Delta Digital Academy students
+        {count !== null && count >= MIN_COUNT_TO_SHOW && (
+          <p className="mt-1 font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-white/45">
+            <span className="font-sans-plomb text-[17px] font-semibold text-white tabular-nums">
+              {displayed}
+            </span>{" "}
+            already building with us
           </p>
-        )}
-
-        <p className="mt-1.5 font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-white/60">
-          {count === null ? (
-            "Loading enrolment count…"
-          ) : claimed ? (
-            `${displayed} students have already enrolled.`
-          ) : (
-            <>
-              <span className="font-sans-plomb text-[18px] font-semibold text-white tabular-nums">
-                {displayed}
-              </span>{" "}
-              enrolled so far · <span className="text-lime-30">{spotsLeft} free spot{spotsLeft === 1 ? "" : "s"} left</span>
-            </>
-          )}
-        </p>
-
-        {count !== null && (
-          <div className="ffb-progress-track mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/10">
-            <div
-              className="ffb-progress-fill h-full rounded-full bg-lime-30 transition-[width] duration-300 ease-out"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
         )}
       </div>
     </motion.div>

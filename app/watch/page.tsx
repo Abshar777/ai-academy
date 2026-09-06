@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EPISODE_BLURB, EPISODE_TITLE } from "@/lib/episode";
 import { WEBINAR_BOOKING_URL } from "@/lib/next-webinar";
-import { VideoPlayer } from "@/components/video-player";
+import { FreeEpisodePlayer } from "@/components/free-episode-player";
 
 export const metadata: Metadata = {
   title: "Watch episode 1 free",
@@ -26,7 +26,7 @@ export default function WatchPage() {
           </p>
         </div>
 
-        <VideoPlayer className="shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]" />
+        <FreeEpisodePlayer className="shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]" />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <a

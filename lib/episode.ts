@@ -1,7 +1,11 @@
 /**
- * Episode 1, free to watch in either language. Hosted on R2 and served with
- * range support, so the custom player can seek without downloading the whole
- * file first.
+ * Episode 1, free to watch in either language.
+ *
+ * EPISODE_SOURCES below are the object URLs, kept for reference — they are NOT
+ * directly playable any more. The bucket is private, so those addresses answer
+ * 401; a playable, signed URL comes from the course API's /episodes/free, which
+ * components/free-episode-player.tsx fetches. The player still accepts a
+ * `sources` prop of the same shape.
  */
 
 export type EpisodeLanguage = "ml" | "en";

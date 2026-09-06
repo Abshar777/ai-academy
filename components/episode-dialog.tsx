@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { EPISODE_BLURB, EPISODE_PAGE_PATH, EPISODE_TITLE } from "@/lib/episode";
-import { VideoPlayer } from "./video-player";
+import { FreeEpisodePlayer } from "./free-episode-player";
 
 /**
  * The free-episode dialog, hoisted into a provider so anything on the page
@@ -108,7 +108,7 @@ export function EpisodeProvider({ children }: { children: ReactNode }) {
             </svg>
           </button>
 
-          <div className="p-3 sm:p-4">{mounted && <VideoPlayer />}</div>
+          <div className="p-3 sm:p-4">{mounted && <FreeEpisodePlayer />}</div>
 
           <div className="flex flex-col gap-3 px-5 pb-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">

@@ -142,3 +142,29 @@ export function normalizeCountry(code: string): string {
   const known = COUNTRY_OPTIONS.some((c) => c.code === code);
   return known ? code : "IN";
 }
+
+/** Friendly aliases accepted in the `?country=` link on /order, so a campaign
+ *  can share `/order?country=uae` or `/order?country=india` rather than the
+ *  bare ISO code. Maps to the codes in COUNTRY_OPTIONS. */
+const COUNTRY_PARAM_ALIASES: Record<string, string> = {
+  in: "IN", india: "IN",
+  ae: "AE", uae: "AE", "united-arab-emirates": "AE", emirates: "AE",
+  sa: "SA", ksa: "SA", saudi: "SA", "saudi-arabia": "SA",
+  om: "OM", oman: "OM",
+  kw: "KW", kuwait: "KW",
+  qa: "QA", qatar: "QA",
+  bh: "BH", bahrain: "BH",
+  other: "OTHER",
+};
+
+/** Resolves a `?country=` query value to a known country code, accepting either
+ *  an ISO code (IN, ae) or a friendly alias (india, uae, …). Returns "" for
+ *  anything unrecognised, so the caller falls back to geo-detection instead of
+ *  forcing a wrong plan. */
+export function countryFromParam(raw: string | undefined | null): string {
+  if (!raw) return "";
+  const key = raw.trim().toLowerCase();
+  if (COUNTRY_PARAM_ALIASES[key]) return COUNTRY_PARAM_ALIASES[key];
+  const upper = raw.trim().toUpperCase();
+  return COUNTRY_OPTIONS.some((c) => c.code === upper) ? upper : "";
+}

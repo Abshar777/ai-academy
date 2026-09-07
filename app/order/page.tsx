@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { OrderForm } from "@/components/order-form";
+import { countryFromParam } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Join the programme",
@@ -8,9 +9,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function OrderPage() {
-  // Set by middleware.ts from Vercel's geo header — empty string in local
-  // dev, where there's no edge network in front of the request to set it.
-  const country = (await cookies()).get("country")?.value ?? "";
+export default async function OrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const raw = (await searchParams).country;
+  // A `?country=` link (e.g. /order?country=india or ?country=uae) preselects
+  // the plan and wins over geo-detection — useful for country-specific campaign
+  // links. Falls through to the `country` cookie middleware.ts sets from
+  // Vercel's geo header (empty in local dev) when the param is absent/unknown.
+  const fromQuery = countryFromParam(Array.isArray(raw) ? raw[0] : raw);
+  const country = fromQuery || ((await cookies()).get("country")?.value ?? "");
   return <OrderForm initialCountry={country} />;
 }

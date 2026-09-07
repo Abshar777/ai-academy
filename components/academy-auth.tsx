@@ -31,7 +31,7 @@ type AuthContextValue = {
    *  once through a refresh if the token has aged out mid-session. */
   apiFetch: (path: string, init?: RequestInit) => Promise<Response>;
   requestCode: (email: string) => Promise<{ ok: boolean; error?: string }>;
-  verifyCode: (email: string, code: string) => Promise<{ ok: boolean; error?: string }>;
+  verifyCode: (email: string, code: string) => Promise<{ ok: boolean; error?: string; code?: string }>;
   redeemHandoff: (token: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   setUser: (user: AcademyUser) => void;
@@ -39,7 +39,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-type SessionResponse = { accessToken?: string; user?: AcademyUser; error?: string };
+type SessionResponse = { accessToken?: string; user?: AcademyUser; error?: string; code?: string };
 
 export function AcademyAuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>("loading");
@@ -131,7 +131,7 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
           credentials: "include",
         });
         const data = (await res.json().catch(() => null)) as SessionResponse | null;
-        if (!res.ok || !data) return { ok: false, error: data?.error ?? "That didn't work. Try again." };
+        if (!res.ok || !data) return { ok: false, error: data?.error ?? "That didn't work. Try again.", code: data?.code };
         return adopt(data) ? { ok: true } : { ok: false, error: "Could not complete sign-in." };
       } catch {
         return { ok: false, error: "Could not reach the server. Check your connection." };

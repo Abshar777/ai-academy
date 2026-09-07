@@ -19,6 +19,10 @@ export function SignIn({ heading = "Sign in to your course" }: { heading?: strin
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /* A second device is blocked pending approval, or a third is over the limit —
+     shown as its own calm state rather than a red error, since nothing is wrong
+     with the code they entered. */
+  const [blocked, setBlocked] = useState<null | "pending" | "limit">(null);
 
   async function submitEmail(event: React.FormEvent) {
     event.preventDefault();
@@ -36,8 +40,17 @@ export function SignIn({ heading = "Sign in to your course" }: { heading?: strin
     setError(null);
     const result = await verifyCode(email.trim(), code.trim());
     setBusy(false);
-    if (!result.ok) setError(result.error ?? "That code didn't work.");
-    // On success the provider flips to "authed" and this form unmounts.
+    if (result.ok) return; // provider flips to "authed" and this form unmounts
+    if (result.code === "DEVICE_PENDING") { setBlocked("pending"); return; }
+    if (result.code === "DEVICE_LIMIT") { setBlocked("limit"); return; }
+    setError(result.error ?? "That code didn't work.");
+  }
+
+  function reset() {
+    setStep("email");
+    setCode("");
+    setError(null);
+    setBlocked(null);
   }
 
   const inputClass =
@@ -51,7 +64,32 @@ export function SignIn({ heading = "Sign in to your course" }: { heading?: strin
         {heading}
       </h1>
 
-      {step === "email" ? (
+      {blocked ? (
+        <div className="mt-5 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime-30/30 text-neutral-90" aria-hidden>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+              </svg>
+            </span>
+            <h2 className="font-noi-grotesk text-[17px] font-medium tracking-[-0.015em]">
+              {blocked === "pending" ? "One more step" : "Two devices already"}
+            </h2>
+          </div>
+          <p className="font-noi-grotesk text-[15px] leading-[1.45] text-neutral-50">
+            {blocked === "pending"
+              ? <>This is a new device, so it needs a quick approval before it can play the course. We&rsquo;ve let the team know — you&rsquo;ll be able to sign in here as soon as they approve it. Signed in on your usual device already? Use that one.</>
+              : <>You&rsquo;re already set up on two devices, which is the limit. Ask the team to remove one of them, then sign in here again.</>}
+          </p>
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-1 font-noi-grotesk text-[14px] text-neutral-50 underline underline-offset-4 transition-colors hover:text-neutral-90 self-start"
+          >
+            Use a different email
+          </button>
+        </div>
+      ) : step === "email" ? (
         <form onSubmit={submitEmail} className="mt-5 flex flex-col gap-3">
           <p className="font-noi-grotesk text-[15px] leading-[1.45] text-neutral-50">
             Enter the email you enrolled with. We&rsquo;ll send you a six-digit code.
@@ -101,11 +139,7 @@ export function SignIn({ heading = "Sign in to your course" }: { heading?: strin
           </button>
           <button
             type="button"
-            onClick={() => {
-              setStep("email");
-              setCode("");
-              setError(null);
-            }}
+            onClick={reset}
             className="font-noi-grotesk text-[14px] text-neutral-50 underline underline-offset-4 transition-colors hover:text-neutral-90"
           >
             Use a different email

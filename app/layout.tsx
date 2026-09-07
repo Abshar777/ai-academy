@@ -4,6 +4,7 @@ import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { ContactProvider } from "@/components/contact-dialog";
 import { EpisodeProvider } from "@/components/episode-dialog";
+import { DisableContextMenu } from "@/components/disable-context-menu";
 import { SiteChrome } from "@/components/site-chrome";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
@@ -140,6 +141,7 @@ export default function RootLayout({
       </head>
 
       <body className="min-h-full">
+        <DisableContextMenu />
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-BCH1QGTJKD"

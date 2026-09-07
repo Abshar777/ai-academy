@@ -52,3 +52,11 @@ export const CONTACT_WHATSAPP_URL = `https://wa.me/${CONTACT_PHONE}`;
  *  without making the whole route dynamic. */
 export const SITE_DESCRIPTION =
   "Build AI powered applications even if you've never coded before. Learn React, React Native, Python FastAPI and MongoDB with AI tools like Codex, Claude Code and Lovable, and ship four real projects on one all-inclusive plan.";
+
+/**
+ * The brochure PDF, as it appears in a URL. The file name has spaces in it,
+ * which are invalid unescaped, so it is encoded once here — the download link
+ * and the sitemap both read this, rather than each spelling it out and
+ * drifting apart when the file is renamed.
+ */
+export const BROCHURE_HREF = encodeURI("/DELTA AI ACADEMY BROCHURE.pdf");

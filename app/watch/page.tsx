@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EPISODE_BLURB, EPISODE_TITLE } from "@/lib/episode";
 import { WEBINAR_BOOKING_URL } from "@/lib/next-webinar";
 import { FreeEpisodePlayer } from "@/components/free-episode-player";
+import { EnrollmentToasts } from "@/components/enrollment-toasts";
 
 export const metadata: Metadata = {
   title: "Watch episode 1 free",
@@ -45,6 +46,7 @@ export default function WatchPage() {
           </Link>
         </div>
       </div>
+      <EnrollmentToasts />
     </main>
   );
 }

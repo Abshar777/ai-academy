@@ -56,9 +56,24 @@ export function OfferBanner() {
 
         <span aria-hidden className="h-3 w-px bg-neutral-90/25" />
 
-        {/* Short on phones, where the full sentence and a countdown won't
-            both fit on one line. */}
-        <span className="font-medium sm:hidden">Offer ends this weekend</span>
+        {/* Phones get the clock too, just coarser. Days and hours carry the
+            urgency; minutes and seconds are what won't fit beside the rest of
+            the sentence at 375px, so they are the part that goes. */}
+        <span className="font-medium sm:hidden">
+          {remaining ? (
+            <>
+              Ends in{" "}
+              <span className="font-semibold tabular-nums">
+                {remaining.days > 0
+                  ? `${remaining.days}d ${remaining.hours}h`
+                  : `${remaining.hours}h ${remaining.minutes}m`}
+              </span>
+            </>
+          ) : (
+            "Offer ends this weekend"
+          )}
+        </span>
+
         <span className="hidden font-medium sm:inline">
           Launch price ends {deadline ? formatOfferDeadline(deadline) : "this weekend"}
         </span>

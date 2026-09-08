@@ -169,7 +169,7 @@ export function AiChatWidget() {
     <div
       className={
         "fixed right-4 z-[51] flex flex-col items-end transition-[bottom] duration-300 ease-in-out sm:right-6 " +
-        (enrollBarVisible ? "bottom-[80px] sm:bottom-6" : "bottom-4 sm:bottom-6")
+        (enrollBarVisible ? "bottom-[88px] sm:bottom-6" : "bottom-4 sm:bottom-6")
       }
     >
       <AnimatePresence>

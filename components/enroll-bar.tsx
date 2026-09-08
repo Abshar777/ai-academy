@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { normalizeCountry, planForCountry } from "@/lib/pricing";
+import { discountPercent, normalizeCountry, planForCountry } from "@/lib/pricing";
 import { readCountryCookie } from "@/lib/country-cookie";
 import { useEnrollBarVisible } from "@/lib/use-enroll-bar-visible";
 import { PROGRAMME_NAME } from "@/lib/site";
@@ -34,6 +34,7 @@ export function EnrollBar() {
   }, []);
 
   const plan = planForCountry(country);
+  const off = discountPercent(plan);
 
   return (
     // pointer-events-none/auto split: this wrapper spans the full inset
@@ -51,36 +52,41 @@ export function EnrollBar() {
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
             className="pointer-events-auto w-full max-w-xl rounded-full border border-white/10 bg-neutral-90/95 shadow-[0_16px_48px_-16px_rgba(0,0,0,0.55)] backdrop-blur-md sm:max-w-2xl"
           >
-            <div className="flex w-full items-center justify-end gap-3 py-2 pr-20 pl-4 sm:gap-4 sm:py-2.5 sm:pr-8 sm:pl-5">
-              <span className="hidden min-w-0 truncate font-noi-grotesk text-[14px] leading-none font-semibold tracking-[-0.015em] text-white sm:block sm:text-[19px]">
-                {PROGRAMME_NAME}
-              </span>
+            <div className="flex w-full items-center gap-3 py-2 pr-4 pl-4 sm:gap-4 sm:py-2.5 sm:pr-8 sm:pl-5">
+              {/* Stacks on phones. One row can't hold the name, the price and
+                  the button at a size worth reading, and the name is what says
+                  which thing is being sold — dropping it left the bar showing
+                  a number with nothing attached to it. */}
+              <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                <span className="min-w-0 truncate font-noi-grotesk text-[11px] leading-none font-medium tracking-[-0.015em] text-white/75 sm:text-[19px] sm:font-semibold sm:text-white">
+                  {PROGRAMME_NAME}
+                </span>
 
-            <span aria-hidden className="hidden h-5 w-px bg-white/15 sm:block" />
-                <span className="flex items-baseline gap-1 sm:gap-1.5">
-                  
-                  <span className="font-noi-grotesk text-[17px] leading-none font-semibold tracking-[-0.015em] text-white sm:text-[20px]">
+                <span aria-hidden className="hidden h-5 w-px shrink-0 bg-white/15 sm:block" />
+
+                <span className="flex shrink-0 items-baseline gap-1.5">
+                  <span className="font-noi-grotesk text-[16px] leading-none font-semibold tracking-[-0.015em] text-white sm:text-[20px]">
                     {plan.label}
                   </span>
                   {plan.originalLabel && (
-                    <span className="font-noi-grotesk text-[10px] font-medium tracking-[-0.01em] text-white/40 line-through sm:text-[12px]">
+                    <span className="font-noi-grotesk text-[11px] leading-none font-medium tracking-[-0.01em] text-white/40 line-through sm:text-[12px]">
                       {plan.originalLabel}
                     </span>
                   )}
+                  {off !== null && (
+                    <span className="font-noi-grotesk text-[11px] leading-none font-semibold tracking-[-0.01em] text-lime-30 sm:text-[12px]">
+                      {off}% off
+                    </span>
+                  )}
                 </span>
-
-              <div className="flex shrink-0 items-center gap-3 sm:gap-4">
-                <Link
-                  href="/order"
-                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
-                >
-                  Enroll now
-                </Link>
-
-    
-
-              
               </div>
+
+              <Link
+                href="/order"
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
+              >
+                Enroll now
+              </Link>
             </div>
           </motion.div>
         )}

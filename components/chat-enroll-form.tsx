@@ -67,7 +67,7 @@ export function ChatEnrollForm() {
     saveContactDetails(contact);
     sendWelcomeEmailRequest({ ...contact, country });
 
-    if (paymentMethod === "razorpay" && plan.country === "IN") {
+    if (paymentMethod === "razorpay") {
       await startRazorpayCheckout({ ...contact, country }, {
         onSuccess: ({ orderId, paymentId, handoffToken }) => {
           const query = new URLSearchParams({ orderId, paymentId });

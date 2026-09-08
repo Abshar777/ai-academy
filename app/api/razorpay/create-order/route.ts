@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
-import { getRazorpayClient, razorpayCurrency, RazorpayNotConfiguredError } from "@/lib/razorpay";
-import { INDIA_PLAN } from "@/lib/pricing";
+import { getRazorpayClient, RazorpayNotConfiguredError } from "@/lib/razorpay";
+import { normalizeCountry, planForCountry } from "@/lib/pricing";
 import { isValidEmail, isValidName, isValidPhone } from "@/lib/contact-validation";
 import { computeDiscountedAmount, lookupCoupon } from "@/lib/coupons";
 
 export const runtime = "nodejs";
 
 /**
- * Creates a Razorpay order for the India plan only — see the currency note
- * on lib/razorpay.ts. The amount always comes from INDIA_PLAN (optionally
- * discounted by a coupon looked up server-side), never from anything the
- * client sends, so a tampered request can't change what gets charged.
+ * Creates a Razorpay order in the currency of the buyer's own plan — rupees
+ * for India, dirhams elsewhere. It used to charge INR whatever the country,
+ * which is why selecting Razorpay outside India fell through to "the team
+ * will reach out" instead of opening checkout.
+ *
+ * The plan is resolved here from the country code, so the amount and currency
+ * come from lib/pricing.ts and never from anything the client sends — a
+ * tampered request still can't change what gets charged.
  *
  * A coupon that fully covers the price is rejected here — Razorpay doesn't
  * support ₹0 orders, so fully-free redemptions go through
@@ -34,14 +38,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing or invalid contact details." }, { status: 400 });
   }
 
-  let amount = INDIA_PLAN.amount;
+  const plan = planForCountry(normalizeCountry(country));
+
+  let amount = plan.amount;
   let appliedCoupon = "";
   if (couponCode) {
     const lookup = await lookupCoupon(couponCode);
     if (!lookup.valid) {
       return NextResponse.json({ error: lookup.error }, { status: 400 });
     }
-    const discounted = computeDiscountedAmount(INDIA_PLAN.amount, lookup.coupon);
+    const discounted = computeDiscountedAmount(plan.amount, lookup.coupon);
     if (discounted === 0) {
       return NextResponse.json(
         { error: "This coupon fully covers the price — enrol free instead of through checkout." },
@@ -54,10 +60,10 @@ export async function POST(request: Request) {
 
   try {
     const order = await getRazorpayClient().orders.create({
-      // Smallest currency unit — paise for INR, which is the only currency
-      // this endpoint ever charges (see INDIA_PLAN / lib/razorpay.ts).
+      // Smallest currency unit — paise for INR, fils for AED. Both are
+      // hundredths, so one conversion covers every plan we sell.
       amount: Math.round(amount * 100),
-      currency: razorpayCurrency(),
+      currency: plan.currency,
       receipt: `order_${Date.now()}`,
       notes: { name, email, phone, country, couponCode: appliedCoupon },
     });

@@ -78,7 +78,7 @@ export const DEFAULT_PLAN: PricingPlan = {
   // and originalAmount together if the rate moves.
   originalLabel: "AED 175",
   originalAmount: 175,
-  methods: ["tabby", "tamara", "razorpay"],
+  methods: ["razorpay", "tabby", "tamara"],
 };
 
 const DEFAULT = DEFAULT_PLAN;
@@ -106,10 +106,12 @@ export const COUNTRY_OPTIONS: { code: string; name: string }[] = [
 export function planForCountry(countryCode: string | undefined | null): PricingPlan {
   if (countryCode === "IN") return INDIA;
   if (countryCode && ABZER_COUNTRIES.has(countryCode)) {
-    // Abzer first — it's the only method here that actually completes a
-    // payment; Tabby/Tamara/Razorpay stay listed but fall through to the
-    // static-link/"team will follow up" path, same as today.
-    return { ...DEFAULT, methods: ["abzer", ...DEFAULT.methods] };
+    // Razorpay leads, Abzer behind it. Both complete a payment now that
+    // checkout charges this plan's own currency rather than only INR;
+    // Tabby/Tamara stay listed but still fall through to the "team will
+    // follow up" path.
+    const [first, ...rest] = DEFAULT.methods;
+    return { ...DEFAULT, methods: [first!, "abzer", ...rest] };
   }
   return DEFAULT;
 }

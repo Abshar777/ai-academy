@@ -1,10 +1,14 @@
 import Razorpay from "razorpay";
 
 /**
- * Server-only Razorpay client. Real checkout is scoped to the India plan
- * (see app/api/razorpay/create-order/route.ts) — the account behind
- * RAZORPAY_KEY_ID/SECRET is assumed to settle in RAZORPAY_CURRENCY only, so
- * nothing here ever charges a different currency.
+ * Server-only Razorpay client.
+ *
+ * Checkout charges the currency of the buyer's plan — see
+ * app/api/razorpay/create-order/route.ts, which resolves it from the country.
+ * Anything other than INR needs International Payments enabled on the
+ * Razorpay account; without it the order call is refused and checkout will
+ * not open, so confirm that in the dashboard before relying on it in
+ * production.
  */
 
 let client: Razorpay | null = null;
@@ -28,6 +32,11 @@ export function getRazorpayClient(): Razorpay {
   return client;
 }
 
+/**
+ * No longer decides what checkout charges — the plan does. Kept because
+ * RAZORPAY_CURRENCY is still set in deployed environments, and a function that
+ * quietly disappeared would be harder to trace than one that says so.
+ */
 export function razorpayCurrency(): string {
   return process.env.RAZORPAY_CURRENCY || "INR";
 }

@@ -187,7 +187,7 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
       return;
     }
 
-    if (paymentMethod === "razorpay" && plan.country === "IN") {
+    if (paymentMethod === "razorpay") {
       await startRazorpayCheckout({ ...contact, country, couponCode: appliedCoupon?.code }, {
         // Full navigation, not a status flag — the thank-you page (with its
         // own confetti + copy) IS the success state, same as how the

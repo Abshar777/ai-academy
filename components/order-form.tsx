@@ -210,6 +210,30 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
       return;
     }
 
+    if (paymentMethod === "stripe") {
+      try {
+        const res = await fetch("/api/stripe/create-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...contact, country, couponCode: appliedCoupon?.code }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.checkoutUrl) {
+          setErrorMessage(data?.error ?? "Could not start checkout. Please try again.");
+          setStatus("error");
+          return;
+        }
+        // Full redirect to Stripe's hosted page. The buyer comes back to
+        // /order/thank-you, but that is only a navigation — the payment is
+        // confirmed by app/api/stripe/webhook, never by the return trip.
+        window.location.href = data.checkoutUrl;
+      } catch {
+        setErrorMessage("Could not start checkout. Please try again.");
+        setStatus("error");
+      }
+      return;
+    }
+
     if (paymentMethod === "abzer") {
       try {
         const res = await fetch("/api/abzer/create-order", {

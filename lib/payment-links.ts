@@ -12,11 +12,12 @@ const LINKS: Record<PaymentMethodId, string | undefined> = {
   razorpay: process.env.NEXT_PUBLIC_RAZORPAY_PAYMENT_LINK,
   tabby: process.env.NEXT_PUBLIC_TABBY_CHECKOUT_URL,
   tamara: process.env.NEXT_PUBLIC_TAMARA_CHECKOUT_URL,
-  // Abzer has its own dedicated create-order route (see
-  // app/api/abzer/create-order) and never falls through to this static-link
-  // path — kept here only so this Record stays exhaustive over
-  // PaymentMethodId.
+  // Abzer and Stripe each have their own create-session route
+  // (app/api/abzer/create-order, app/api/stripe/create-session) and never
+  // fall through to this static-link path — kept here only so this Record
+  // stays exhaustive over PaymentMethodId.
   abzer: undefined,
+  stripe: undefined,
 };
 
 export function paymentLinkFor(method: PaymentMethodId): string | null {

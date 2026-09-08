@@ -11,7 +11,7 @@
  * grants anyone this missed.
  */
 
-export type AccessSource = "razorpay" | "abzer" | "coupon";
+export type AccessSource = "razorpay" | "stripe" | "abzer" | "coupon";
 
 export type GrantInput = {
   email: string;

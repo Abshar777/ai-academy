@@ -10,7 +10,7 @@ import { getDb } from "./mongodb";
  * enrollment would be invisible to anything that only queried Razorpay.
  */
 
-export type EnrollmentSource = "razorpay" | "abzer" | "coupon";
+export type EnrollmentSource = "razorpay" | "stripe" | "abzer" | "coupon";
 
 export type Enrollment = {
   name: string;
@@ -28,6 +28,10 @@ export type Enrollment = {
    *  a different gateway's identifiers. */
   abzerOrderId?: string;
   abzerReceiptId?: string;
+  /** Stripe Checkout Session id. Unique, and the thing a repeated webhook
+   *  delivery is recognised by — same role razorpayPaymentId plays. */
+  stripeSessionId?: string;
+  stripePaymentIntentId?: string;
   createdAt: Date;
 };
 
@@ -47,14 +51,19 @@ async function collection(): Promise<Collection<Enrollment> | null> {
   const coll = db.collection<Enrollment>(COLLECTION);
   if (!indexesEnsured) {
     indexesEnsured = true;
-    await coll
-      .createIndex(
-        { razorpayPaymentId: 1 },
-        { unique: true, partialFilterExpression: { razorpayPaymentId: { $type: "string" } } },
-      )
-      .catch((err) => {
-        console.error("[enrollments] Failed to ensure unique index on razorpayPaymentId", err);
-      });
+    // One index per gateway rather than one shared "paymentRef": the ids come
+    // from different systems and a single field would collide the moment two
+    // of them ever produced the same string.
+    for (const field of ["razorpayPaymentId", "stripeSessionId"] as const) {
+      await coll
+        .createIndex(
+          { [field]: 1 },
+          { unique: true, partialFilterExpression: { [field]: { $type: "string" } } },
+        )
+        .catch((err) => {
+          console.error(`[enrollments] Failed to ensure unique index on ${field}`, err);
+        });
+    }
   }
   return coll;
 }
@@ -82,20 +91,23 @@ export async function recordEnrollment(
 
     const row = { ...data, createdAt: new Date() };
 
-    // Anything without a payment id (coupon, and Abzer — already de-duped
-    // upstream by the atomic pending -> paid flip in lib/abzer-orders.ts)
-    // has nothing to key on, so it inserts straight.
-    if (!data.razorpayPaymentId) {
+    // Whichever gateway reference this row carries is what a repeat delivery
+    // is recognised by. Anything without one (coupon, and Abzer — already
+    // de-duped upstream by the atomic pending -> paid flip in
+    // lib/abzer-orders.ts) has nothing to key on, so it inserts straight.
+    const dedupe = data.razorpayPaymentId
+      ? { razorpayPaymentId: data.razorpayPaymentId }
+      : data.stripeSessionId
+        ? { stripeSessionId: data.stripeSessionId }
+        : null;
+
+    if (!dedupe) {
       await coll.insertOne(row);
       return { created: true };
     }
 
     // $setOnInsert so a second arrival is a no-op rather than an overwrite.
-    const result = await coll.updateOne(
-      { razorpayPaymentId: data.razorpayPaymentId },
-      { $setOnInsert: row },
-      { upsert: true },
-    );
+    const result = await coll.updateOne(dedupe, { $setOnInsert: row }, { upsert: true });
     return { created: result.upsertedCount > 0 };
   } catch (err) {
     // A duplicate-key error means the index did its job and another caller

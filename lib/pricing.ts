@@ -15,7 +15,7 @@
  * static payment link or a "team will follow up" fallback.
  */
 
-export type PaymentMethodId = "razorpay" | "tabby" | "tamara" | "abzer";
+export type PaymentMethodId = "razorpay" | "stripe" | "tabby" | "tamara" | "abzer";
 
 /** Countries where Abzer Pay is offered, per product decision — not every
  *  non-India country, just this named Middle East set. "OTHER" deliberately
@@ -60,7 +60,7 @@ export const INDIA_PLAN: PricingPlan = {
   label: "₹999",
   originalLabel: "₹4,000",
   originalAmount: 4000,
-  methods: ["razorpay"],
+  methods: ["razorpay", "stripe"],
 };
 
 const INDIA = INDIA_PLAN;
@@ -78,13 +78,14 @@ export const DEFAULT_PLAN: PricingPlan = {
   // and originalAmount together if the rate moves.
   originalLabel: "AED 175",
   originalAmount: 175,
-  methods: ["razorpay", "tabby", "tamara"],
+  methods: ["razorpay", "stripe", "tabby", "tamara"],
 };
 
 const DEFAULT = DEFAULT_PLAN;
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodId, string> = {
   razorpay: "Razorpay",
+  stripe: "Card (Stripe)",
   tabby: "Tabby",
   tamara: "Tamara",
   abzer: "Abzer Pay",

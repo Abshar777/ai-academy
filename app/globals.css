@@ -142,11 +142,25 @@ body {
   --nav-offset: 3rem;
   --nav-padding: 0.5rem;
   --desktop-nav-height: 3.5rem;
-  --desktop-nav-top-offset: 1.5rem;
   --condensed-nav-width: 48rem;
   --mobile-nav-height: 3rem;
   --mobile-nav-offset: 2rem;
-  --mobile-top-offset: 1.5rem;
+
+  /* Height of the launch-price bar pinned to the top of every marketing page
+     (components/offer-banner.tsx). Everything that positions against the top
+     of the viewport adds it, so the bar's size is set in exactly one place.
+     Set to 0 and the whole layout closes up again. */
+  --announcement-height: 2.25rem;
+
+  --desktop-nav-top-offset: calc(1.5rem + var(--announcement-height));
+  --mobile-top-offset: calc(1.5rem + var(--announcement-height));
+}
+
+/* The bar is fixed, so it takes no space in the flow — this gives it some,
+   which keeps it off the top of the hero rather than over it. Set on a class
+   the chrome adds, because /admin has no bar. */
+body:has(.site-announcement) {
+  padding-top: var(--announcement-height);
 }
 
 .page-surface {

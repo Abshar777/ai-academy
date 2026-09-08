@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { OfferBanner } from "./offer-banner";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
 import { AiChatWidget } from "./ai-chat-widget";
@@ -20,6 +21,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <OfferBanner />
       <SiteHeader />
       {children}
       <SiteFooter />

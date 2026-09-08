@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { OrderForm } from "@/components/order-form";
+import { AlreadyEnrolledGuard } from "@/components/already-enrolled-guard";
 import { countryFromParam } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -21,5 +22,10 @@ export default async function OrderPage({
   // Vercel's geo header (empty in local dev) when the param is absent/unknown.
   const fromQuery = countryFromParam(Array.isArray(raw) ? raw[0] : raw);
   const country = fromQuery || ((await cookies()).get("country")?.value ?? "");
-  return <OrderForm initialCountry={country} />;
+  return (
+    <>
+      <AlreadyEnrolledGuard />
+      <OrderForm initialCountry={country} />
+    </>
+  );
 }

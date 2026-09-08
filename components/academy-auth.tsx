@@ -60,7 +60,16 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
     setStatus("anon");
   }, []);
 
+  /**
+   * One refresh at a time. Several things can want the session at once — the
+   * mount effect, a 401 retry, a guard on the page — and each extra request
+   * carries a token the one before it has already rotated away.
+   */
+  const inFlight = useRef<Promise<boolean> | null>(null);
+
   const refresh = useCallback(async (): Promise<boolean> => {
+    if (inFlight.current) return inFlight.current;
+    const attempt = (async (): Promise<boolean> => {
     try {
       const res = await fetch(`${ACADEMY_API_URL}/auth/refresh`, {
         method: "POST",
@@ -70,6 +79,14 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
       return adopt((await res.json()) as SessionResponse);
     } catch {
       return false;
+    }
+    })();
+
+    inFlight.current = attempt;
+    try {
+      return await attempt;
+    } finally {
+      inFlight.current = null;
     }
   }, [adopt]);
 

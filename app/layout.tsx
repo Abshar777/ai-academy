@@ -6,6 +6,7 @@ import { ContactProvider } from "@/components/contact-dialog";
 import { EpisodeProvider } from "@/components/episode-dialog";
 import { DisableContextMenu } from "@/components/disable-context-menu";
 import { SiteChrome } from "@/components/site-chrome";
+import { AcademyAuthProvider } from "@/components/academy-auth";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
@@ -154,11 +155,19 @@ export default function RootLayout({
           `}
         </Script>
 
-        <ContactProvider>
-          <EpisodeProvider>
-            <SiteChrome>{children}</SiteChrome>
-          </EpisodeProvider>
-        </ContactProvider>
+        {/* Session at the root, not just under /learn. Checkout needs to know
+            whether the visitor already owns the course, and the sign-in form
+            reappearing on a signed-in browser was the same gap seen from the
+            other side. It costs anonymous visitors nothing: the provider only
+            reaches for a session when the da_session hint cookie says there
+            might be one. */}
+        <AcademyAuthProvider>
+          <ContactProvider>
+            <EpisodeProvider>
+              <SiteChrome>{children}</SiteChrome>
+            </EpisodeProvider>
+          </ContactProvider>
+        </AcademyAuthProvider>
       </body>
     </html>
   );

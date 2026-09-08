@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useEpisode } from "./episode-dialog";
 
 /**
  * Compact looping video preview — same lazy-play-near-viewport behaviour as
  * ClassPreview in pricing-section.tsx (reusing the same /video.mp4 asset),
  * just sized down for a sidebar slot on /order instead of a full section.
+ *
+ * Opens the free episode, like its larger twin does. It carried a play button
+ * and the words "see a class before you join" while being a plain div, so the
+ * one thing it invited you to do was the one thing it did not do.
  */
 export function VideoPreview() {
+  const { open: openEpisode } = useEpisode();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -44,7 +50,12 @@ export function VideoPreview() {
   }, []);
 
   return (
-    <div className="group relative flex aspect-video w-full items-end overflow-hidden rounded-2xl">
+    <button
+      type="button"
+      onClick={() => openEpisode({ autoPlay: true })}
+      aria-label="Watch a class — play the free episode"
+      className="group relative flex aspect-video w-full items-end overflow-hidden rounded-2xl text-left"
+    >
       <video
         ref={videoRef}
         src="/video.mp4"
@@ -69,6 +80,6 @@ export function VideoPreview() {
       <span className="relative z-10 p-4 font-noi-grotesk text-[14px] leading-[1.3] font-medium tracking-[-0.015em] text-white">
         See a class before you join
       </span>
-    </div>
+    </button>
   );
 }

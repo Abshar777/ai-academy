@@ -45,13 +45,13 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  icons: {
-    icon: [{ url: "/favicon.ico" }],
-    other: [
-      { rel: "icon", url: "/favicon.ico", sizes: "32x32" },
-      { rel: "icon", url: "/favicon.ico", sizes: "16x16" },
-    ],
-  },
+  // No `icons` here on purpose. app/favicon.ico, app/icon.png and
+  // app/apple-icon.png are picked up by Next's file conventions, which emit
+  // one correctly-typed link each. Declaring icons in metadata as well
+  // replaced those: it produced three extra <link rel="icon"> tags pointing at
+  // the same .ico under two wrong size hints, and dropped the apple-touch-icon
+  // entirely. Google asks for a single favicon declaration, and iOS needs that
+  // apple link to put the logo on a home screen.
   openGraph: {
     type: "website",
     url: "/",
@@ -59,14 +59,6 @@ export const metadata: Metadata = {
     title: TITLE,
     description: SITE_DESCRIPTION,
     locale: "en_US",
-    images: [
-      {
-        url: "/favicon.ico",
-        width: 512,
-        height: 512,
-        alt: SITE_NAME,
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -124,12 +116,6 @@ export default function RootLayout({
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"
-        />
-
-        <link
-          rel="mask-icon"
-          href="/icons/icon-512.png"
-          color="#14151c"
         />
 
         <script

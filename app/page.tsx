@@ -11,7 +11,6 @@ import { PricingSection } from "@/components/pricing-section";
 import { FaqSection } from "@/components/faq-section";
 import { ClosingCta } from "@/components/closing-cta";
 import { Preloader } from "@/components/preloader";
-import { EnrollmentToasts } from "@/components/enrollment-toasts";
 
 export default function Home() {
   return (
@@ -39,7 +38,6 @@ export default function Home() {
         </div>
       </main>
       <ClosingCta />
-      <EnrollmentToasts />
     </>
   );
 }

@@ -7,7 +7,6 @@ import { BrochureLink } from "@/components/brochure-link";
 import { Reveal } from "@/components/reveal";
 import { SplitReveal } from "@/components/split-reveal";
 import { StaggerGroup, StaggerItem } from "@/components/stagger";
-import { EnrollmentToasts } from "@/components/enrollment-toasts";
 
 export const metadata: Metadata = {
   title: "Full Curriculum",
@@ -138,7 +137,6 @@ export default function CoursePage() {
           Pay in full, or split it with Tabby or Tamara at enrolment. Razorpay accepted too.
         </Reveal>
       </section>
-      <EnrollmentToasts />
     </main>
   );
 }

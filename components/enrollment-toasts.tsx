@@ -131,7 +131,10 @@ export function EnrollmentToasts({
   return createPortal(
     <div
       aria-live="polite"
-      className="pointer-events-none fixed bottom-24 left-3 z-[60] sm:bottom-6 sm:left-6"
+      // Anchored under the nav's resting position, derived from the same
+      // variables the nav and the offer banner use — so it can't drift out
+      // from under either when one of them changes height.
+      className="pointer-events-none fixed left-3 z-[60] top-[calc(var(--mobile-top-offset)+var(--mobile-nav-height)+0.75rem)] sm:left-6 sm:top-[calc(var(--desktop-nav-top-offset)+var(--desktop-nav-height)+0.75rem)]"
     >
       <div
         className={`pointer-events-auto flex w-[min(20rem,calc(100vw-1.5rem))] items-start gap-3 rounded-2xl bg-white p-3 pr-9 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-black/5 ${
@@ -180,13 +183,15 @@ export function EnrollmentToasts({
         .toast-bar {
           animation: toast-progress ${visibleMs}ms linear forwards;
         }
+        /* Drops in from above and retreats the same way, now that the toast
+           sits at the top of the screen rather than the bottom. */
         @keyframes toast-in {
-          from { opacity: 0; transform: translateY(12px) scale(0.96); }
+          from { opacity: 0; transform: translateY(-12px) scale(0.96); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes toast-out {
           from { opacity: 1; transform: translateY(0); }
-          to { opacity: 0; transform: translateY(10px); }
+          to { opacity: 0; transform: translateY(-10px); }
         }
         @keyframes toast-progress {
           from { width: 100%; }

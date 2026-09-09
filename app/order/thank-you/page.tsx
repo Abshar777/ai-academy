@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfettiBurst } from "@/components/confetti-burst";
+import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
+import { grantCourseAccess } from "@/lib/course-access";
 
 export const metadata: Metadata = {
   title: "Payment successful",
@@ -18,17 +20,65 @@ export const metadata: Metadata = {
  * download button below, which re-fetches and re-verifies against the
  * matching gateway itself (see app/api/invoice).
  */
+/**
+ * Turns a paid Stripe checkout session into a sign-in ticket.
+ *
+ * Never throws: this runs while rendering a page that has to say "payment
+ * successful" regardless. If anything here fails the buyer simply signs in
+ * with an emailed code instead, which is the same fallback every other
+ * gateway has.
+ */
+async function ticketForStripeSession(sessionId: string | undefined): Promise<string | null> {
+  if (!sessionId || !isStripeConfigured()) return null;
+
+  try {
+    const session = await getStripeClient().checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== "paid") return null;
+
+    const meta = session.metadata ?? {};
+    const email = meta.email ?? session.customer_email ?? "";
+    if (!email) return null;
+
+    // Idempotent on the order reference, and the webhook very likely granted
+    // this already — this call is here for the ticket, not the access.
+    const { handoffToken } = await grantCourseAccess({
+      email,
+      name: meta.name,
+      phone: meta.phone,
+      country: meta.country,
+      source: "stripe",
+      orderRef: `stripe:${session.id}`,
+    });
+    return handoffToken;
+  } catch (err) {
+    console.error("[thank-you] could not mint a sign-in ticket for the Stripe session", err);
+    return null;
+  }
+}
+
 export default async function ThankYouPage({
   searchParams,
 }: {
-  searchParams: Promise<{ orderId?: string; paymentId?: string; ht?: string }>;
+  searchParams: Promise<{
+    orderId?: string;
+    paymentId?: string;
+    ht?: string;
+    session_id?: string;
+  }>;
 }) {
-  const { orderId, paymentId, ht } = await searchParams;
+  const { orderId, paymentId, ht, session_id: stripeSessionId } = await searchParams;
+
   // The one-time ticket from the purchase bridge. /learn spends it on arrival
   // and strips it from the URL, so the buyer lands inside the course already
   // signed in. Absent when the course API was unreachable — they can still get
   // in with an emailed code, so the link is offered either way.
-  const courseHref = ht ? `/learn?ht=${encodeURIComponent(ht)}` : "/learn";
+  //
+  // Stripe is the exception: its ticket is minted by a webhook, which has no
+  // browser to hand it to, so the buyer arrives carrying only the checkout
+  // session id. That id is known to nobody but them, and Stripe is asked
+  // whether it was actually paid before anything is issued against it.
+  const ticket = ht ?? (await ticketForStripeSession(stripeSessionId));
+  const courseHref = ticket ? `/learn?ht=${encodeURIComponent(ticket)}` : "/learn";
 
   const invoiceHref =
     orderId && paymentId

@@ -158,9 +158,17 @@ body {
 
 /* The bar is fixed, so it takes no space in the flow — this gives it some,
    which keeps it off the top of the hero rather than over it. Set on a class
-   the chrome adds, because /admin has no bar. */
+   the chrome adds, because /admin and /learn have no bar. */
 body:has(.site-announcement) {
   padding-top: var(--announcement-height);
+}
+
+/* No bar on this page, so nothing should be reserved for one. Redefined at the
+   same level the offsets are, because a custom property that other custom
+   properties are built from is resolved where it is declared — overriding it
+   further down the tree would leave the nav still holding the gap. */
+html:not(:has(.site-announcement)) {
+  --announcement-height: 0rem;
 }
 
 .page-surface {
@@ -754,5 +762,28 @@ body:has(.site-announcement) {
 @media (prefers-reduced-motion: reduce) {
   .preloader {
     display: none;
+  }
+}
+
+/* The seconds box on the launch-price bar, breathing once a second so the
+   deadline reads as running rather than printed. Scoped to that one box —
+   a whole bar that pulses is a bar people learn to ignore. */
+@keyframes offer-tick {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+.offer-tick {
+  animation: offer-tick 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-tick {
+    animation: none;
   }
 }

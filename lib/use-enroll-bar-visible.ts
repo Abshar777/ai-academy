@@ -12,8 +12,9 @@ import { useEffect, useState } from "react";
  * the price and the saving are worth keeping in view while someone fills the
  * form, and on that page the bar scrolls to the form rather than navigating.
  *
- * The pages after payment are the exception. Offering to enrol someone who
- * has just paid reads as not knowing they did.
+ * Two exceptions: the pages after payment, and the course itself. Offering to
+ * enrol someone who has just paid — or who is sitting in the thing they
+ * bought — reads as not knowing who they are.
  */
 
 const SHOW_AFTER_PX = 480;
@@ -22,11 +23,14 @@ const HIDE_NEAR_BOTTOM_PX = 480;
 export function useEnrollBarVisible(): boolean {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const afterPayment =
-    (pathname?.startsWith("/order/thank-you") || pathname?.startsWith("/order/payment-return")) ?? false;
+  const alreadyIn =
+    (pathname?.startsWith("/order/thank-you") ||
+      pathname?.startsWith("/order/payment-return") ||
+      pathname?.startsWith("/learn")) ??
+    false;
 
   useEffect(() => {
-    if (afterPayment) {
+    if (alreadyIn) {
       const id = window.setTimeout(() => setVisible(false), 0);
       return () => window.clearTimeout(id);
     }
@@ -43,7 +47,7 @@ export function useEnrollBarVisible(): boolean {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [afterPayment]);
+  }, [alreadyIn]);
 
   return visible;
 }

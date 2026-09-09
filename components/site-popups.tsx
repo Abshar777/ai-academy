@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { hasSessionHint } from "@/lib/academy-api";
+import { useSessionHint } from "@/lib/use-session-hint";
 import { EPISODE_PAGE_PATH } from "@/lib/episode";
 import { WEBINAR_BOOKING_URL, formatWebinarDate, nextWebinarDate } from "@/lib/next-webinar";
 import { useEpisode } from "./episode-dialog";
@@ -24,6 +24,15 @@ import { useEpisode } from "./episode-dialog";
  */
 
 const FIRST_POPUP_DELAY_MS = 3000;
+
+/**
+ * The seminar popup is paused. Set back to true to bring it and its poster
+ * back — everything it needs is still here, nothing was deleted.
+ *
+ * While it is off, the free-episode popup takes its slot directly rather than
+ * waiting to be handed the baton, which is what used to open it.
+ */
+const SEMINAR_POPUP_ENABLED = false;
 
 /** Routes where an interrupting dialog is the wrong call. */
 function isSuppressed(pathname: string | null): boolean {
@@ -59,14 +68,7 @@ function CloseButton({ onClick }: { onClick: () => void }) {
 export function SitePopups() {
   const pathname = usePathname();
 
-  // Read after mount rather than during render: the server has no way to know,
-  // and a cookie read in the render pass would disagree with the markup it
-  // hydrates into. Deferred a tick, matching the pattern used elsewhere here.
-  const [hasSession, setHasSession] = useState(false);
-  useEffect(() => {
-    const id = window.setTimeout(() => setHasSession(hasSessionHint()), 0);
-    return () => window.clearTimeout(id);
-  }, []);
+  const hasSession = useSessionHint();
 
   const suppressed = isSuppressed(pathname) || hasSession;
   const episode = useEpisode();
@@ -87,13 +89,22 @@ export function SitePopups() {
     if (suppressed || stage.current !== "idle") return;
 
     const timer = window.setTimeout(() => {
+      // With the seminar paused there is no dialog to close, so nothing would
+      // ever hand the episode popup its cue — it opens on the same delay
+      // instead.
+      if (!SEMINAR_POPUP_ENABLED) {
+        stage.current = "done";
+        episode.open();
+        return;
+      }
+
       setWebinarDate(formatWebinarDate(nextWebinarDate()));
       stage.current = "seminar";
       seminarRef.current?.showModal();
     }, FIRST_POPUP_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [suppressed]);
+  }, [suppressed, episode]);
 
   /**
    * Both the scroll lock and the seminar -> episode hand-off run off the
@@ -134,7 +145,9 @@ export function SitePopups() {
     // detached node would silently stop driving the hand-off on the way back.
   }, [suppressed, episode]);
 
-  if (suppressed) return null;
+  // Paused rather than removed: the markup below is what comes back when
+  // SEMINAR_POPUP_ENABLED goes true again.
+  if (suppressed || !SEMINAR_POPUP_ENABLED) return null;
 
   return (
     <>

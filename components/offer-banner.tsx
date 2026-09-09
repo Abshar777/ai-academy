@@ -50,40 +50,65 @@ export function OfferBanner() {
     <div className="site-announcement fixed inset-x-0 top-0 z-[60] bg-lime-30 text-neutral-90">
       <Link
         href="/order"
-        className="mx-auto flex h-(--announcement-height) w-full max-w-[1200px] items-center justify-center gap-2 px-4 font-noi-grotesk text-[12px] leading-none tracking-[-0.01em] transition-opacity duration-150 hover:opacity-80 sm:gap-3 sm:text-[13px]"
+        className="mx-auto flex h-(--announcement-height) w-full max-w-[1200px] items-center justify-center gap-2 px-3 font-noi-grotesk text-[12px] leading-none tracking-[-0.01em] transition-opacity duration-150 hover:opacity-80 sm:gap-3 sm:px-4 sm:text-[13px]"
       >
-        {off !== null && <span className="font-semibold">{off}% off</span>}
+        {/* Inverted out of the lime rather than just bolded. On a bar that is
+            already one bright colour, weight alone does not separate anything
+            — reversing the contrast does. */}
+        {off !== null && (
+          <span className="shrink-0 rounded-full bg-neutral-90 px-2.5 py-1 font-noi-grotesk text-[11px] font-bold tracking-[0.03em] text-lime-30 sm:text-[12px]">
+            {off}% OFF
+          </span>
+        )}
 
-        <span aria-hidden className="h-3 w-px bg-neutral-90/25" />
-
-        {/* Phones get the clock too, just coarser. Days and hours carry the
-            urgency; minutes and seconds are what won't fit beside the rest of
-            the sentence at 375px, so they are the part that goes. */}
-        <span className="font-medium sm:hidden">
-          {remaining ? (
-            <>
-              Ends in{" "}
-              <span className="font-semibold tabular-nums">
-                {remaining.days > 0
-                  ? `${remaining.days}d ${remaining.hours}h`
-                  : `${remaining.hours}h ${remaining.minutes}m`}
-              </span>
-            </>
-          ) : (
-            "Offer ends this weekend"
-          )}
-        </span>
-
-        <span className="hidden font-medium sm:inline">
+        {/* Quiet on purpose: it is the connective tissue between the two things
+            that are meant to be read. */}
+        <span className="hidden font-medium text-neutral-90/70 sm:inline">
           Launch price ends {deadline ? formatOfferDeadline(deadline) : "this weekend"}
         </span>
+        <span className="font-medium text-neutral-90/70 sm:hidden">Ends in</span>
 
         {remaining && (
-          <span className="hidden font-semibold tabular-nums sm:inline">
-            {remaining.days}d {remaining.hours}h {remaining.minutes}m {remaining.seconds}s
+          <span className="flex shrink-0 items-center gap-1">
+            {/* Phones show the two coarsest units that still move visibly;
+                anything finer would not fit beside the rest at 375px. */}
+            {remaining.days > 0 ? (
+              <>
+                <Unit value={remaining.days} label="d" />
+                <Unit value={remaining.hours} label="h" />
+              </>
+            ) : (
+              <>
+                <Unit value={remaining.hours} label="h" />
+                <Unit value={remaining.minutes} label="m" />
+              </>
+            )}
+            <span className="hidden items-center gap-1 sm:flex">
+              {remaining.days > 0 && <Unit value={remaining.minutes} label="m" />}
+              {/* The one that ticks. A clock you can watch move is what makes
+                  a deadline feel like one. */}
+              <Unit value={remaining.seconds} label="s" ticking />
+            </span>
           </span>
         )}
       </Link>
     </div>
+  );
+}
+
+/** One unit of the countdown, boxed and inverted so the numbers read as a
+ *  clock rather than as part of the sentence beside them. */
+function Unit({ value, label, ticking = false }: { value: number; label: string; ticking?: boolean }) {
+  return (
+    <span
+      className={`flex items-baseline gap-0.5 rounded-md bg-neutral-90 px-1.5 py-1 text-lime-30 ${
+        ticking ? "offer-tick" : ""
+      }`}
+    >
+      <span className="font-noi-grotesk text-[12px] font-bold tabular-nums sm:text-[13px]">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="font-noi-grotesk text-[9px] font-semibold uppercase opacity-70">{label}</span>
+    </span>
   );
 }

@@ -6,6 +6,14 @@
  * page we control until Abzer sends them back, and the actual payment
  * confirmation arrives separately via a server-to-server webhook (see
  * app/api/abzer/webhook/route.ts) — never trust the browser redirect alone.
+ *
+ * Where Abzer sends the buyer afterwards is NOT set here. This used to pass
+ * successUrl/failureUrl/cancelUrl with every request, which read as though it
+ * worked; reading a created payment request back from Abzer shows it stores no
+ * redirect field at all, so all three were silently discarded. The redirect
+ * lives in the BillXPro dashboard, under Admin > Configuration > Payment
+ * Plugin > Payment Configuration, and applies to the whole merchant account —
+ * which is why one account cannot serve two sites.
  */
 
 const BASE = process.env.ABZER_BASE_URL || "https://billxpro.com/as/api/v100";
@@ -75,9 +83,6 @@ export async function createAbzerOrder(
   const firstName = parts[0] || "Student";
   const lastName = parts.length > 1 ? parts.slice(1).join(" ") : firstName;
 
-  const clientUrl = process.env.CLIENT_URL;
-  const returnBase = `${clientUrl}/order/payment-return`;
-
   const createRes = await fetch(`${BASE}/direct-payment-request/extended`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -89,9 +94,6 @@ export async function createAbzerOrder(
       mobileNo: opts.buyerPhone ?? "",
       amount: opts.amountAED,
       referenceNumber: opts.orderId,
-      successUrl: returnBase,
-      failureUrl: returnBase,
-      cancelUrl: returnBase,
     }),
   });
   if (!createRes.ok) {

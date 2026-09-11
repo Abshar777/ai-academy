@@ -12,9 +12,15 @@
  * legible over both the light course pages and the dark video. It drifts
  * between edge zones every few seconds — a static mark can be cropped out of a
  * re-encode, a moving one cannot.
+ *
+ * It yields on an episode page, where the player carries two marks of its own
+ * inside the video frame. Before that it added a third, drifting over the page
+ * beside the video and half-vanishing as it crossed the frame edge, which read
+ * as a rendering fault rather than as security. See lib/identity-stamp.ts.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useAcademyAuth } from "@/components/academy-auth";
+import { useStampedElsewhere } from "@/lib/identity-stamp";
 
 /* [top%, left%, anchorRight] — edge zones only, so the tag never sits dead
    centre over what someone is actually reading or watching. */
@@ -28,6 +34,7 @@ const MOVE_EVERY_MS = 7000;
 
 export function CourseWatermark() {
   const { status, user } = useAcademyAuth();
+  const stampedElsewhere = useStampedElsewhere();
   const [zone, setZone] = useState(0);
 
   const tag = useMemo(
@@ -47,7 +54,7 @@ export function CourseWatermark() {
     return () => clearInterval(id);
   }, [tag]);
 
-  if (status !== "authed" || !tag) return null;
+  if (status !== "authed" || !tag || stampedElsewhere) return null;
 
   const [top, left, anchorRight] = ZONES[zone]!;
 

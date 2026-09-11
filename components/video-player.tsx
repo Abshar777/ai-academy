@@ -7,6 +7,7 @@ import {
   EPISODE_SOURCES,
   type EpisodeLanguage,
 } from "@/lib/episode";
+import { useIdentityStamp } from "@/lib/identity-stamp";
 
 /**
  * The episode player. Deliberately not the browser's native controls: those
@@ -119,6 +120,16 @@ const WATERMARK_SPOTS = [
   { top: "60%", left: "54%" },
 ];
 
+/**
+ * Two marks ride the frame, not one: a single tag can be cropped out of a
+ * re-encode, and a crop that has to lose both takes most of the picture with
+ * it. The second sits half the cycle ahead of the first, which is what keeps
+ * them apart — no pair of spots that far apart in the list collides.
+ */
+const WATERMARK_OFFSET = WATERMARK_SPOTS.length / 2;
+/** Keeps a mark off the very edge of the frame. */
+const WATERMARK_INSET = 12;
+
 export function VideoPlayer({
   initialLanguage = "en",
   className = "",
@@ -188,7 +199,40 @@ export function VideoPlayer({
 
   // Moves so it can't be cropped out of a recording, and cycles clear of the
   // language toggle and the control bar rather than sitting under either.
+  // While this player carries the viewer's identity, the page-wide watermark
+  // stands down — otherwise the same email shows up twice on an episode page.
+  useIdentityStamp(!!watermark);
+
   const [watermarkSpot, setWatermarkSpot] = useState(0);
+  const markRef = useRef<HTMLSpanElement>(null);
+  /** Frame and mark widths, so a spot can be placed in the room it really has.
+   *  The observer fires once on observe, which is also the first measurement. */
+  const [markRoom, setMarkRoom] = useState({ frame: 0, mark: 0 });
+  useEffect(() => {
+    const frame = wrapRef.current;
+    const mark = markRef.current;
+    if (!watermark || !frame || !mark) return;
+    const observer = new ResizeObserver(() =>
+      setMarkRoom({ frame: frame.clientWidth, mark: mark.offsetWidth }),
+    );
+    observer.observe(frame);
+    observer.observe(mark);
+    return () => observer.disconnect();
+  }, [watermark]);
+
+  /**
+   * A spot's horizontal position, read as a fraction of the room the mark
+   * actually has rather than of the frame. On a phone the email and phone
+   * number come to nearly the width of the video, so a spot two thirds across
+   * would put the tag through the right edge — and the frame clips, so it would
+   * show up as a mark cut off mid-address.
+   */
+  const markLeft = (left: string): string => {
+    if (!markRoom.frame || !markRoom.mark) return left;
+    const travel = Math.max(0, markRoom.frame - markRoom.mark - WATERMARK_INSET * 2);
+    return `${WATERMARK_INSET + (Number.parseFloat(left) / 100) * travel}px`;
+  };
+
   useEffect(() => {
     if (!watermark) return;
     const id = window.setInterval(
@@ -465,15 +509,23 @@ export function VideoPlayer({
         {!isHls(currentSrc) && <source src={currentSrc} type="video/mp4" />}
       </video>
 
-      {watermark && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute font-noi-grotesk text-[11px] leading-none tracking-[0.06em] text-white/30 mix-blend-difference transition-[top,left] duration-1000 ease-in-out select-none sm:text-[12px]"
-          style={WATERMARK_SPOTS[watermarkSpot]}
-        >
-          {watermark}
-        </span>
-      )}
+      {watermark &&
+        [0, 1].map((nth) => {
+          // Keyed by position in the pair, not by spot, so the same node drifts
+          // between spots rather than being replaced and jumping.
+          const spot = WATERMARK_SPOTS[(watermarkSpot + nth * WATERMARK_OFFSET) % WATERMARK_SPOTS.length]!;
+          return (
+            <span
+              key={nth}
+              ref={nth === 0 ? markRef : undefined}
+              aria-hidden
+              className="pointer-events-none absolute font-noi-grotesk text-[11px] leading-none tracking-[0.06em] text-white/30 mix-blend-difference transition-[top,left] duration-1000 ease-in-out select-none sm:text-[12px]"
+              style={{ top: spot.top, left: markLeft(spot.left) }}
+            >
+              {watermark}
+            </span>
+          );
+        })}
 
       {/* Centre affordance — the whole point of the first frame. */}
       {(!started || !playing) && (

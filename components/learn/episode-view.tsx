@@ -130,6 +130,10 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
 
   // Latest position, kept in a ref so the unmount save reads the current value
   // without re-subscribing on every tick.
+  /** The row for the episode being watched, so a list of 34 opens on it
+   *  rather than at the top of module one. */
+  const currentItemRef = useRef<HTMLAnchorElement>(null);
+
   const position = useRef({ seconds: 0, lang: lang as Lang });
   const lastSaveAt = useRef(0);
   const remints = useRef(0);
@@ -163,6 +167,13 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
       if (position.current.seconds > 5) save(position.current.seconds, position.current.lang);
     };
   }, [save]);
+
+  // Scrolls the contents to the episode being watched. Keyed on the episode so
+  // it follows a move to the next one, and "nearest" so it only scrolls when
+  // the row is actually out of view.
+  useEffect(() => {
+    currentItemRef.current?.scrollIntoView({ block: "nearest" });
+  }, [episodeId, course]);
 
   if (loading) {
     return (
@@ -303,39 +314,56 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
 
         {/* This module's contents, so the next episode is one click away
             without going back to the overview. */}
-        <aside className="w-full shrink-0 lg:w-72">
+        {/* The whole course, not just the module being watched. Four modules is
+            little enough to hold in one list, and seeing what comes after the
+            one you are in is most of the reason to look at a contents list at
+            all. */}
+        <aside className="w-full shrink-0 lg:w-80">
           <h2 className="mb-2 font-noi-grotesk text-[12px] font-medium tracking-[0.12em] text-neutral-50 uppercase">
-            {localized(module.title, lang)}
+            Course contents
           </h2>
-          <ol className="flex list-none flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-neutral-90/10">
-            {module.episodes.map((item, i) => {
-              const current = item.id === episode.id;
-              const media = item.languages[lang] ?? item.languages.en ?? item.languages.ml;
-              return (
-                <li key={item.id}>
-                  <Link
-                    href={`/learn/${module.order + 1}/${item.key}`}
-                    aria-current={current ? "true" : undefined}
-                    className={`flex items-center gap-2.5 border-b border-neutral-90/8 px-4 py-3 last:border-b-0 transition-colors duration-150 ${
-                      current ? "bg-neutral-90/6" : "hover:bg-neutral-90/4"
-                    }`}
-                  >
-                    <span className="w-4 shrink-0 font-noi-grotesk text-[12px] tabular-nums text-neutral-50">
-                      {item.progress?.completed ? "✓" : i + 1}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate font-noi-grotesk text-[14px] leading-[1.35] text-neutral-90">
-                      {localized(item.title, lang)}
-                    </span>
-                    {media ? (
-                      <span className="shrink-0 font-noi-grotesk text-[12px] tabular-nums text-neutral-50">
-                        {formatDuration(media.durationSec)}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
+          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-neutral-90/10 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
+            {course.modules.map((section) => (
+              <section key={section.id}>
+                {/* Sticky, so you can always see which module you have
+                    scrolled into on a list this long. */}
+                <h3 className="sticky top-0 z-10 flex items-baseline gap-2 border-b border-neutral-90/8 bg-neutral-10/95 px-4 py-2 font-noi-grotesk text-[12px] font-semibold tracking-[-0.01em] text-neutral-70 backdrop-blur-sm">
+                  <span className="tabular-nums text-neutral-50">{section.order + 1}</span>
+                  <span className="truncate">{localized(section.title, lang)}</span>
+                </h3>
+                <ol className="flex list-none flex-col">
+                  {section.episodes.map((item, i) => {
+                    const current = item.id === episode.id;
+                    const media = item.languages[lang] ?? item.languages.en ?? item.languages.ml;
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          ref={current ? currentItemRef : undefined}
+                          href={`/learn/${section.order + 1}/${item.key}`}
+                          aria-current={current ? "true" : undefined}
+                          className={`flex items-center gap-2.5 border-b border-neutral-90/8 px-4 py-3 transition-colors duration-150 ${
+                            current ? "bg-neutral-90/6 font-medium" : "hover:bg-neutral-90/4"
+                          }`}
+                        >
+                          <span className="w-4 shrink-0 font-noi-grotesk text-[12px] tabular-nums text-neutral-50">
+                            {item.progress?.completed ? "✓" : i + 1}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-noi-grotesk text-[14px] leading-[1.35] text-neutral-90">
+                            {localized(item.title, lang)}
+                          </span>
+                          {media ? (
+                            <span className="shrink-0 font-noi-grotesk text-[12px] tabular-nums text-neutral-50">
+                              {formatDuration(media.durationSec)}
+                            </span>
+                          ) : null}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))}
+          </div>
         </aside>
       </div>
     </div>

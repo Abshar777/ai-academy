@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ContactButton } from "./contact-dialog";
@@ -11,7 +11,7 @@ import { StaggerGroup, StaggerItem } from "./stagger";
 import { FreeFiftyBanner } from "./free-fifty-banner";
 import { PROGRAMME_NAME } from "@/lib/site";
 import { discountPercent, normalizeCountry, planForCountry } from "@/lib/pricing";
-import { readCountryCookie } from "@/lib/country-cookie";
+import { useCountry } from "@/lib/use-country";
 import { useEpisode } from "./episode-dialog";
 
 /** The actual purchase workflow — there's no live checkout on the site, so
@@ -151,11 +151,7 @@ export function PricingSection() {
   // Deferred out of the effect body (see enroll-bar.tsx): the cookie only
   // exists client-side, so the first client render has to match the
   // server-rendered default before swapping.
-  const [country, setCountry] = useState("");
-  useEffect(() => {
-    const id = window.setTimeout(() => setCountry(readCountryCookie()), 0);
-    return () => window.clearTimeout(id);
-  }, []);
+  const country = useCountry();
   const plan = planForCountry(normalizeCountry(country));
   const saving = discountPercent(plan);
 

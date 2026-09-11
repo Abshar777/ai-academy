@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { discountPercent, normalizeCountry, planForCountry } from "@/lib/pricing";
-import { readCountryCookie } from "@/lib/country-cookie";
+import { discountPercent, planForCountry } from "@/lib/pricing";
+import { useCountry } from "@/lib/use-country";
 import {
   countdownTo,
   formatOfferDeadline,
@@ -21,7 +21,7 @@ import {
  * it.
  */
 export function OfferBanner() {
-  const [country, setCountry] = useState("AE");
+  const country = useCountry();
   const [deadline, setDeadline] = useState<Date | null>(null);
   const [remaining, setRemaining] = useState<OfferCountdown | null>(null);
 
@@ -30,7 +30,6 @@ export function OfferBanner() {
   // render would disagree with the server-rendered markup it hydrates into.
   useEffect(() => {
     const id = window.setTimeout(() => {
-      setCountry(normalizeCountry(readCountryCookie()));
       const end = offerDeadline();
       setDeadline(end);
       setRemaining(countdownTo(end));

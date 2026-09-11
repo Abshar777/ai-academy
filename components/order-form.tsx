@@ -12,6 +12,7 @@ import { paymentLinkFor } from "@/lib/payment-links";
 import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
 import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
+import { writeCountryCookie } from "@/lib/country-cookie";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
 import { FreeFiftyBanner } from "./free-fifty-banner";
@@ -92,9 +93,11 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
 
   function handleCountryChange(next: string) {
     setCountry(next);
-    // Persisted so a reload (or the next visit) keeps a manual override
-    // rather than snapping back to the geo-detected default.
-    document.cookie = `country=${next}; path=/; max-age=${60 * 60 * 24 * 30}`;
+    // Persisted so a reload (or the next visit) keeps a manual override rather
+    // than snapping back to the geo-detected default — and broadcast, so every
+    // other price on the page moves with the form instead of leaving the page
+    // quoting two currencies at once.
+    writeCountryCookie(next);
     // Re-derive rather than leaving the old choice selected — "Razorpay"
     // carried over from India would otherwise sit checked (and non-
     // functional) after switching to the UAE, since it's still a listed

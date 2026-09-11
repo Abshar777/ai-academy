@@ -12,7 +12,7 @@ import { paymentLinkFor } from "@/lib/payment-links";
 import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
 import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
-import { readCountryCookie } from "@/lib/country-cookie";
+import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
 
 /**
  * The actual enrolment flow, inline in the chat — same data and same
@@ -198,6 +198,9 @@ export function ChatEnrollForm() {
         onChange={(e) => {
           setCountry(e.target.value);
           setPaymentMethodChoice(planForCountry(e.target.value).methods[0]);
+          // Persisted and broadcast, same as /order — this picker used to
+          // change the price in front of the visitor and nowhere else.
+          writeCountryCookie(e.target.value);
         }}
         aria-label="Country"
         className={FIELD}

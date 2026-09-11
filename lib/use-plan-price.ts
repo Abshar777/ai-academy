@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { normalizeCountry, planForCountry } from "./pricing";
-import { readCountryCookie } from "./country-cookie";
+import { planForCountry } from "./pricing";
+import { useCountry } from "./use-country";
 
 /**
  * The current plan's display price ("₹999", "AED 99") for the visitor's
@@ -15,14 +14,7 @@ import { readCountryCookie } from "./country-cookie";
  * enroll-bar.tsx) so the first client render still matches the server's.
  */
 export function usePlanLabel(): string {
-  const [country, setCountry] = useState("");
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setCountry(readCountryCookie()), 0);
-    return () => window.clearTimeout(id);
-  }, []);
-
-  return planForCountry(normalizeCountry(country)).label;
+  return planForCountry(useCountry()).label;
 }
 
 /** Swaps the `{price}` token in canned copy for the live price label. */

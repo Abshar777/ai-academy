@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { discountPercent, normalizeCountry, planForCountry } from "@/lib/pricing";
-import { readCountryCookie } from "@/lib/country-cookie";
+import { discountPercent, planForCountry } from "@/lib/pricing";
+import { useCountry } from "@/lib/use-country";
 import { useEnrollBarVisible } from "@/lib/use-enroll-bar-visible";
 import { PROGRAMME_NAME } from "@/lib/site";
 
@@ -21,18 +20,7 @@ import { PROGRAMME_NAME } from "@/lib/site";
 
 export function EnrollBar() {
   const visible = useEnrollBarVisible();
-  const [country, setCountry] = useState("AE");
-
-  // Deferred out of the effect body (same pattern as order-form.tsx's
-  // saved-contact prefill): the cookie only exists client-side, and the
-  // initial client render must still match the server-rendered "AE"
-  // default for hydration to succeed.
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      setCountry(normalizeCountry(readCountryCookie()));
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, []);
+  const country = useCountry();
 
   const plan = planForCountry(country);
   const off = discountPercent(plan);

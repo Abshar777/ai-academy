@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ConfettiBurst } from "@/components/confetti-burst";
 import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
 import { grantCourseAccess } from "@/lib/course-access";
+import { getAbzerOrder } from "@/lib/abzer-orders";
 
 export const metadata: Metadata = {
   title: "Payment successful",
@@ -56,6 +57,36 @@ async function ticketForStripeSession(sessionId: string | undefined): Promise<st
   }
 }
 
+/**
+ * The same, for an Abzer order.
+ *
+ * Abzer's ticket is minted by a webhook with no browser to hand it to, exactly
+ * as Stripe's is, so the buyer arrives holding only the order id. That id is
+ * checked against a locally stored order that the webhook has already marked
+ * paid — the browser's word for it is never taken.
+ */
+async function ticketForAbzerOrder(orderId: string | undefined): Promise<string | null> {
+  if (!orderId?.startsWith("abzer_")) return null;
+
+  try {
+    const order = await getAbzerOrder(orderId);
+    if (!order || order.status !== "paid" || !order.email) return null;
+
+    const { handoffToken } = await grantCourseAccess({
+      email: order.email,
+      name: order.name,
+      phone: order.phone,
+      country: order.country,
+      source: "abzer",
+      orderRef: `abzer:${order.abzerRequestId}`,
+    });
+    return handoffToken;
+  } catch (err) {
+    console.error("[thank-you] could not mint a sign-in ticket for the Abzer order", err);
+    return null;
+  }
+}
+
 export default async function ThankYouPage({
   searchParams,
 }: {
@@ -77,7 +108,10 @@ export default async function ThankYouPage({
   // browser to hand it to, so the buyer arrives carrying only the checkout
   // session id. That id is known to nobody but them, and Stripe is asked
   // whether it was actually paid before anything is issued against it.
-  const ticket = ht ?? (await ticketForStripeSession(stripeSessionId));
+  const ticket =
+    ht ??
+    (await ticketForStripeSession(stripeSessionId)) ??
+    (await ticketForAbzerOrder(orderId));
   const courseHref = ticket ? `/learn?ht=${encodeURIComponent(ticket)}` : "/learn";
 
   const invoiceHref =

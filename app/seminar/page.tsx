@@ -1,12 +1,39 @@
 import type { Metadata } from "next";
 import { SeminarForm, SeminarPoster } from "@/components/seminar-form";
-import { nextWebinarSession } from "@/lib/next-webinar";
+import { formatWebinarDate, formatWebinarTime, nextWebinarSession } from "@/lib/next-webinar";
 
-export const metadata: Metadata = {
-  title: "Free live seminar",
-  description:
-    "Book a free seat at the next Delta AI Academy live seminar. Build a website in minutes with AI — no coding experience needed.",
-};
+/**
+ * The share card is the poster itself, rather than the site-wide card from
+ * app/opengraph-image.tsx. This link gets sent in WhatsApp more than anywhere
+ * else, and the poster already says the thing the preview needs to say —
+ * what it is, the date, the time and who is running it — in the language the
+ * people receiving it read it in.
+ *
+ * Generated per request rather than declared statically so it follows the
+ * session: a new seminar brings a new poster, and the preview changes with it
+ * instead of advertising the last one.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const session = nextWebinarSession();
+  const title = session ? `${session.title} — free live seminar` : "Free live seminar";
+  const description = session
+    ? `${formatWebinarDate(new Date(session.startsAt))} at ${formatWebinarTime(new Date(session.startsAt))}, live on Google Meet with ${session.speaker}. Free — no card needed.`
+    : "Book a free seat at the next Delta AI Academy live seminar. Build a website in minutes with AI — no coding experience needed.";
+
+  // Portrait, because it is the poster. WhatsApp renders it as a large
+  // preview; the dimensions are declared so it does not have to fetch the
+  // image to work out the layout.
+  const images = session
+    ? [{ url: session.poster, width: 1080, height: 1350, alt: session.title }]
+    : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: { type: "website", url: "/seminar", title, description, images },
+    twitter: { card: "summary_large_image", title, description, images },
+  };
+}
 
 /**
  * Registration for the free seminar, replacing the Typeform this used to be

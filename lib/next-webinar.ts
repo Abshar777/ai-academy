@@ -43,7 +43,7 @@ const SESSIONS: WebinarSession[] = [
     durationMinutes: 60,
     title: "Build a website in minutes, free",
     speaker: "Muhammed Shan",
-    poster: "/seminar/2026-09-15-free-website.jpg",
+    poster: "/seminar/free-website.jpg",
   },
 ];
 

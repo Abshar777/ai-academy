@@ -8,7 +8,7 @@ import {
   sessionEvent,
 } from "@/lib/seminar-registrations";
 import { addSeminarGuest } from "@/lib/google-calendar";
-import { seminarInvite } from "@/lib/seminar-invite";
+import { plainInvite, seminarInvite } from "@/lib/seminar-invite";
 import { sendSeminarConfirmationEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifySeminarWhatsApp } from "@/lib/whatsapp";
 
@@ -83,7 +83,20 @@ export async function POST(request: Request) {
   // to finish first — but allSettled, because a failed send must not fail a
   // booking that already succeeded.
   await Promise.allSettled([
-    sendSeminarConfirmationEmail({ name, email, title: session.title, when, meetLink, communityUrl }),
+    sendSeminarConfirmationEmail({
+      name,
+      email,
+      title: session.title,
+      when,
+      meetLink,
+      communityUrl,
+      calendar: {
+        eventId: event?.eventId ?? null,
+        description: plainInvite(session, { meetLink, communityUrl }),
+        startsAt: session.startsAt,
+        durationMinutes: session.durationMinutes,
+      },
+    }),
     communityUrl && created
       ? notifySeminarWhatsApp(phone, name, when, communityUrl, country)
       : Promise.resolve({ sent: false }),

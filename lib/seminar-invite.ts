@@ -70,3 +70,30 @@ function escape(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+/**
+ * The same wording as a calendar file's DESCRIPTION, which is plain text —
+ * ICS has no HTML, and an escaped <b> tag shows up verbatim in the entry.
+ *
+ * Built from the same parts as seminarInvite rather than by stripping its
+ * markup, so the two cannot drift into saying different things.
+ */
+export function plainInvite(
+  session: WebinarSession,
+  options: { meetLink?: string | null; communityUrl?: string | null } = {},
+): string {
+  const start = new Date(session.startsAt);
+  const lines = [
+    session.title,
+    "",
+    "In one hour you will build a real website and put it online. No coding experience needed:",
+    "you describe what you want, AI builds it, and you direct it until it is live.",
+    "",
+    `When: ${formatWebinarDate(start)}, ${formatWebinarTime(start)} (${session.durationMinutes} minutes)`,
+    `Who is running it: ${session.speaker}, AI Mentor at Delta AI Academy`,
+  ];
+  if (options.meetLink) lines.push(`Join here: ${options.meetLink}`);
+  if (options.communityUrl) lines.push(`WhatsApp community: ${options.communityUrl}`);
+  lines.push("", SITE_URL);
+  return lines.join("\n");
+}

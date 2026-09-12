@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { seminarIcs } from "./seminar-ics";
 import path from "node:path";
 import nodemailer from "nodemailer";
 import { CURRICULUM, CURRICULUM_TOPIC_COUNT } from "./curriculum";
@@ -116,6 +117,7 @@ function seminarEmailHtml(input: {
   when: string;
   meetLink: string | null;
   communityUrl: string | null;
+  hasIcs?: boolean;
 }): string {
   const greeting = input.name ? escapeHtml(input.name) : "there";
   const button = (href: string, label: string, background: string, color: string) =>
@@ -132,8 +134,13 @@ function seminarEmailHtml(input: {
         <tr><td style="padding:4px 16px 4px 0;color:#777;">Where</td><td style="padding:4px 0;color:#111;font-weight:600;">Google Meet — link below</td></tr>
       </table>
 
-      <p style="margin:0 0 16px;color:#444;">A Google Calendar invitation is on its way to this address.
-      Accept it and the session — with the joining link — sits in your calendar, and Google will remind you before it starts.</p>
+      <p style="margin:0 0 16px;color:#444;">A Google Calendar invitation is on its way to this address — accept it and
+      the session sits in your calendar with the joining link, and Google will remind you before it starts.${
+        input.hasIcs
+          ? ` If it doesn't appear, open the <strong>calendar file attached to this email</strong> instead — it adds the
+      same session to Google Calendar, Apple Calendar or Outlook in one tap.`
+          : ""
+      }</p>
 
       ${input.meetLink ? button(input.meetLink, "Join the seminar", "#14151c", "#ffffff") : ""}
       ${input.communityUrl ? button(input.communityUrl, "Join the WhatsApp community", "#25D366", "#ffffff") : ""}
@@ -150,18 +157,49 @@ export async function sendSeminarConfirmationEmail(input: {
   when: string;
   meetLink: string | null;
   communityUrl: string | null;
+  /** Everything the attached calendar file needs. Optional so the email still
+   *  sends when the calendar integration is unconfigured. */
+  calendar?: {
+    eventId: string | null;
+    description: string;
+    startsAt: string;
+    durationMinutes: number;
+  };
 }): Promise<{ sent: boolean }> {
   const mailer = getSeminarTransporter();
   if (!mailer) {
     console.info("[seminar] SMTP not configured — skipping confirmation to", input.email);
     return { sent: false };
   }
+
+  // One click, and it does not depend on the recipient ever having heard from
+  // us — unlike the Google invitation, which their own settings may hold back.
+  const attachments: nodemailer.SendMailOptions["attachments"] = input.calendar
+    ? [
+        {
+          filename: "delta-ai-academy-seminar.ics",
+          content: seminarIcs({
+            eventId: input.calendar.eventId,
+            title: input.title,
+            description: input.calendar.description,
+            location: input.meetLink,
+            startsAt: input.calendar.startsAt,
+            durationMinutes: input.calendar.durationMinutes,
+            organizerName: "Delta AI Academy",
+            organizerEmail: mailer.from,
+          }),
+          contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+        },
+      ]
+    : [];
+
   try {
     await mailer.transport.sendMail({
       from: mailer.from,
       to: input.email,
       subject: `You're registered — ${input.title}, ${input.when}`,
-      html: seminarEmailHtml(input),
+      html: seminarEmailHtml({ ...input, hasIcs: attachments.length > 0 }),
+      attachments,
     });
     return { sent: true };
   } catch (err) {

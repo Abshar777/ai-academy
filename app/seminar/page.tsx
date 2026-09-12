@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SeminarForm, SeminarPoster } from "@/components/seminar-form";
+import { SeminarPrompt } from "@/components/seminar-prompt";
 import { formatWebinarDate, formatWebinarTime, nextWebinarSession } from "@/lib/next-webinar";
 
 /**
@@ -76,6 +77,8 @@ export default function SeminarPage() {
 
         <SeminarForm session={session} />
       </div>
+
+      <SeminarPrompt session={session} />
     </main>
   );
 }

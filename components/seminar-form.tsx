@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Image from "next/image";
 import { COUNTRY_OPTIONS } from "@/lib/pricing";
 import { useCountry } from "@/lib/use-country";
@@ -38,7 +38,19 @@ type BookedState = {
  * that is a UAE or a Saudi line — the digits are identical. Without it every
  * non-Indian registrant silently gets no WhatsApp message.
  */
-export function SeminarForm({ session }: { session: WebinarSession | null }) {
+export function SeminarForm({
+  session,
+  compact = false,
+}: {
+  session: WebinarSession | null;
+  /** The mobile prompt's copy of the form: no country row, tighter padding.
+   *  Country still travels — it is the detected one rather than a chosen one. */
+  compact?: boolean;
+}) {
+  // Two copies of this form share the page on mobile — the one in the layout
+  // and the one in the prompt. Fixed ids would collide, and every label would
+  // point at whichever rendered first.
+  const uid = useId();
   const detectedCountry = useCountry();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -126,7 +138,7 @@ export function SeminarForm({ session }: { session: WebinarSession | null }) {
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="flex flex-col gap-5 rounded-3xl bg-neutral-10 p-8 md:p-10"
+      className={`flex flex-col gap-5 rounded-3xl bg-neutral-10 ${compact ? "p-6" : "p-8 md:p-10"}`}
     >
       <div className="flex flex-col gap-1.5">
         <h1 className="font-noi-grotesk text-[26px] leading-[1.1] tracking-[-0.025em]">
@@ -138,9 +150,9 @@ export function SeminarForm({ session }: { session: WebinarSession | null }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className={LABEL} htmlFor="seminar-name">Full name</label>
+        <label className={LABEL} htmlFor={`${uid}-name`}>Full name</label>
         <input
-          id="seminar-name"
+          id={`${uid}-name`}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
@@ -152,9 +164,9 @@ export function SeminarForm({ session }: { session: WebinarSession | null }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className={LABEL} htmlFor="seminar-email">Email</label>
+        <label className={LABEL} htmlFor={`${uid}-email`}>Email</label>
         <input
-          id="seminar-email"
+          id={`${uid}-email`}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -170,9 +182,9 @@ export function SeminarForm({ session }: { session: WebinarSession | null }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className={LABEL} htmlFor="seminar-phone">Phone number</label>
+        <label className={LABEL} htmlFor={`${uid}-phone`}>Phone number</label>
         <input
-          id="seminar-phone"
+          id={`${uid}-phone`}
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -184,10 +196,10 @@ export function SeminarForm({ session }: { session: WebinarSession | null }) {
         {fieldErrors.phone && <p className={ERROR}>{fieldErrors.phone}</p>}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className={LABEL} htmlFor="seminar-country">Country</label>
+      <div className={`flex-col gap-2 ${compact ? "hidden" : "flex"}`}>
+        <label className={LABEL} htmlFor={`${uid}-country`}>Country</label>
         <select
-          id="seminar-country"
+          id={`${uid}-country`}
           value={country}
           onChange={(e) => setCountry(e.target.value)}
           className={FIELD}

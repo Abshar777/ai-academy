@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   COUNTRY_OPTIONS,
   PAYMENT_METHOD_LABELS,
@@ -45,7 +45,14 @@ type AppliedCoupon = {
 
 type CouponStatus = "idle" | "checking" | "applied" | "error";
 
-export function OrderForm({ initialCountry }: { initialCountry: string }) {
+export function OrderForm({
+  initialCountry,
+  initialCoupon = "",
+}: {
+  initialCountry: string;
+  /** A code from ?coupon= in the link, applied on arrival. */
+  initialCoupon?: string;
+}) {
   const [country, setCountry] = useState(() => normalizeCountry(initialCountry));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -63,6 +70,22 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
   const [couponStatus, setCouponStatus] = useState<CouponStatus>("idle");
   const [couponError, setCouponError] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+  // A code handed over in the link (/order?coupon=ABC123) applies itself, so
+  // somebody sent one personally never has to retype it — and sees the price
+  // already at zero rather than being asked to take our word for it.
+  //
+  // Runs once. `country` is deliberately not a dependency: changing it clears
+  // the coupon (a discount is priced per country), and re-applying here would
+  // fight that and put back a code the visitor had just dropped.
+  const autoApplied = useRef(false);
+  useEffect(() => {
+    if (!initialCoupon || autoApplied.current) return;
+    autoApplied.current = true;
+    setCouponInput(initialCoupon);
+    void applyCoupon(initialCoupon);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCoupon]);
 
   // One-time prefill from whichever form (this one, the enquiry modal, or the
   // chat widget) was filled in first — see lib/contact-storage.ts. The
@@ -112,7 +135,11 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
 
   async function handleApplyCoupon(event: React.FormEvent) {
     event.preventDefault();
-    const code = couponInput.trim();
+    await applyCoupon(couponInput);
+  }
+
+  async function applyCoupon(raw: string) {
+    const code = raw.trim();
     if (!code) return;
 
     setCouponStatus("checking");

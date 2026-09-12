@@ -13,6 +13,16 @@ const FIELD =
 const LABEL = "font-noi-grotesk text-[14px] leading-[1.4] font-medium tracking-[-0.015em]";
 const ERROR = "font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-[#c0392b]";
 
+/**
+ * Pause before handing a new registrant to the WhatsApp community.
+ *
+ * Not zero. The booking has just succeeded and this screen is the only place
+ * that says so — jumping straight out of it reads as the form having failed,
+ * and takes the Meet link away with it. Three seconds is enough to see "your
+ * seat is booked" and the date, and short enough that nobody sits waiting.
+ */
+const REDIRECT_AFTER_SECONDS = 3;
+
 type BookedState = {
   when: string;
   meetLink: string | null;
@@ -207,6 +217,28 @@ export function SeminarForm({ session }: { session: WebinarSession | null }) {
 }
 
 function BookedSeat({ booked }: { booked: BookedState }) {
+  const community = booked.communityUrl;
+  const [secondsLeft, setSecondsLeft] = useState(REDIRECT_AFTER_SECONDS);
+  const [cancelled, setCancelled] = useState(false);
+
+  useEffect(() => {
+    if (!community || cancelled) return;
+    const tick = window.setInterval(
+      () => setSecondsLeft((n) => Math.max(0, n - 1)),
+      1000,
+    );
+    const go = window.setTimeout(() => {
+      // A top-level navigation rather than window.open: a popup opened this
+      // long after the click — with no gesture behind it — is blocked by
+      // default, and the person would land nowhere at all.
+      window.location.href = community;
+    }, REDIRECT_AFTER_SECONDS * 1000);
+    return () => {
+      window.clearInterval(tick);
+      window.clearTimeout(go);
+    };
+  }, [community, cancelled]);
+
   return (
     <div className="flex flex-col items-start gap-5 rounded-3xl bg-neutral-10 p-8 md:p-10">
       <span aria-hidden className="flex size-14 items-center justify-center rounded-full bg-lime-30">
@@ -225,10 +257,29 @@ function BookedSeat({ booked }: { booked: BookedState }) {
         </p>
       </div>
 
+      {community && !cancelled && (
+        // aria-live, because a page that moves on its own has to say so to
+        // somebody who cannot see the countdown.
+        <p
+          aria-live="polite"
+          className="font-noi-grotesk text-[15px] leading-[1.45] tracking-[-0.015em]"
+        >
+          Taking you to the WhatsApp community
+          {secondsLeft > 0 ? ` in ${secondsLeft}…` : "…"}{" "}
+          <button
+            type="button"
+            onClick={() => setCancelled(true)}
+            className="underline underline-offset-2 transition-colors duration-150 hover:text-neutral-50"
+          >
+            Stay here
+          </button>
+        </p>
+      )}
+
       <div className="flex w-full flex-col gap-3 sm:flex-row">
-        {booked.communityUrl && (
+        {community && (
           <a
-            href={booked.communityUrl}
+            href={community}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-6 font-noi-grotesk text-[16px] leading-none font-medium text-white transition duration-150 hover:brightness-95"

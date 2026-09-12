@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { discountPercent, planForCountry } from "@/lib/pricing";
 import { useCountry } from "@/lib/use-country";
@@ -23,6 +24,18 @@ export function EnrollBar() {
 
   const plan = planForCountry(country);
   const off = discountPercent(plan);
+
+  // On checkout itself the bar is a price reminder, not a way in — "Enroll
+  // now" linking to the page you are already on would do nothing visible.
+  const pathname = usePathname();
+  const onOrderPage = pathname === "/order";
+
+  function scrollToForm() {
+    const field = document.getElementById("order-name");
+    field?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Focus after the scroll settles, so the browser doesn't jump twice.
+    window.setTimeout(() => (field as HTMLInputElement | null)?.focus(), 400);
+  }
 
   return (
     // pointer-events-none/auto split: this wrapper spans the full inset
@@ -69,12 +82,22 @@ export function EnrollBar() {
                 </span>
               </div>
 
-              <Link
-                href="/order"
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
-              >
-                Enroll now
-              </Link>
+              {onOrderPage ? (
+                <button
+                  type="button"
+                  onClick={scrollToForm}
+                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
+                >
+                  Complete order
+                </button>
+              ) : (
+                <Link
+                  href="/order"
+                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
+                >
+                  Enroll now
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

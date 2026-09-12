@@ -40,7 +40,10 @@ const BADGE_CLASS =
 
 export function SiteFooter() {
   return (
-    <footer className="w-full overflow-hidden rounded-t-3xl bg-neutral-90 px-5 pt-8 text-white sm:px-6 md:p-6">
+    // pb clears the enroll bar, which now stays put at the bottom of the page
+    // instead of retreating near the footer — without it the bar sits on top
+    // of the footer's own buttons for good.
+    <footer className="w-full overflow-hidden rounded-t-3xl bg-neutral-90 px-5 pt-8 pb-24 text-white sm:px-6 md:p-6 md:pb-24">
       <div className="mx-auto grid w-full grid-cols-4 gap-x-4 gap-y-2 pt-4 md:grid-cols-12 md:pt-8">
         <div className="col-span-full grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col gap-8 lg:gap-10">

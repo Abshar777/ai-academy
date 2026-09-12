@@ -6,43 +6,49 @@ import { useEffect, useState } from "react";
 /**
  * Whether components/enroll-bar.tsx is currently showing — shared so the
  * floating chat widget (ai-chat-widget.tsx) can lift itself clear of the bar
- * instead of the two competing for the same bottom-right corner. Single
- * source of truth for the show/hide rule: once the visitor has scrolled past
- * the hero and before they reach the footer.
+ * instead of the two competing for the same bottom-right corner.
  *
- * It comes off entirely on the pages where someone is already partway into
- * something. A floating advert for the course is noise next to a form that
- * sells the course, and worse next to one that does not: /seminar books a
- * free seat, and a bar quoting AED 99 next to it argues with the word free.
- * It also physically covers the footer's own buttons on a phone.
+ * The rule: once the visitor has scrolled past the hero, and from then on it
+ * stays. It used to hide again near the footer; it no longer does, because
+ * the end of the page is where someone has finished reading and is deciding,
+ * which is the last moment to take the way in away from them.
  *
- * /learn and the pages after payment are the same rule seen from the other
- * end — offering to enrol someone who has just paid, or who is sitting in the
- * thing they bought, reads as not knowing who they are.
+ * /order and /seminar show it from the top. The scroll threshold exists to
+ * clear the home page hero and its own call to action, and neither of those
+ * pages has a hero — waiting there would just mean the bar is missing at the
+ * moment someone arrives.
+ *
+ * It stays off for people who have already bought: /learn and the pages after
+ * payment. Offering to enrol someone sitting in the thing they bought reads
+ * as not knowing who they are.
  */
 
 const SHOW_AFTER_PX = 480;
-const HIDE_NEAR_BOTTOM_PX = 480;
 
 export function useEnrollBarVisible(): boolean {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const busyElsewhere =
-    (pathname?.startsWith("/order") ||
-      pathname?.startsWith("/seminar") ||
+  // Checked before the /order prefix below, or thank-you and payment-return
+  // would match it and show the bar to somebody who has just paid.
+  const alreadyBought =
+    (pathname?.startsWith("/order/thank-you") ||
+      pathname?.startsWith("/order/payment-return") ||
       pathname?.startsWith("/learn")) ??
     false;
+  const noHeroToClear =
+    (pathname?.startsWith("/order") || pathname?.startsWith("/seminar")) ?? false;
 
   useEffect(() => {
-    if (busyElsewhere) {
+    if (alreadyBought) {
       const id = window.setTimeout(() => setVisible(false), 0);
       return () => window.clearTimeout(id);
     }
+    if (noHeroToClear) {
+      const id = window.setTimeout(() => setVisible(true), 0);
+      return () => window.clearTimeout(id);
+    }
     function update() {
-      const scrollY = window.scrollY;
-      const nearBottom =
-        scrollY + window.innerHeight > document.documentElement.scrollHeight - HIDE_NEAR_BOTTOM_PX;
-      setVisible(scrollY > SHOW_AFTER_PX && !nearBottom);
+      setVisible(window.scrollY > SHOW_AFTER_PX);
     }
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -51,7 +57,7 @@ export function useEnrollBarVisible(): boolean {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [busyElsewhere]);
+  }, [alreadyBought, noHeroToClear]);
 
   return visible;
 }

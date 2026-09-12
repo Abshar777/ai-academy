@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   COUNTRY_OPTIONS,
@@ -389,9 +390,21 @@ export function OrderForm({ initialCountry }: { initialCountry: string }) {
           noValidate
           className="flex flex-col gap-5 rounded-3xl bg-neutral-10 p-8 md:p-10"
         >
-          <h1 className="font-noi-grotesk text-[26px] leading-[1.1] tracking-[-0.025em]">
-            Your details
-          </h1>
+          <div className="flex flex-col items-start gap-3">
+            <h1 className="font-noi-grotesk text-[26px] leading-[1.1] tracking-[-0.025em]">
+              Your details
+            </h1>
+            {/* AlreadyEnrolledGuard only bounces someone whose session is
+                already in hand. A buyer arriving signed out — an old link, an
+                ad, a second browser — would otherwise be looking at a page
+                asking them to buy what they own, with no way through to it. */}
+            <Link
+              href="/learn"
+              className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-neutral-90/15 px-4 py-2.5 text-center font-noi-grotesk text-[14px] leading-[1.3] font-medium transition duration-150 ease-in-out hover:border-neutral-90 hover:bg-neutral-90/5 sm:w-auto"
+            >
+              Already enrolled? Start the course
+            </Link>
+          </div>
 
           <div className="flex flex-col gap-2">
             <label className={LABEL} htmlFor="order-name">

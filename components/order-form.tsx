@@ -13,7 +13,7 @@ import { paymentLinkFor } from "@/lib/payment-links";
 import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
 import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
-import { writeCountryCookie } from "@/lib/country-cookie";
+import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
 import { FreeFiftyBanner } from "./free-fifty-banner";
@@ -70,6 +70,29 @@ export function OrderForm({
   const [couponStatus, setCouponStatus] = useState<CouponStatus>("idle");
   const [couponError, setCouponError] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+  // A country handed over in the link (/order?country=uae) has to be published,
+  // not just used here.
+  //
+  // Everything else that quotes a price — the enrol bar, the offer banner, the
+  // pricing section — reads lib/use-country.ts, which reads the cookie. The
+  // form took the parameter straight from the server and told nobody, so a
+  // campaign link left the page quoting two currencies at once: AED 99 in the
+  // form and Rs999 in the bar across the bottom. Changing the select by hand
+  // never had this problem, because that path already writes the cookie.
+  //
+  // Only written when it actually differs, so arriving without a parameter
+  // does not rewrite the cookie with the value just read out of it.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const fromCookie = normalizeCountry(readCountryCookie());
+      if (country && country !== fromCookie) writeCountryCookie(country);
+    }, 0);
+    return () => window.clearTimeout(id);
+    // Mount only: later changes go through handleCountryChange, which already
+    // writes and broadcasts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // A code handed over in the link (/order?coupon=ABC123) applies itself, so
   // somebody sent one personally never has to retype it — and sees the price

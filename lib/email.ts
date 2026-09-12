@@ -5,6 +5,7 @@ import nodemailer from "nodemailer";
 import { CURRICULUM, CURRICULUM_TOPIC_COUNT } from "./curriculum";
 import { generateInvoicePdf } from "./invoice";
 import { emailLayout } from "./email-templates";
+import { PROGRAMME_NAME } from "./site";
 
 /**
  * Welcome email — fired once a visitor completes any contact form (the
@@ -205,6 +206,70 @@ export async function sendSeminarConfirmationEmail(input: {
   } catch (err) {
     console.error("[seminar] confirmation email failed for", input.email, err);
     return { sent: false };
+  }
+}
+
+/**
+ * Hands a registered student their free access to the course.
+ *
+ * The code is in the link and also printed in the body: the link does the work
+ * — /order applies it on arrival — but a link that gets mangled by a mail
+ * client, or opened on a different device, leaves them with something they can
+ * type in by hand.
+ *
+ * One code per student, single use. Shared codes cannot be withdrawn from one
+ * person without withdrawing them from everybody.
+ */
+export function courseAccessEmailHtml(input: {
+  name: string;
+  code: string;
+  url: string;
+  lessons: number;
+  duration: string;
+}): string {
+  const greeting = input.name ? escapeHtml(input.name.split(" ")[0]) : "there";
+  return emailLayout({
+    preheader: `Your free access code for ${PROGRAMME_NAME}.`,
+    bodyHtml: `
+      <h2 style="margin:0 0 4px;font-size:22px;letter-spacing:-0.01em;">Your free access, ${greeting}</h2>
+      <p style="margin:0 0 20px;color:#444;">You registered for our AI video class, so here is your
+      access to <strong>${escapeHtml(PROGRAMME_NAME)}</strong> — ${input.lessons} lessons,
+      ${escapeHtml(input.duration)}, yours to keep.</p>
+
+      <p style="margin:0 0 8px;color:#777;font-size:14px;">Your personal code</p>
+      <p style="margin:0 0 20px;font-size:26px;font-weight:700;letter-spacing:0.08em;color:#111;">${escapeHtml(input.code)}</p>
+
+      <a href="${escapeHtml(input.url)}" style="display:inline-block;margin:0 0 20px;padding:14px 26px;border-radius:8px;background:#14151c;color:#ffffff;font-weight:600;text-decoration:none;">Claim your free access</a>
+
+      <p style="margin:0 0 16px;color:#444;">The code is already applied when you open that link — fill in
+      your details and the course opens. No card, nothing to pay.</p>
+
+      <p style="margin:0;color:#777;font-size:13px;">This code works once and is yours alone. If the button
+      doesn't work, go to ${escapeHtml(input.url)}</p>
+    `,
+  });
+}
+
+export async function sendCourseAccessEmail(input: {
+  name: string;
+  email: string;
+  code: string;
+  url: string;
+  lessons: number;
+  duration: string;
+}): Promise<{ sent: boolean; error?: string }> {
+  const transport = getTransporter();
+  if (!transport) return { sent: false, error: "SMTP not configured" };
+  try {
+    await transport.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: input.email,
+      subject: `Your free access to ${PROGRAMME_NAME}`,
+      html: courseAccessEmailHtml(input),
+    });
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 

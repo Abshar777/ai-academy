@@ -1,24 +1,32 @@
 /**
- * The launch price runs to the end of the week — midnight at the close of
- * Sunday, in the visitor's own time zone.
+ * The launch price ends on a fixed date: Friday 18 September 2026, at the
+ * close of the day in India.
  *
- * Always call this from the client, for the same reason as
- * lib/next-webinar.ts: a `new Date()` read during a server render can be baked
- * into a statically-optimized page and then never move, which would leave the
- * site counting down to a deadline that passed weeks ago.
+ * It used to roll forward to the next Sunday every week, which meant the
+ * countdown never reached zero — every Monday it quietly started again from a
+ * new deadline. A countdown that resets is not a deadline, and a visitor who
+ * came back a week later saw the same "ends this Sunday" urgency over the same
+ * price.
+ *
+ * Pinned to +05:30 rather than read from the visitor's clock, for the same
+ * reason lib/next-webinar.ts is: one instant, the same for everyone, so the
+ * offer does not close at a different moment in Dubai than in Kochi.
+ *
+ * Always call this from the client. A `new Date()` read during a server render
+ * can be baked into a statically-optimized page and then never move, leaving
+ * the site counting down to a deadline that has already passed.
  */
 
-/** Sunday. The week rolls over the moment it ends, so the offer always has a
- *  weekend to run to rather than showing a dead countdown on Monday. */
-const OFFER_END_WEEKDAY = 0;
+const OFFER_ENDS_AT = "2026-09-18T23:59:59+05:30";
 
-export function offerDeadline(from: Date = new Date()): Date {
-  const date = new Date(from);
-  date.setDate(from.getDate() + ((OFFER_END_WEEKDAY - from.getDay() + 7) % 7));
-  date.setHours(23, 59, 59, 999);
-  // Already past Sunday midnight — roll to the following week.
-  if (date.getTime() <= from.getTime()) date.setDate(date.getDate() + 7);
-  return date;
+export function offerDeadline(): Date {
+  return new Date(OFFER_ENDS_AT);
+}
+
+/** Whether the launch price is still running. The banner comes off once it is
+ *  not — a countdown frozen at zero advertises that nobody is minding it. */
+export function offerIsLive(from: Date = new Date()): boolean {
+  return offerDeadline().getTime() > from.getTime();
 }
 
 export type OfferCountdown = { days: number; hours: number; minutes: number; seconds: number };
@@ -34,7 +42,7 @@ export function countdownTo(deadline: Date, from: Date = new Date()): OfferCount
   };
 }
 
-/** e.g. "Sun, 13 Sept" — the deadline, without the year, which reads as
+/** e.g. "Fri, 18 Sept" — the deadline, without the year, which reads as
  *  further away than it is. */
 export function formatOfferDeadline(date: Date): string {
   return date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });

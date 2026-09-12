@@ -8,6 +8,7 @@ import {
   countdownTo,
   formatOfferDeadline,
   offerDeadline,
+  offerIsLive,
   type OfferCountdown,
 } from "@/lib/offer-deadline";
 
@@ -24,6 +25,9 @@ export function OfferBanner() {
   const country = useCountry();
   const [deadline, setDeadline] = useState<Date | null>(null);
   const [remaining, setRemaining] = useState<OfferCountdown | null>(null);
+  // Starts true so the bar renders as the server sent it; the check runs after
+  // mount, for the same hydration reason as the deadline itself.
+  const [live, setLive] = useState(true);
 
   // Deferred, and only after mount: the country lives in a cookie, and the
   // deadline is computed from the visitor's own clock. Reading either during
@@ -33,17 +37,26 @@ export function OfferBanner() {
       const end = offerDeadline();
       setDeadline(end);
       setRemaining(countdownTo(end));
+      setLive(offerIsLive());
     }, 0);
     return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {
     if (!deadline) return;
-    const id = window.setInterval(() => setRemaining(countdownTo(deadline)), 1000);
+    const id = window.setInterval(() => {
+      setRemaining(countdownTo(deadline));
+      // Catches the moment it runs out with somebody sitting on the page.
+      setLive(offerIsLive());
+    }, 1000);
     return () => window.clearInterval(id);
   }, [deadline]);
 
   const off = discountPercent(planForCountry(country));
+
+  // --announcement-height collapses on its own in the bar's absence (see
+  // app/globals.css), so the nav and body close the gap without anything here.
+  if (!live) return null;
 
   return (
     <div className="site-announcement fixed inset-x-0 top-0 z-[60] bg-lime-30 text-neutral-90">

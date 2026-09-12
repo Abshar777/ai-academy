@@ -26,7 +26,7 @@ export default function SeminarPage() {
     <main className="page-surface flex min-h-screen items-start justify-center overflow-x-clip px-6 pt-28 pb-20 md:pt-36 md:pb-32">
       <div className="mx-auto grid w-full max-w-4xl gap-6 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-6">
-          <SeminarPoster />
+          <SeminarPoster session={session} />
           {session && (
             <ul className="flex flex-col gap-3 rounded-3xl bg-neutral-10 p-8 md:p-10">
               {[

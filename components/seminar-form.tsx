@@ -251,11 +251,13 @@ function BookedSeat({ booked }: { booked: BookedState }) {
   );
 }
 
-export function SeminarPoster() {
+export function SeminarPoster({ session }: { session: WebinarSession | null }) {
+  if (!session) return null;
+  const start = new Date(session.startsAt);
   return (
     <Image
-      src="/seminar/webinar-poster.jpg"
-      alt=""
+      src={session.poster}
+      alt={`${session.title} — ${formatWebinarDate(start)} at ${formatWebinarTime(start)}, with ${session.speaker}`}
       width={1080}
       height={1350}
       className="h-auto w-full rounded-3xl"

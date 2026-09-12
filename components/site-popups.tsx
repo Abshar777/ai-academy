@@ -6,7 +6,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSessionHint } from "@/lib/use-session-hint";
 import { EPISODE_PAGE_PATH } from "@/lib/episode";
-import { WEBINAR_BOOKING_URL, formatWebinarDate, nextWebinarDate } from "@/lib/next-webinar";
+import {
+  WEBINAR_BOOKING_URL,
+  formatWebinarDate,
+  formatWebinarTime,
+  nextWebinarSession,
+  type WebinarSession,
+} from "@/lib/next-webinar";
 import { useEpisode } from "./episode-dialog";
 
 /**
@@ -27,13 +33,14 @@ import { useEpisode } from "./episode-dialog";
 const FIRST_POPUP_DELAY_MS = 3000;
 
 /**
- * The seminar popup is paused. Set back to true to bring it and its poster
- * back — everything it needs is still here, nothing was deleted.
+ * The seminar popup. Off means the free-episode popup takes its slot directly
+ * rather than waiting to be handed the baton.
  *
- * While it is off, the free-episode popup takes its slot directly rather than
- * waiting to be handed the baton, which is what used to open it.
+ * It also stays out of the way on its own once the schedule runs out: with no
+ * upcoming session there is nothing to book, and the poster would be
+ * advertising a date that has already been.
  */
-const SEMINAR_POPUP_ENABLED = false;
+const SEMINAR_POPUP_ENABLED = true;
 
 /** Routes where an interrupting dialog is the wrong call. */
 function isSuppressed(pathname: string | null): boolean {
@@ -77,7 +84,7 @@ export function SitePopups() {
   const suppressed = isSuppressed(pathname) || hasSession;
   const episode = useEpisode();
   const seminarRef = useRef<HTMLDialogElement>(null);
-  const [webinarDate, setWebinarDate] = useState("");
+  const [session, setSession] = useState<WebinarSession | null>(null);
   /** Guards the hand-off so closing the episode dialog can't reopen anything. */
   const stage = useRef<"idle" | "seminar" | "episode" | "done">("idle");
 
@@ -102,8 +109,15 @@ export function SitePopups() {
         return;
       }
 
-      const next = nextWebinarDate();
-      if (next) setWebinarDate(formatWebinarDate(next));
+      // Nothing scheduled — hand straight to the episode popup rather than
+      // showing a poster for a webinar that has been and gone.
+      const next = nextWebinarSession();
+      if (!next) {
+        stage.current = "done";
+        episode.open();
+        return;
+      }
+      setSession(next);
       stage.current = "seminar";
       seminarRef.current?.showModal();
     }, FIRST_POPUP_DELAY_MS);
@@ -168,8 +182,12 @@ export function SitePopups() {
           <CloseButton onClick={() => close(seminarRef)} />
 
           <Image
-            src="/seminar/webinar-poster.jpg"
-            alt="Free webinar — Prompt. Build. Launch. Saturday 5 September, with Muhammed Shan"
+            src={session?.poster ?? ""}
+            alt={
+              session
+                ? `Free live webinar — ${session.title}, ${formatWebinarDate(new Date(session.startsAt))} at ${formatWebinarTime(new Date(session.startsAt))}, with ${session.speaker}`
+                : "Free live webinar"
+            }
             width={1080}
             height={1350}
             className="h-auto w-full"
@@ -189,7 +207,9 @@ export function SitePopups() {
               onClick={() => close(seminarRef)}
               className="font-noi-grotesk text-[13px] leading-none text-white/55 transition-colors duration-150 hover:text-white"
             >
-              {webinarDate ? `Maybe later — next one is ${webinarDate}` : "Maybe later"}
+              {session
+                ? `Maybe later — it's on ${formatWebinarDate(new Date(session.startsAt))}`
+                : "Maybe later"}
             </button>
           </div>
         </div>

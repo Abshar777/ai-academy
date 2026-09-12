@@ -26,6 +26,12 @@ export type WebinarSession = {
   durationMinutes: number;
   title: string;
   speaker: string;
+  /** Path under /public. Named per session rather than a fixed
+   *  "webinar-poster.jpg": Next's image optimiser caches on the URL, so
+   *  overwriting one file in place leaves every page serving the previous
+   *  poster until the cache expires. A new session gets a new filename and
+   *  the problem cannot happen. */
+  poster: string;
 };
 
 export const WEBINAR_TIME_ZONE = "Asia/Kolkata";
@@ -37,6 +43,7 @@ const SESSIONS: WebinarSession[] = [
     durationMinutes: 60,
     title: "Build a website in minutes, free",
     speaker: "Muhammed Shan",
+    poster: "/seminar/2026-09-15-free-website.jpg",
   },
 ];
 

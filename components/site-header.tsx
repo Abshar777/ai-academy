@@ -6,6 +6,7 @@ import Link from "next/link";
 import { DeltaWordmark, DeltaMark } from "./delta-logo";
 import { MobileNav } from "./mobile-nav";
 import { useIntroComplete } from "@/lib/intro";
+import { usePrimaryCta } from "@/lib/use-primary-cta";
 
 // Prefixed with "/" rather than a bare "#...": the header now renders on
 // every route via the root layout, so a bare hash would try to scroll the
@@ -25,6 +26,7 @@ const CONDENSE_AT = 50;
 
 export function SiteHeader() {
   const ref = useRef<HTMLElement>(null);
+  const cta = usePrimaryCta();
   // The bar drops in with the curtain rather than being there already.
   const introDone = useIntroComplete();
 
@@ -84,10 +86,10 @@ export function SiteHeader() {
                   Brochure
                 </BrochureLink>
                 <Link
-                href="/order"
+                href={cta.href}
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out hover:bg-lime-40"
               >
-                Join now
+                {cta.label}
               </Link>
               </div>
             </div>

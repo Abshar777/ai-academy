@@ -5,6 +5,7 @@ import { BrochureLink } from "./brochure-link";
 import Link from "next/link";
 import { DeltaLogo, DeltaWordmark } from "./delta-logo";
 import { useIntroComplete } from "@/lib/intro";
+import { usePrimaryCta } from "@/lib/use-primary-cta";
 
 /** Matches the desktop bar, so both collapse at the same point. */
 const CONDENSE_AT = 50;
@@ -78,6 +79,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLElement>(null);
   const introDone = useIntroComplete();
+  const cta = usePrimaryCta();
 
   // Written straight to the DOM so the transition starts on the same frame as
   // the scroll, exactly as the desktop bar does.
@@ -177,10 +179,10 @@ export function MobileNav() {
                 Hidden while the drawer is open — it offers the same thing. */}
             {!open && (
               <Link
-                href="/order"
+                href={cta.href}
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-none font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out active:scale-[0.97]"
               >
-                Join now
+                {cta.label}
               </Link>
             )}
 
@@ -247,11 +249,11 @@ export function MobileNav() {
           style={{ ["--i" as string]: String(NAV.length) }}
         >
           <Link
-            href="/order"
+            href={cta.href}
             onClick={() => setOpen(false)}
             className="inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-5 text-[16px] leading-none font-medium text-white"
           >
-            Join now
+            {cta.label}
           </Link>
           <BrochureLink className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-5 text-[16px] leading-none font-medium">
             Brochure

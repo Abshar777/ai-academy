@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -39,6 +40,9 @@ function isSuppressed(pathname: string | null): boolean {
   if (!pathname) return false;
   return (
     pathname.startsWith("/order") ||
+    // Someone on the seminar page is already mid-signup for the free thing a
+    // popup would be offering them.
+    pathname.startsWith("/seminar") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith(EPISODE_PAGE_PATH) ||
     pathname.startsWith("/learn")
@@ -173,15 +177,13 @@ export function SitePopups() {
           />
 
           <div className="flex flex-col gap-3 p-5">
-            <a
+            <Link
               href={WEBINAR_BOOKING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
               onClick={() => close(seminarRef)}
               className="inline-flex h-12 w-full items-center justify-center rounded-full bg-lime-30 px-6 font-noi-grotesk text-[15px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 active:scale-[0.98]"
             >
               Book your free slot
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => close(seminarRef)}

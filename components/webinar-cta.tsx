@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -149,10 +150,8 @@ export function WebinarCta({ className = "" }: { className?: string }) {
 
           {/* Straight to the registration form rather than the general
               enquiry modal — booking a seat is its own flow. */}
-          <a
+          <Link
             href={WEBINAR_BOOKING_URL}
-            target="_blank"
-            rel="noopener noreferrer"
             className="group inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-full bg-lime-30 px-6 font-noi-grotesk text-[14px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 active:scale-[0.98] sm:w-auto sm:text-[15px]"
           >
             Book my free seat
@@ -166,7 +165,7 @@ export function WebinarCta({ className = "" }: { className?: string }) {
                 className="transition-transform duration-150 ease-out group-hover:translate-x-0.5"
               />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

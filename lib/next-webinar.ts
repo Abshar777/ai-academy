@@ -40,8 +40,10 @@ const SESSIONS: WebinarSession[] = [
   },
 ];
 
-/** Where "Book my free seat" goes. */
-export const WEBINAR_BOOKING_URL = "https://qoywuk5j2jd.typeform.com/to/VswZiCFL";
+/** Where "Book my free seat" goes. Our own page rather than the Typeform it
+ *  used to be: booking here is what lets us send the calendar invite, hand
+ *  over the WhatsApp community, and know who actually registered. */
+export const WEBINAR_BOOKING_URL = "/seminar";
 
 /** The next session still ahead of `from`, or null once the list runs out. */
 export function nextWebinarSession(from: Date = new Date()): WebinarSession | null {

@@ -220,6 +220,32 @@ export async function notifyWelcomeWhatsApp(
   );
 }
 
+/**
+ * Confirms a free-seminar seat and hands over the community link.
+ *
+ * Reliable delivery needs WHATSAPP_SEMINAR_TEMPLATE pointing at an approved
+ * Meta template — a seminar registrant has, by definition, never messaged the
+ * business number, so the free-text fallback below will not reach them. It is
+ * kept anyway for the few who have, and because the page and the confirmation
+ * email carry the same link regardless.
+ */
+export async function notifySeminarWhatsApp(
+  phone: string,
+  name: string,
+  when: string,
+  communityUrl: string,
+  countryCode?: string,
+): Promise<SendResult> {
+  const greeting = name || "there";
+  return notifyCustomerWhatsApp(
+    phone,
+    "WHATSAPP_SEMINAR_TEMPLATE",
+    [greeting, when, communityUrl],
+    `Hi ${greeting}, your free seat for the Delta AI Academy seminar on ${when} is confirmed. The Google Calendar invite is in your email. Join our WhatsApp community here: ${communityUrl}`,
+    countryCode,
+  );
+}
+
 export async function notifyPaymentSuccessWhatsApp(
   phone: string,
   name: string,

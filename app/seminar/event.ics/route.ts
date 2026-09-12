@@ -1,7 +1,7 @@
 import { seminarIcs } from "@/lib/seminar-ics";
 import { plainInvite } from "@/lib/seminar-invite";
 import { nextWebinarSession } from "@/lib/next-webinar";
-import { sessionEventId } from "@/lib/seminar-registrations";
+import { sessionCalendarRef } from "@/lib/seminar-registrations";
 
 /** Mongo and node:crypto — not edge. */
 export const runtime = "nodejs";
@@ -17,9 +17,14 @@ export const dynamic = "force-dynamic";
  * iPhone on Apple Calendar never gets there at all. A .ics is understood by
  * Google Calendar, Apple Calendar and Outlook alike.
  *
- * It carries the registration page rather than the Meet link. The Meet link is
- * what a booked seat buys you, and putting it in a public file hands out the
- * room to anyone forwarded the message — along with any idea of who is coming.
+ * It carries the Meet link, by decision: someone who adds this to their
+ * calendar can join straight from the entry without going back for it.
+ *
+ * That makes the link forwardable — anyone passed the file can join without
+ * ever registering, so the guest list stops being a record of who turns up.
+ * Registration is still the only route that sends the confirmation, the
+ * reminder and the community link, so it remains worth doing; but if the room
+ * needs to be closed to people who did not book, this file is how it gets out.
  *
  * The UID matches the real event where one exists, so somebody who adds this
  * and later registers ends up with one entry in their calendar, not two.
@@ -33,11 +38,15 @@ export async function GET() {
     });
   }
 
+  const { eventId, meetLink } = await sessionCalendarRef(session.startsAt);
+
   const ics = seminarIcs({
-    eventId: await sessionEventId(session.startsAt),
+    eventId,
     title: `Delta AI Academy — ${session.title}`,
-    description: plainInvite(session),
-    location: "https://deltaaiacademy.ai/seminar",
+    description: plainInvite(session, { meetLink }),
+    // Falls back to the registration page until a first booking has created
+    // the event — there is no Meet link to give out before that exists.
+    location: meetLink ?? "https://deltaaiacademy.ai/seminar",
     startsAt: session.startsAt,
     durationMinutes: session.durationMinutes,
     organizerName: "Delta AI Academy",

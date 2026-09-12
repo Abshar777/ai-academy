@@ -159,16 +159,18 @@ export async function sessionEvent(
 }
 
 /**
- * The Google event id for a session, if one has been created yet.
+ * The Google event id and Meet link for a session, if one exists yet.
  *
  * Read-only on purpose: the public .ics route must not be able to create a
  * calendar event, or a stranger fetching the file would provision one.
  */
-export async function sessionEventId(startsAt: string): Promise<string | null> {
+export async function sessionCalendarRef(
+  startsAt: string,
+): Promise<{ eventId: string | null; meetLink: string | null }> {
   const db = await collections();
-  if (!db) return null;
+  if (!db) return { eventId: null, meetLink: null };
   const row = await db.sessions.findOne({ startsAt });
-  return row?.eventId ?? null;
+  return { eventId: row?.eventId ?? null, meetLink: row?.meetLink ?? null };
 }
 
 /** Re-reads the Meet link from Google, for a session whose event we already

@@ -1,42 +1,81 @@
 /**
- * The free live webinar runs weekly, Saturdays at 8:00 PM. Shared by the
- * hero's booking CTA (components/webinar-cta.tsx) and the smaller badge on
- * the "Start building today" card (components/next-webinar-badge.tsx) so
- * both quote the same session.
+ * The free live webinar sessions, in one place. Read by the hero's booking CTA
+ * (components/webinar-cta.tsx), the badge on the "Start building today" card
+ * (components/next-webinar-badge.tsx) and the entry popup, so none of them can
+ * quote a different date from the others.
  *
- * Always call this from the client. A `new Date()` read during a server
- * render can get baked into a statically-optimized page and then never
- * update, which would leave the site advertising a webinar that has been
- * and gone.
+ * Real dated sessions rather than a weekly rule. The rule this replaced said
+ * "every Saturday at 20:00" and computed it with setHours() in whatever
+ * timezone the visitor's browser happened to be in — so the site advertised
+ * 8:00 PM to everyone, meaning a different moment in each country, and none of
+ * them the moment the webinar actually runs.
+ *
+ * Each start is an absolute instant with its offset written in, and every
+ * format below pins the output to IST. A visitor in Dubai is told the Indian
+ * time, which is what the posters say and what the host will be keeping to.
+ *
+ * Add the next session to the list when it is scheduled. Once every session is
+ * in the past, nothing is advertised at all — an empty hero card is a smaller
+ * problem than an invitation to a webinar that has already happened.
  */
 
-const WEBINAR_WEEKDAY = 6; // Saturday
-const WEBINAR_HOUR = 20; // 8:00 PM
+export type WebinarSession = {
+  /** ISO instant. The +05:30 is part of the value, so it resolves to the same
+   *  moment wherever it is read — server, browser, or calendar invite. */
+  startsAt: string;
+  durationMinutes: number;
+  title: string;
+  speaker: string;
+};
 
-/** Where "Book my free seat" goes — the live registration form. */
+export const WEBINAR_TIME_ZONE = "Asia/Kolkata";
+const TIME_ZONE_LABEL = "IST";
+
+const SESSIONS: WebinarSession[] = [
+  {
+    startsAt: "2026-09-15T19:30:00+05:30",
+    durationMinutes: 60,
+    title: "Build a website in minutes, free",
+    speaker: "Muhammed Shan",
+  },
+];
+
+/** Where "Book my free seat" goes. */
 export const WEBINAR_BOOKING_URL = "https://qoywuk5j2jd.typeform.com/to/VswZiCFL";
 
-export function nextWebinarDate(from: Date = new Date()): Date {
-  const date = new Date(from);
-  date.setDate(from.getDate() + ((WEBINAR_WEEKDAY - from.getDay() + 7) % 7));
-  date.setHours(WEBINAR_HOUR, 0, 0, 0);
-  // It is already Saturday and 20:00 has passed — this week's session has
-  // started, so the *next* one is a week out.
-  if (date.getTime() <= from.getTime()) date.setDate(date.getDate() + 7);
-  return date;
+/** The next session still ahead of `from`, or null once the list runs out. */
+export function nextWebinarSession(from: Date = new Date()): WebinarSession | null {
+  return (
+    [...SESSIONS]
+      .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
+      .find((session) => Date.parse(session.startsAt) > from.getTime()) ?? null
+  );
 }
 
-/** e.g. "Sat, 5 Sept 2026" */
+/** When the next session starts, or null if there isn't one. */
+export function nextWebinarDate(from: Date = new Date()): Date | null {
+  const session = nextWebinarSession(from);
+  return session ? new Date(session.startsAt) : null;
+}
+
+/** e.g. "Tue, 15 Sept 2026" — always the Indian date. */
 export function formatWebinarDate(date: Date): string {
   return date.toLocaleDateString("en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: WEBINAR_TIME_ZONE,
   });
 }
 
-/** e.g. "11:00 AM" */
+/** e.g. "7:30 PM IST". The zone is named because the audience spans India and
+ *  the Gulf, and a bare "7:30 PM" means two different evenings to them. */
 export function formatWebinarTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: WEBINAR_TIME_ZONE,
+  });
+  return `${time} ${TIME_ZONE_LABEL}`;
 }

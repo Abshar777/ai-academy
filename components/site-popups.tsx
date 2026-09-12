@@ -98,7 +98,8 @@ export function SitePopups() {
         return;
       }
 
-      setWebinarDate(formatWebinarDate(nextWebinarDate()));
+      const next = nextWebinarDate();
+      if (next) setWebinarDate(formatWebinarDate(next));
       stage.current = "seminar";
       seminarRef.current?.showModal();
     }, FIRST_POPUP_DELAY_MS);

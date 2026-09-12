@@ -92,13 +92,15 @@ function CountdownUnit({
 
 export function WebinarCta({ className = "" }: { className?: string }) {
   const reducedMotion = useReducedMotion();
-  const [session, setSession] = useState<{ date: Date; remaining: Remaining } | null>(null);
+  /** null while the first tick is still pending — which is also what the
+   *  server rendered — and "none" once the schedule has run out. */
+  const [session, setSession] = useState<{ date: Date; remaining: Remaining } | "none" | null>(null);
 
   useEffect(() => {
     function tick() {
       const now = new Date();
       const date = nextWebinarDate(now);
-      setSession({ date, remaining: remainingUntil(date, now) });
+      setSession(date ? { date, remaining: remainingUntil(date, now) } : "none");
     }
     // Deferred rather than called straight from the effect body: the server
     // renders no date at all, so the first client render has to match that.
@@ -110,8 +112,13 @@ export function WebinarCta({ className = "" }: { className?: string }) {
     };
   }, []);
 
-  const remaining = session?.remaining ?? null;
+  const upcoming = session === "none" ? null : session;
+  const remaining = upcoming?.remaining ?? null;
   const animated = !reducedMotion;
+
+  // Nothing on the calendar. Inviting people to a webinar that has already
+  // happened is worse than the hero being one card shorter.
+  if (session === "none") return null;
 
   return (
     <div
@@ -126,8 +133,8 @@ export function WebinarCta({ className = "" }: { className?: string }) {
 
           {/* Fixed line height so the row doesn't jump when the date lands. */}
           <span className="min-h-[18px] font-noi-grotesk text-[13px] leading-[1.3] font-medium tracking-[-0.01em] text-white/70 sm:text-[14px]">
-            {session
-              ? `${formatWebinarDate(session.date)} · ${formatWebinarTime(session.date)}`
+            {upcoming
+              ? `${formatWebinarDate(upcoming.date)} · ${formatWebinarTime(upcoming.date)}`
               : ""}
           </span>
         </div>

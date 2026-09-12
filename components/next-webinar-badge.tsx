@@ -30,6 +30,9 @@ export function NextWebinarBadge({ className = "" }: { className?: string }) {
   useEffect(() => {
     const id = window.setTimeout(() => {
       const date = nextWebinarDate();
+      // Nothing scheduled — the badge stays away rather than naming a date
+      // that has been and gone.
+      if (!date) return;
       setLabel(`${formatWebinarDate(date)} · ${formatWebinarTime(date)}`);
     }, 0);
     return () => window.clearTimeout(id);

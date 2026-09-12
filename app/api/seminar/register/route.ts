@@ -8,6 +8,7 @@ import {
   sessionEvent,
 } from "@/lib/seminar-registrations";
 import { addSeminarGuest } from "@/lib/google-calendar";
+import { seminarInvite } from "@/lib/seminar-invite";
 import { sendSeminarConfirmationEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifySeminarWhatsApp } from "@/lib/whatsapp";
 
@@ -60,20 +61,15 @@ export async function POST(request: Request) {
     startsAt: session.startsAt,
   });
 
-  // What a registrant reads inside their calendar entry days later, with none
-  // of this page in front of them.
-  const description = [
-    `${session.title} — a free live session with ${session.speaker}.`,
-    "",
-    "Join from the Google Meet link on this event.",
-    communityUrl ? `Our WhatsApp community: ${communityUrl}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const event = await sessionEvent(session, description);
+  const event = await sessionEvent(session, seminarInvite(session, { communityUrl }));
   let meetLink = event?.meetLink ?? null;
   if (event && !meetLink) meetLink = await refreshSessionMeetLink(session.startsAt, event.eventId);
+
+  if (event && meetLink) {
+    // The Meet link only exists after the event does, so the location is set
+    // on the next pass rather than at creation.
+    await sessionEvent(session, seminarInvite(session, { communityUrl, meetLink }));
+  }
 
   if (event) {
     // Google emails the invitation as part of this. Re-run on a resubmit too:

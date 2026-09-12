@@ -1,7 +1,14 @@
 import type { Collection } from "mongodb";
 import { getDb } from "./mongodb";
-import { createSeminarEvent, getSeminarEvent, isCalendarConfigured } from "./google-calendar";
+import { createHash } from "node:crypto";
+import {
+  createSeminarEvent,
+  getSeminarEvent,
+  isCalendarConfigured,
+  updateSeminarEvent,
+} from "./google-calendar";
 import { WEBINAR_TIME_ZONE, type WebinarSession } from "./next-webinar";
+import type { InviteContent } from "./seminar-invite";
 
 /**
  * Who booked a seat at a free seminar, and which Google Calendar event each
@@ -33,6 +40,9 @@ type SeminarSession = {
   startsAt: string;
   eventId?: string;
   meetLink?: string | null;
+  /** Fingerprint of the wording last written to the event, so corrected copy
+   *  reaches an invitation people already hold instead of only the next one. */
+  contentHash?: string;
   createdAt: Date;
 };
 
@@ -80,14 +90,28 @@ async function collections(): Promise<{
  */
 export async function sessionEvent(
   session: WebinarSession,
-  description: string,
+  content: InviteContent,
 ): Promise<{ eventId: string; meetLink: string | null } | null> {
   if (!isCalendarConfigured()) return null;
   const db = await collections();
   if (!db) return null;
 
+  const hash = createHash("sha256")
+    .update(`${content.title}\u0000${content.description}\u0000${content.location ?? ""}`)
+    .digest("hex");
+
   const existing = await db.sessions.findOne({ startsAt: session.startsAt });
-  if (existing?.eventId) return { eventId: existing.eventId, meetLink: existing.meetLink ?? null };
+  if (existing?.eventId) {
+    // The event outlives the registration that created it, so corrected
+    // wording has to be pushed to it rather than waiting for a new event.
+    if (existing.contentHash !== hash) {
+      const updated = await updateSeminarEvent(existing.eventId, content);
+      if (updated) {
+        await db.sessions.updateOne({ startsAt: session.startsAt }, { $set: { contentHash: hash } });
+      }
+    }
+    return { eventId: existing.eventId, meetLink: existing.meetLink ?? null };
+  }
 
   let weCreate = false;
   try {
@@ -103,8 +127,9 @@ export async function sessionEvent(
 
   if (weCreate) {
     const event = await createSeminarEvent({
-      title: session.title,
-      description,
+      title: content.title,
+      description: content.description,
+      location: content.location,
       startsAt: session.startsAt,
       durationMinutes: session.durationMinutes,
       timeZone: WEBINAR_TIME_ZONE,
@@ -117,7 +142,7 @@ export async function sessionEvent(
     }
     await db.sessions.updateOne(
       { startsAt: session.startsAt },
-      { $set: { eventId: event.eventId, meetLink: event.meetLink } },
+      { $set: { eventId: event.eventId, meetLink: event.meetLink, contentHash: hash } },
     );
     return event;
   }

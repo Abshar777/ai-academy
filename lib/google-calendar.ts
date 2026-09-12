@@ -179,6 +179,7 @@ const meetLinkOf = (event: GoogleEvent): string | null =>
 export async function createSeminarEvent(input: {
   title: string;
   description: string;
+  location?: string | null;
   startsAt: string;
   durationMinutes: number;
   timeZone: string;
@@ -197,6 +198,7 @@ export async function createSeminarEvent(input: {
       body: JSON.stringify({
         summary: input.title,
         description: input.description,
+        ...(input.location ? { location: input.location } : {}),
         start: { dateTime: start.toISOString(), timeZone: input.timeZone },
         end: { dateTime: end.toISOString(), timeZone: input.timeZone },
         guestsCanSeeOtherGuests: false,
@@ -214,6 +216,37 @@ export async function createSeminarEvent(input: {
 
   if (!result.ok) return null;
   return { eventId: result.data.id, meetLink: meetLinkOf(result.data) };
+}
+
+/**
+ * Rewrites the wording on an event that already exists.
+ *
+ * Needed because the event is created on the first registration and then long
+ * outlives it: correcting a title or adding the community link afterwards has
+ * to reach the invitation everyone already has, not just the next one.
+ *
+ * sendUpdates is "none" — a reworded description is not worth mailing every
+ * guest about, and Google would otherwise notify all of them on each edit.
+ */
+export async function updateSeminarEvent(
+  eventId: string,
+  content: { title: string; description: string; location?: string | null },
+): Promise<boolean> {
+  const conf = config();
+  if (!conf) return false;
+  const result = await api<GoogleEvent>(
+    conf,
+    `/calendars/${encodeURIComponent(conf.calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        summary: content.title,
+        description: content.description,
+        ...(content.location ? { location: content.location } : {}),
+      }),
+    },
+  );
+  return result.ok;
 }
 
 /** Reads an event back, to confirm one we recorded earlier is still there. */

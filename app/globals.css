@@ -150,7 +150,7 @@ body {
      (components/offer-banner.tsx). Everything that positions against the top
      of the viewport adds it, so the bar's size is set in exactly one place.
      Set to 0 and the whole layout closes up again. */
-  --announcement-height: 2.25rem;
+  --announcement-height: 2.75rem;
 
   --desktop-nav-top-offset: calc(1.5rem + var(--announcement-height));
   --mobile-top-offset: calc(1.5rem + var(--announcement-height));

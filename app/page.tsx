@@ -21,7 +21,10 @@ export default function Home() {
       <main className="page-surface overflow-x-clip">
         <Hero />
         <AiTools />
+        
         <div className="mx-auto flex w-full max-w-[1440px] flex-col px-6 lg:px-36">
+          <PricingSection />
+           <CertificateSection />
           <VibeCoding />
           <CurriculumPreview />
         </div>
@@ -31,8 +34,7 @@ export default function Home() {
         <div className="mx-auto flex w-full max-w-[1440px] flex-col px-6 py-8 lg:px-36 lg:py-12">
           <WhyDelta />
           <MentorsSection />
-          <CertificateSection />
-          <PricingSection />
+         
           <Testimonials />
           <FaqSection />
         </div>

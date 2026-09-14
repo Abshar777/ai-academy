@@ -42,3 +42,6 @@ next-env.d.ts
 
 # large source media, not served
 media-source/
+
+# Blog images uploaded through the admin — content, not source.
+public/uploads/

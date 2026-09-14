@@ -99,7 +99,7 @@ export function Hero() {
             delay={0.15}
             className="mt-5 max-w-[820px] pb-2 font-sans-plomb text-[16vw] leading-[0.88] font-semibold tracking-[-0.02em] uppercase sm:mt-0 sm:text-[76px] sm:leading-[0.9] sm:tracking-[-0.015em] md:pb-4 md:text-[110px] lg:text-[120px] xl:text-[150px]"
           >
-            Build AI powered applications
+            Build websites &amp; apps in minutes with AI
           </SplitReveal>
 
           <SplitReveal

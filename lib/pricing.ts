@@ -58,8 +58,8 @@ export const INDIA_PLAN: PricingPlan = {
   amount: 999,
   currency: "INR",
   label: "₹999",
-  originalLabel: "₹4,000",
-  originalAmount: 4000,
+  originalLabel: "₹10,000",
+  originalAmount: 10000,
   methods: ["razorpay", "stripe"],
 };
 
@@ -73,11 +73,11 @@ export const DEFAULT_PLAN: PricingPlan = {
   amount: 99,
   currency: "AED",
   label: "AED 99",
-  // The same ₹4,000 reference price as the India plan, converted at roughly
-  // ₹22.7 to the dirham and rounded down to a clean figure. Adjust both this
-  // and originalAmount together if the rate moves.
-  originalLabel: "AED 175",
-  originalAmount: 175,
+  // The same ₹10,000 reference price as the India plan, converted at roughly
+  // ₹22.7 to the dirham (₹10,000 ≈ AED 440.5) and rounded down to a clean
+  // figure. Adjust both this and originalAmount together if the rate moves.
+  originalLabel: "AED 440",
+  originalAmount: 440,
   methods: ["razorpay", "stripe", "tabby", "tamara"],
 };
 

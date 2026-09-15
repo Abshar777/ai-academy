@@ -26,6 +26,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      // The beginners landing page — written for search as much as for ads,
+      // and a complete answer on its own.
+      url: `${SITE_URL}/ai-development-course-for-beginners`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       // The free episode — a real landing page, and the strongest thing to
       // arrive on from a search.
       url: `${SITE_URL}${EPISODE_PAGE_PATH}`,

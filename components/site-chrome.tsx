@@ -25,6 +25,11 @@ export function SiteChrome({ children }: { children: ReactNode }) {
 
   if (pathname?.startsWith("/admin")) return <>{children}</>;
 
+  // Ad landing pages bring their own header and footer and a theme that shares
+  // nothing with this one — the banner, popups and chat bubble would sit on top
+  // of a page designed to have none of them.
+  if (pathname?.startsWith("/ai-development-course-for-beginners")) return <>{children}</>;
+
   // Everything that sells the programme comes off for two audiences: people
   // inside the course, and anyone already signed in. Both have bought it.
   //

@@ -23,6 +23,38 @@ import { ACADEMY_API_URL, hasSessionHint, type AcademyUser, type Lang } from "@/
  * read it.
  */
 
+/* Records that this browser has a session — a boolean, never the session.
+ *
+ * The token stays in the httpOnly cookie, out of reach of script, because the
+ * two-device limit is only worth anything while a session cannot be copied out
+ * of one browser and pasted into another. What is kept here is one bit: worth
+ * asking the server whether the cookie is still good. Forging it gains an
+ * anonymous visitor a 401 and nothing else.
+ *
+ * The `da_session` cookie was meant to carry this bit, but it is set by the
+ * API's own host and cannot be read here unless COOKIE_DOMAIN scopes it to the
+ * parent domain. When it cannot be read, every reload looked like a first
+ * visit and asked a signed-in learner to sign in again.
+ */
+const LOCAL_HINT = "da_has_session";
+
+function rememberSession(exists: boolean): void {
+  try {
+    if (exists) localStorage.setItem(LOCAL_HINT, "1");
+    else localStorage.removeItem(LOCAL_HINT);
+  } catch {
+    // Private windows, blocked site data. The cookie hint still applies.
+  }
+}
+
+function hasLocalHint(): boolean {
+  try {
+    return localStorage.getItem(LOCAL_HINT) === "1";
+  } catch {
+    return false;
+  }
+}
+
 type Status = "loading" | "anon" | "authed";
 
 type AuthContextValue = {
@@ -57,6 +89,7 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
     tokenRef.current = data.accessToken;
     setUserState(data.user);
     setStatus("authed");
+    rememberSession(true);
     return true;
   }, []);
 
@@ -64,6 +97,7 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
     tokenRef.current = null;
     setUserState(null);
     setStatus("anon");
+    rememberSession(false);
   }, []);
 
   /**
@@ -108,7 +142,8 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const restored = hasSessionHint() || onCourse ? await refresh() : false;
+      const worthAsking = hasSessionHint() || hasLocalHint() || onCourse;
+      const restored = worthAsking ? await refresh() : false;
       if (cancelled || restored) return;
       forget();
     })();

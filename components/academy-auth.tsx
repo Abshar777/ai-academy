@@ -204,7 +204,9 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
       // while the PATCH is still in flight.
       setUserState((current) => (current ? { ...current, preferredLang: lang } : current));
       if (status === "authed") {
-        void apiFetch("/me", { method: "PATCH", body: JSON.stringify({ preferredLang: lang }) });
+        // Same reason as the progress save: the local state is already right,
+        // so a write that never lands should not surface as an error.
+        apiFetch("/me", { method: "PATCH", body: JSON.stringify({ preferredLang: lang }) }).catch(() => {});
       }
     },
     [status, apiFetch],

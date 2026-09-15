@@ -64,7 +64,7 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
   const { status, user, apiFetch, setPreferredLang } = useAcademyAuth();
   const [course, setCourse] = useState<CourseResponse | null>(null);
   const [play, setPlay] = useState<PlayResponse | null>(null);
-  const [blocked, setBlocked] = useState<"none" | "sign-in" | "purchase">("none");
+  const [blocked, setBlocked] = useState<"none" | "sign-in" | "purchase" | "unavailable">("none");
   const [loading, setLoading] = useState(true);
   const [langOverride, setLangOverride] = useState<Lang | null>(null);
 
@@ -92,6 +92,11 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
       try {
         const res = await apiFetch(`/courses/${COURSE_SLUG}`);
         if (!cancelled) setCourse(res.ok ? ((await res.json()) as CourseResponse) : null);
+      } catch {
+        // try/finally with no catch rethrew a dropped request into an unhandled
+        // rejection, and the page settled on "No such episode" — which reads as
+        // a broken link rather than a connection that gave out.
+        if (!cancelled) setCourse(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -106,8 +111,22 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
   const episodeId = located?.episode.id;
 
   const loadPlayback = useCallback(async () => {
-    if (!episodeId) return;
-    const res = await apiFetch(`/episodes/${episodeId}/play`);
+    // Waiting for the session to settle first. Asking while it is still being
+    // restored earns a 401 that means "not yet", not "not allowed", and the
+    // card it raises would be the one a signed-in learner is looking at.
+    if (!episodeId || status === "loading") return;
+    let res: Response;
+    try {
+      res = await apiFetch(`/episodes/${episodeId}/play`);
+    } catch {
+      // The request never landed — a dropped connection, not a verdict on who
+      // this person is. Saying nothing threw the rejection away and left the
+      // view on whichever card was already up; falling through to the branches
+      // below would have told someone who has paid to go and buy the course.
+      setPlay(null);
+      setBlocked("unavailable");
+      return;
+    }
     if (res.ok) {
       setPlay((await res.json()) as PlayResponse);
       setBlocked("none");
@@ -115,7 +134,11 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
       setPlay(null);
       setBlocked(res.status === 401 ? "sign-in" : "purchase");
     }
-  }, [episodeId, apiFetch]);
+    // `status` is a dependency so signing in re-runs this. Without it the
+    // request was pinned to `apiFetch`, which does not change when the session
+    // does: the code was accepted, the card stayed up, and the second attempt
+    // spent an already-used code on "That code isn't right."
+  }, [episodeId, apiFetch, status]);
 
   useEffect(() => {
     // Deferred a tick: react-hooks/set-state-in-effect flags a setState the
@@ -152,10 +175,13 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
   const save = useCallback(
     (seconds: number, language: Lang, completed = false) => {
       if (!episodeId || status !== "authed") return;
-      void apiFetch(`/progress/${episodeId}`, {
+      // `void` drops the promise but not its rejection: every save attempted on
+      // a bad connection became an unhandled error in the console. Losing a
+      // position marker is a thing to shrug at, so shrug at it deliberately.
+      apiFetch(`/progress/${episodeId}`, {
         method: "PUT",
         body: JSON.stringify({ positionSec: Math.round(seconds), lang: language, completed }),
-      });
+      }).catch(() => {});
     },
     [episodeId, status, apiFetch],
   );
@@ -258,6 +284,23 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
         <div className="flex aspect-video w-full items-center justify-center rounded-2xl bg-neutral-90 p-6">
           {blocked === "sign-in" ? (
             <SignIn heading="Sign in to watch" />
+          ) : blocked === "unavailable" ? (
+            <div className="text-center text-white">
+              <h2 className="font-noi-grotesk text-[22px] tracking-[-0.02em]">
+                This episode couldn&rsquo;t load
+              </h2>
+              <p className="mx-auto mt-2 max-w-sm font-noi-grotesk text-[15px] leading-[1.45] text-white/70">
+                The connection dropped on the way. Your place in the course is
+                safe — try again.
+              </p>
+              <button
+                type="button"
+                onClick={() => void loadPlayback()}
+                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-lime-30 px-6 font-noi-grotesk text-[15px] leading-none font-medium text-neutral-90 transition hover:bg-lime-40"
+              >
+                Try again
+              </button>
+            </div>
           ) : (
             <div className="text-center text-white">
               <h2 className="font-noi-grotesk text-[22px] tracking-[-0.02em]">

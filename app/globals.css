@@ -152,6 +152,20 @@ body {
      Set to 0 and the whole layout closes up again. */
   --announcement-height: 2.75rem;
 
+}
+
+/* The taller bar is for phones, where the offer has to compete with a small
+   screen. On a laptop that height reads as a banner rather than a notice, so
+   it goes back to where it was. Declared at the same level as the offsets
+   built from it — a custom property other properties derive from resolves
+   where it is declared. */
+@media (min-width: 40rem) {
+  :root {
+    --announcement-height: 2.25rem;
+  }
+}
+
+:root {
   --desktop-nav-top-offset: calc(1.5rem + var(--announcement-height));
   --mobile-top-offset: calc(1.5rem + var(--announcement-height));
 }
@@ -921,4 +935,17 @@ html:not(:has(.site-announcement)) {
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* SplitText wraps each line in an overflow:hidden box so the characters can
+   rise into view from under it. The display headline sets line-height to
+   0.88, which makes that box shorter than the capitals it contains — so the
+   mask sheared the tops off "BUILD WEBSITES".
+
+   The room is added to the mask and taken straight back off as margin, so
+   nothing moves. Only the top is opened up: the characters travel upward from
+   below, so the bottom edge is the one doing the hiding and is left alone. */
+.split-line-mask {
+  padding-top: 0.16em;
+  margin-top: -0.16em;
 }

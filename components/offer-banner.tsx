@@ -62,13 +62,13 @@ export function OfferBanner() {
     <div className="site-announcement fixed inset-x-0 top-0 z-[60] bg-lime-30 text-neutral-90">
       <Link
         href="/order"
-        className="mx-auto flex h-(--announcement-height) w-full max-w-[1200px] items-center justify-center gap-2.5 px-3 font-noi-grotesk text-[13px] leading-none tracking-[-0.01em] transition-opacity duration-150 hover:opacity-80 sm:gap-4 sm:px-4 sm:text-[15px]"
+        className="mx-auto flex h-(--announcement-height) w-full max-w-[1200px] items-center justify-center gap-2.5 px-3 font-noi-grotesk text-[13px] leading-none tracking-[-0.01em] transition-opacity duration-150 hover:opacity-80 sm:gap-3 sm:px-4 sm:text-[13px]"
       >
         {/* Inverted out of the lime rather than just bolded. On a bar that is
             already one bright colour, weight alone does not separate anything
             — reversing the contrast does. */}
         {off !== null && (
-          <span className="shrink-0 rounded-full bg-neutral-90 px-3 py-1.5 font-noi-grotesk text-[12px] font-bold tracking-[0.03em] text-lime-30 sm:px-3.5 sm:text-[14px]">
+          <span className="shrink-0 rounded-full bg-neutral-90 px-3 py-1.5 font-noi-grotesk text-[12px] font-bold tracking-[0.03em] text-lime-30 sm:px-2.5 sm:py-1 sm:text-[12px]">
             {off}% OFF
           </span>
         )}
@@ -113,14 +113,14 @@ export function OfferBanner() {
 function Unit({ value, label, ticking = false }: { value: number; label: string; ticking?: boolean }) {
   return (
     <span
-      className={`flex items-baseline gap-0.5 rounded-md bg-neutral-90 px-2 py-1.5 text-lime-30 ${
+      className={`flex items-baseline gap-0.5 rounded-md bg-neutral-90 px-2 py-1.5 text-lime-30 sm:px-1.5 sm:py-1 ${
         ticking ? "offer-tick" : ""
       }`}
     >
-      <span className="font-noi-grotesk text-[13px] font-bold tabular-nums sm:text-[15px]">
+      <span className="font-noi-grotesk text-[13px] font-bold tabular-nums sm:text-[13px]">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="font-noi-grotesk text-[10px] font-semibold uppercase opacity-70">{label}</span>
+      <span className="font-noi-grotesk text-[10px] font-semibold uppercase opacity-70 sm:text-[9px]">{label}</span>
     </span>
   );
 }

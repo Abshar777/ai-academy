@@ -10,7 +10,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ACADEMY_API_URL, hasSessionHint, type AcademyUser } from "@/lib/academy-api";
+import { usePathname } from "next/navigation";
+import { ACADEMY_API_URL, hasSessionHint, type AcademyUser, type Lang } from "@/lib/academy-api";
 
 /**
  * Holds the signed-in session for the course view.
@@ -35,6 +36,10 @@ type AuthContextValue = {
   redeemHandoff: (token: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   setUser: (user: AcademyUser) => void;
+  /** Records the course language on the account. Held here rather than in each
+   *  view because a choice made on one page has to survive navigating to the
+   *  next — component state does not. */
+  setPreferredLang: (lang: Lang) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -42,6 +47,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 type SessionResponse = { accessToken?: string; user?: AcademyUser; error?: string; code?: string };
 
 export function AcademyAuthProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [status, setStatus] = useState<Status>("loading");
   const [user, setUserState] = useState<AcademyUser | null>(null);
   const tokenRef = useRef<string | null>(null);
@@ -90,19 +96,26 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
     }
   }, [adopt]);
 
-  // Only reaches for a session when the hint cookie says there might be one,
-  // so an anonymous visitor to the marketing site never pays for a request.
+  // The hint cookie spares anonymous marketing visitors a pointless request.
+  // It cannot be the only way in, though: it is set by the API's own host, so
+  // unless COOKIE_DOMAIN scopes it to the parent domain, this origin cannot
+  // read it — and a signed-in learner gets bounced to the sign-in card on
+  // every reload while a perfectly good refresh cookie sits unused.
+  //
+  // On the course itself a session is the expectation, so ask there regardless
+  // and let the answer decide. Everywhere else the hint still gates it.
+  const onCourse = pathname?.startsWith("/learn") ?? false;
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const restored = hasSessionHint() ? await refresh() : false;
+      const restored = hasSessionHint() || onCourse ? await refresh() : false;
       if (cancelled || restored) return;
       forget();
     })();
     return () => {
       cancelled = true;
     };
-  }, [refresh, forget]);
+  }, [refresh, forget, onCourse]);
 
   const apiFetch = useCallback<AuthContextValue["apiFetch"]>(
     async (path, init = {}) => {
@@ -184,9 +197,22 @@ export function AcademyAuthProvider({ children }: { children: ReactNode }) {
     forget();
   }, [forget]);
 
+  const setPreferredLang = useCallback(
+    (lang: Lang) => {
+      // Updated locally first so the page turns over immediately, and so the
+      // next view reads the new value from `user` rather than the old one
+      // while the PATCH is still in flight.
+      setUserState((current) => (current ? { ...current, preferredLang: lang } : current));
+      if (status === "authed") {
+        void apiFetch("/me", { method: "PATCH", body: JSON.stringify({ preferredLang: lang }) });
+      }
+    },
+    [status, apiFetch],
+  );
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, apiFetch, requestCode, verifyCode, redeemHandoff, signOut, setUser: setUserState }),
-    [status, user, apiFetch, requestCode, verifyCode, redeemHandoff, signOut],
+    () => ({ status, user, apiFetch, requestCode, verifyCode, redeemHandoff, signOut, setUser: setUserState, setPreferredLang }),
+    [status, user, apiFetch, requestCode, verifyCode, redeemHandoff, signOut, setPreferredLang],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

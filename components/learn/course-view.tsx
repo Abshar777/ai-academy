@@ -22,7 +22,7 @@ import {
  * side — see /episodes/:id/play.
  */
 export function CourseView() {
-  const { status, user, apiFetch, redeemHandoff, signOut } = useAcademyAuth();
+  const { status, user, apiFetch, redeemHandoff, signOut, setPreferredLang } = useAcademyAuth();
   const [course, setCourse] = useState<CourseResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -81,12 +81,11 @@ export function CourseView() {
     (next: Lang) => {
       setLangOverride(next);
       // Saved on the account rather than in this browser, so the choice
-      // follows the learner to their phone.
-      if (status === "authed") {
-        void apiFetch("/me", { method: "PATCH", body: JSON.stringify({ preferredLang: next }) });
-      }
+      // follows the learner to their phone — and survives moving between
+      // episodes, which local state does not.
+      setPreferredLang(next);
     },
-    [status, apiFetch],
+    [setPreferredLang],
   );
 
   const stats = useMemo(() => {

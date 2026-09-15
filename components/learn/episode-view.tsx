@@ -61,7 +61,7 @@ function locate(course: CourseResponse, moduleOrder: number, key: string, lang: 
 }
 
 export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; episodeKey: string }) {
-  const { status, user, apiFetch } = useAcademyAuth();
+  const { status, user, apiFetch, setPreferredLang } = useAcademyAuth();
   const [course, setCourse] = useState<CourseResponse | null>(null);
   const [play, setPlay] = useState<PlayResponse | null>(null);
   const [blocked, setBlocked] = useState<"none" | "sign-in" | "purchase">("none");
@@ -69,6 +69,17 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
   const [langOverride, setLangOverride] = useState<Lang | null>(null);
 
   const lang: Lang = langOverride ?? user?.preferredLang ?? "en";
+
+  /* Switching language here used to set component state and nothing else, so
+     the choice died on the way to the next episode and the course dropped back
+     to English. Recorded on the account now, the same as the course page. */
+  const changeLanguage = useCallback(
+    (next: Lang) => {
+      setLangOverride(next);
+      setPreferredLang(next);
+    },
+    [setPreferredLang],
+  );
   const located = useMemo(
     () => (course ? locate(course, moduleOrder, episodeKey, lang) : null),
     [course, moduleOrder, episodeKey, lang],
@@ -230,7 +241,7 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
           startAt={episode.progress?.positionSec ?? 0}
           onPosition={onPosition}
           onFinished={(language) => save(position.current.seconds, language, true)}
-          onLanguageChange={(next) => setLangOverride(next)}
+          onLanguageChange={changeLanguage}
           // A URL that expired while the tab slept — mint another and carry on.
           onMediaError={() => {
             if (remints.current >= MAX_REMINTS) return;
@@ -273,7 +284,7 @@ export function EpisodeView({ moduleOrder, episodeKey }: { moduleOrder: number; 
             <h1 className="font-noi-grotesk text-[24px] leading-[1.15] tracking-[-0.025em] text-pretty sm:text-[30px]">
               {localized(episode.title, lang)}
             </h1>
-            <LanguageToggle value={lang} onChange={setLangOverride} />
+            <LanguageToggle value={lang} onChange={changeLanguage} />
           </div>
 
           {missingHere ? (

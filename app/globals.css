@@ -949,3 +949,33 @@ html:not(:has(.site-announcement)) {
   padding-top: 0.16em;
   margin-top: -0.16em;
 }
+
+/* ── Buttons: pointer and press ──────────────────────────────────────────
+   Tailwind v4's preflight no longer gives buttons a pointer cursor, so every
+   <button> on the site showed the arrow. Restored here for anything that acts
+   as a button, and a short press so a click is felt as well as seen — scale
+   rather than colour, since it works on every button regardless of its own
+   styling. Disabled controls get neither. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label[for] {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+a.lp-btn:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  a.lp-btn:active {
+    transform: none;
+  }
+}

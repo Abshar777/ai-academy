@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ReminderStage, ReminderStatus } from "@/lib/seminar-reminders";
+import { Spinner } from "./spinner";
 
 /**
  * Reminder emails for the next seminar: what has gone out, what is due, and a
@@ -82,7 +83,9 @@ export function SeminarReminders() {
 
   if (!status) {
     return (
-      <div className="rounded-2xl bg-white p-5 font-noi-grotesk text-[14px] text-neutral-50">Loading reminders…</div>
+      <div className="flex items-center gap-2.5 rounded-2xl bg-white p-5 font-noi-grotesk text-[14px] text-neutral-50">
+        <Spinner /> Loading reminders…
+      </div>
     );
   }
 
@@ -147,7 +150,13 @@ export function SeminarReminders() {
                     disabled={busy !== null || !status.session || status.registrants === 0}
                     onClick={() => void send(row.stage, false)}
                   >
-                    {busy === String(row.stage) ? "Sending…" : "Send now"}
+                    {busy === String(row.stage) ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Spinner /> Sending…
+                      </span>
+                    ) : (
+                      "Send now"
+                    )}
                   </button>
                 </td>
               </tr>
@@ -174,7 +183,13 @@ export function SeminarReminders() {
           disabled={busy !== null || !status.session || !/^\S+@\S+\.\S+$/.test(testTo)}
           onClick={() => void send(0, true)}
         >
-          {busy === "0-test" ? "Sending…" : "Send test"}
+          {busy === "0-test" ? (
+            <span className="inline-flex items-center gap-2">
+              <Spinner /> Sending…
+            </span>
+          ) : (
+            "Send test"
+          )}
         </button>
       </div>
 

@@ -34,6 +34,13 @@ function getTransporter(): nodemailer.Transporter | null {
     port,
     secure: port === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Pooled for the same reason as the seminar mailbox below: one login per
+    // message is what gets a Gmail account throttled.
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 200,
+    rateDelta: 1000,
+    rateLimit: 4,
   });
   return transporter;
 }
@@ -105,6 +112,17 @@ function getSeminarTransporter(): { transport: nodemailer.Transporter; from: str
       port,
       secure: port === 465,
       auth: { user, pass },
+      // A pooled connection reused across a batch, not a fresh login per
+      // message. Gmail throttles a burst of logins long before it throttles
+      // messages, and a reminder to sixty-five people sent eight at a time was
+      // exactly that burst: two batches went through, then every send failed
+      // for the rest of the evening's session. Two connections, a few messages
+      // a second, and the whole list goes out on a handful of logins.
+      pool: true,
+      maxConnections: 2,
+      maxMessages: 200,
+      rateDelta: 1000,
+      rateLimit: 4,
     });
   }
   const from =

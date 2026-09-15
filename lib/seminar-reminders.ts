@@ -44,8 +44,14 @@ const START_GRACE_MS = 10 * 60_000;
  *  so the start-time reminder can find it after the instant has passed. */
 const LOOKBACK_MS = 15 * 60_000;
 
-/** How many emails are in flight at once. SMTP relays throttle bursts. */
-const BATCH = 8;
+/** How many emails are handed to the mailer at once. The transport is pooled
+ *  and rate-limited (lib/email.ts), so this only bounds the queue in front of
+ *  it, not the number of logins. */
+const BATCH = 5;
+
+/** A claim this old with no finish is a process that died between claiming
+ *  and sending — a deploy landing mid-window does exactly that. */
+const STALE_CLAIM_MS = 2 * 60_000;
 
 export type ReminderRecord = {
   startsAt: string;
@@ -184,10 +190,24 @@ export async function runDueReminders(now = new Date()): Promise<RunResult> {
   try {
     await col.insertOne({ startsAt: session.startsAt, stage, kind: "auto", claimedAt: now, recipients: 0, sent: 0, failed: 0 });
   } catch (err) {
-    if ((err as { code?: number }).code === 11000) {
+    if ((err as { code?: number }).code !== 11000) throw err;
+    // Claimed already. If that claim never finished, the process holding it
+    // died between claiming and sending — take it over. The filter makes the
+    // takeover atomic: only one caller can move claimedAt forward.
+    const takeover = await col.updateOne(
+      {
+        startsAt: session.startsAt,
+        stage,
+        kind: "auto",
+        finishedAt: { $exists: false },
+        claimedAt: { $lt: new Date(now.getTime() - STALE_CLAIM_MS) },
+      },
+      { $set: { claimedAt: now } },
+    );
+    if (takeover.modifiedCount !== 1) {
       return { session: session.startsAt, ran: [], note: `stage ${stage} already sent` };
     }
-    throw err;
+    console.warn(`[seminar/reminders] stage ${stage} was claimed but never finished — taking it over`);
   }
 
   const people = await recipientsFor(session);

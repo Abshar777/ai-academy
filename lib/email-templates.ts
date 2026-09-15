@@ -6,8 +6,17 @@
  * blocks or external stylesheets.
  */
 
+import { SITE_URL } from "./site";
+
 const BRAND_LIME = "#d3fb52";
 const BRAND_INK = "#171717";
+
+/* The wordmark, served from the site itself — mail clients only load images
+   over http(s), never from an attachment or a data URI they can trust. The
+   name stays in the alt text and beside the mark, because most clients hold
+   images back until the reader allows them, and a header that is blank until
+   then reads as spam. */
+const LOGO_URL = `${SITE_URL.replace(/\/$/, "")}/brand/delta-wordmark-white.png`;
 
 export function emailLayout({
   preheader,
@@ -32,9 +41,18 @@ export function emailLayout({
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border-radius:20px;overflow:hidden;">
             <tr>
-              <td style="background-color:${BRAND_INK};padding:28px 32px;">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:999px;background-color:${BRAND_LIME};margin-right:8px;vertical-align:middle;"></span>
-                <span style="color:#ffffff;font-size:16px;font-weight:600;letter-spacing:-0.01em;vertical-align:middle;">Delta AI Academy</span>
+              <td style="background-color:${BRAND_INK};padding:26px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="vertical-align:middle;padding-right:12px;">
+                      <img src="${LOGO_URL}" width="95" height="36" alt="Delta" style="display:block;width:95px;height:36px;border:0;outline:none;" />
+                    </td>
+                    <td style="vertical-align:middle;border-left:1px solid rgba(255,255,255,0.22);padding-left:12px;">
+                      <span style="display:inline-block;width:8px;height:8px;border-radius:999px;background-color:${BRAND_LIME};margin-right:8px;vertical-align:middle;"></span>
+                      <span style="color:#ffffff;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;vertical-align:middle;">AI Academy</span>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>

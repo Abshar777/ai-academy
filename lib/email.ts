@@ -210,6 +210,77 @@ export async function sendSeminarConfirmationEmail(input: {
 }
 
 /**
+ * Reminder before a seminar: 30, 15, 5 or 3 minutes ahead, or as it starts.
+ *
+ * Short on purpose. Someone reading this has minutes, or none: one line saying
+ * how long, one button into the room, and the link written out beneath it for
+ * the client that strips the button. Sent from the seminar mailbox so it lands
+ * in the same thread of sender as the confirmation and the calendar invite.
+ */
+const REMINDER_COPY: Record<number, { subject: string; heading: string; line: string }> = {
+  30: { subject: "Starting in 30 minutes", heading: "Starting in 30 minutes", line: "Your seat is ready. Grab a coffee, open the link a couple of minutes early, and we'll see you there." },
+  15: { subject: "15 minutes to go", heading: "15 minutes to go", line: "The room opens shortly. Tap the button below when you're ready — it takes you straight in." },
+  5: { subject: "Starting in 5 minutes", heading: "Starting in 5 minutes", line: "We're about to begin. Join now so you're in the room when it starts." },
+  3: { subject: "3 minutes — join now", heading: "3 minutes", line: "We're going live in three minutes. Tap the button and come on in." },
+  0: { subject: "We're live — join now", heading: "We're live", line: "The session has started. Join now — you haven't missed anything yet." },
+};
+
+export function seminarReminderEmailHtml(input: {
+  name: string;
+  title: string;
+  speaker: string;
+  when: string;
+  minutesBefore: number;
+  meetLink: string;
+}): string {
+  const copy = REMINDER_COPY[input.minutesBefore] ?? REMINDER_COPY[0];
+  const greeting = input.name ? escapeHtml(input.name.split(" ")[0]) : "there";
+  const link = escapeHtml(input.meetLink);
+  return emailLayout({
+    preheader: `${copy.subject} — ${input.title}. Your joining link is inside.`,
+    bodyHtml: `
+      <p style="margin:0 0 6px;color:#777;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;">Free live seminar</p>
+      <h2 style="margin:0 0 12px;font-size:26px;line-height:1.15;letter-spacing:-0.02em;">${escapeHtml(copy.heading)}, ${greeting}</h2>
+      <p style="margin:0 0 20px;color:#444;"><strong>${escapeHtml(input.title)}</strong> with ${escapeHtml(input.speaker)} &mdash; ${escapeHtml(input.when)}.</p>
+      <p style="margin:0 0 24px;color:#444;">${escapeHtml(copy.line)}</p>
+
+      <a href="${link}" style="display:inline-block;padding:16px 28px;border-radius:10px;background:#14151c;color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;">Join on Google Meet &rarr;</a>
+
+      <p style="margin:20px 0 0;color:#777;font-size:13px;line-height:1.6;">If the button doesn't open, copy this link into your browser:<br />
+      <a href="${link}" style="color:#14151c;word-break:break-all;">${link}</a></p>
+
+      <p style="margin:20px 0 0;color:#555;">Can't get in? Reply to this email and we'll help.</p>
+    `,
+  });
+}
+
+export async function sendSeminarReminderEmail(input: {
+  name: string;
+  email: string;
+  title: string;
+  speaker: string;
+  when: string;
+  minutesBefore: number;
+  meetLink: string;
+}): Promise<{ sent: boolean; error?: string }> {
+  const mailer = getSeminarTransporter();
+  if (!mailer) return { sent: false, error: "SMTP not configured" };
+  const copy = REMINDER_COPY[input.minutesBefore] ?? REMINDER_COPY[0];
+  try {
+    await mailer.transport.sendMail({
+      from: mailer.from,
+      to: input.email,
+      subject: `${copy.subject} — ${input.title}`,
+      html: seminarReminderEmailHtml(input),
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error("[seminar] reminder email failed for", input.email, err);
+    return { sent: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
  * Hands a registered student their free access to the course.
  *
  * The code is in the link and also printed in the body: the link does the work

@@ -1,5 +1,6 @@
 import { listSeminarRegistrations } from "@/lib/seminar-registrations";
 import { SeminarTable, type SeminarRow } from "@/components/admin/seminar-table";
+import { SeminarReminders } from "@/components/admin/seminar-reminders";
 import { formatWebinarDate, formatWebinarTime, nextWebinarSession } from "@/lib/next-webinar";
 
 /** Registrations change between page loads, so this can't be cached. */
@@ -47,6 +48,7 @@ export default async function AdminSeminarPage() {
         </p>
       </div>
 
+      <SeminarReminders />
       <SeminarTable rows={rows} />
     </div>
   );

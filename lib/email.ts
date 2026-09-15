@@ -210,7 +210,7 @@ export async function sendSeminarConfirmationEmail(input: {
 }
 
 /**
- * Reminder before a seminar: 30, 15, 5 or 3 minutes ahead, or as it starts.
+ * Reminder before a seminar: 30, 15, 10, 5 or 3 minutes ahead, or as it starts.
  *
  * Short on purpose. Someone reading this has minutes, or none: one line saying
  * how long, one button into the room, and the link written out beneath it for
@@ -220,6 +220,7 @@ export async function sendSeminarConfirmationEmail(input: {
 const REMINDER_COPY: Record<number, { subject: string; heading: string; line: string }> = {
   30: { subject: "Starting in 30 minutes", heading: "Starting in 30 minutes", line: "Your seat is ready. Grab a coffee, open the link a couple of minutes early, and we'll see you there." },
   15: { subject: "15 minutes to go", heading: "15 minutes to go", line: "The room opens shortly. Tap the button below when you're ready — it takes you straight in." },
+  10: { subject: "Starting in 10 minutes", heading: "Starting in 10 minutes", line: "The room is open. Join now, get your audio sorted, and we'll begin shortly." },
   5: { subject: "Starting in 5 minutes", heading: "Starting in 5 minutes", line: "We're about to begin. Join now so you're in the room when it starts." },
   3: { subject: "3 minutes — join now", heading: "3 minutes", line: "We're going live in three minutes. Tap the button and come on in." },
   0: { subject: "We're live — join now", heading: "We're live", line: "The session has started. Join now — you haven't missed anything yet." },

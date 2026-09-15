@@ -15,6 +15,7 @@ import { Spinner } from "./spinner";
 const LABEL: Record<ReminderStage, string> = {
   30: "30 minutes before",
   15: "15 minutes before",
+  10: "10 minutes before",
   5: "5 minutes before",
   3: "3 minutes before",
   0: "At the start",

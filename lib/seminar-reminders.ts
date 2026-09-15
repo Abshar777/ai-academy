@@ -10,8 +10,8 @@ import {
 import { listSeminarRegistrations } from "./seminar-registrations";
 
 /**
- * Reminder emails before a free seminar: 30, 15, 5 and 3 minutes ahead, and
- * one as it starts. Sent automatically by the scheduler in instrumentation.ts
+ * Reminder emails before a free seminar: 30, 15, 10, 5 and 3 minutes ahead,
+ * and one as it starts. Sent automatically by the scheduler in instrumentation.ts
  * (or an external cron hitting /api/seminar/reminders/tick), and by hand from
  * the admin's seminar page.
  *
@@ -29,7 +29,7 @@ import { listSeminarRegistrations } from "./seminar-registrations";
  * blocked — an admin pressing the button means it.
  */
 
-export const REMINDER_STAGES = [30, 15, 5, 3, 0] as const;
+export const REMINDER_STAGES = [30, 15, 10, 5, 3, 0] as const;
 export type ReminderStage = (typeof REMINDER_STAGES)[number];
 
 /** Where the session runs. The env var wins so the link can change without a

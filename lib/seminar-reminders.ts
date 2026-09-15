@@ -108,8 +108,22 @@ export function dueStage(session: WebinarSession, now = Date.now()): ReminderSta
 
 /** The session reminders are about: the next one ahead, or the one that
  *  started within the last few minutes. */
-export function reminderSession(now = new Date()): WebinarSession | null {
-  return nextWebinarSession(new Date(now.getTime() - LOOKBACK_MS));
+export function reminderSession(now = new Date(), lookbackMs = LOOKBACK_MS): WebinarSession | null {
+  return nextWebinarSession(new Date(now.getTime() - lookbackMs));
+}
+
+/**
+ * The session the admin is looking at: the one running now, for as long as it
+ * runs, else the next one. The automatic scheduler keeps its short lookback —
+ * its windows close on time by design — but an admin pressing "send the start
+ * reminder" twenty minutes in, to reach the latecomers, was refused tonight
+ * with "no upcoming session", which is not an answer.
+ */
+export function sessionForAdmin(now = new Date()): WebinarSession | null {
+  const candidate = reminderSession(now, 3 * 60 * 60_000);
+  if (!candidate) return null;
+  const endsAt = Date.parse(candidate.startsAt) + candidate.durationMinutes * 60_000 + LOOKBACK_MS;
+  return endsAt > now.getTime() ? candidate : nextWebinarSession(now);
 }
 
 function whenLabel(session: WebinarSession): string {
@@ -229,8 +243,8 @@ export async function sendReminderNow(
   stage: ReminderStage,
   options: { testTo?: string } = {},
 ): Promise<{ ok: boolean; error?: string; recipients: number; sent: number; failed: number }> {
-  const session = reminderSession();
-  if (!session) return { ok: false, error: "There is no upcoming session to remind people about.", recipients: 0, sent: 0, failed: 0 };
+  const session = sessionForAdmin();
+  if (!session) return { ok: false, error: "There is no session running or upcoming to remind people about.", recipients: 0, sent: 0, failed: 0 };
 
   const people = options.testTo
     ? [{ name: "", email: options.testTo.trim().toLowerCase() }]
@@ -271,7 +285,7 @@ export type ReminderStatus = {
 
 /** What the admin page shows. */
 export async function reminderStatus(now = new Date()): Promise<ReminderStatus> {
-  const session = reminderSession(now);
+  const session = sessionForAdmin(now);
   const col = await collection();
   const records = session && col ? await col.find({ startsAt: session.startsAt }).sort({ claimedAt: -1 }).toArray() : [];
   const registrants = session ? (await recipientsFor(session)).length : 0;

@@ -6,7 +6,7 @@ import { formatWebinarDate, formatWebinarTime } from "@/lib/next-webinar";
 import {
   REMINDER_STAGES,
   SEMINAR_MEET_URL,
-  reminderSession,
+  sessionForAdmin,
   reminderStatus,
   sendReminderNow,
   type ReminderStage,
@@ -32,8 +32,8 @@ export async function GET(request: Request) {
     if (!REMINDER_STAGES.includes(stage as ReminderStage)) {
       return NextResponse.json({ error: `preview must be one of ${REMINDER_STAGES.join(", ")}.` }, { status: 400 });
     }
-    const session = reminderSession();
-    if (!session) return NextResponse.json({ error: "No upcoming session." }, { status: 404 });
+    const session = sessionForAdmin();
+    if (!session) return NextResponse.json({ error: "No session running or upcoming." }, { status: 404 });
     const date = new Date(session.startsAt);
     const html = seminarReminderEmailHtml({
       name: "Priya",

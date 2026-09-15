@@ -13,12 +13,11 @@ import { usePrimaryCta } from "@/lib/use-primary-cta";
 // CURRENT page (e.g. /course) instead of jumping back to the homepage
 // section it actually names.
 const NAV = [
-  { label: "Program", href: "/#program" },
   { label: "What you'll learn", href: "/#learn" },
   { label: "Projects", href: "/#projects" },
   { label: "Curriculum", href: "/course" },
-  { label: "AI tools", href: "/#tools" },
   { label: "Pricing", href: "/#pricing" },
+  { label: "Blog", href: "/blog" },
 ];
 
 /** Scroll distance before the bar collapses into the floating pill. */

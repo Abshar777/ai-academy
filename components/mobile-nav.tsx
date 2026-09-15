@@ -21,12 +21,11 @@ const DIRECTION_THRESHOLD = 6;
 // CURRENT page (e.g. /course) instead of jumping back to the homepage
 // section it actually names.
 const NAV = [
-  { label: "Program", href: "/#program" },
   { label: "What you'll learn", href: "/#learn" },
   { label: "Projects", href: "/#projects" },
   { label: "Curriculum", href: "/course" },
-  { label: "AI tools", href: "/#tools" },
   { label: "Pricing", href: "/#pricing" },
+  { label: "Blog", href: "/blog" },
 ];
 
 /** Three rules that rotate into an X. Matches the reference's 15×11 mark. */

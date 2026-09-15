@@ -3,7 +3,9 @@ import Link from "next/link";
 import { listPosts, readingMinutes } from "@/lib/blog";
 
 export const metadata: Metadata = {
-  title: "Blog — Delta AI Academy",
+  // The root layout's title template appends the site name; repeating it
+  // here produced "Blog — Delta AI Academy — Delta AI Academy".
+  title: "Blog",
   description:
     "Notes on building with AI — what the tools can do, where they fall short, and how to ship real software with them.",
 };
@@ -21,7 +23,7 @@ export default async function BlogIndexPage() {
 
   return (
     <main className="page-surface">
-      <div className="mx-auto w-full max-w-[1000px] px-5 pt-16 pb-20 sm:px-6 sm:pt-20 md:pt-24">
+      <div className="mx-auto w-full max-w-[1000px] px-5 pt-28 pb-20 sm:px-6 sm:pt-32 md:pt-36">
         <h1 className="font-sans-plomb text-[13vw] leading-[0.9] font-semibold tracking-[-0.02em] uppercase sm:text-[64px] md:text-[80px]">
           Blog
         </h1>

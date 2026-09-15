@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPost, readingMinutes } from "@/lib/blog";
-import { SITE_NAME } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +16,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
-  if (!post || post.status !== "published") return { title: `Not found — ${SITE_NAME}` };
+  if (!post || post.status !== "published") return { title: "Not found" };
 
   return {
-    title: `${post.title} — ${SITE_NAME}`,
+    title: post.title,
     description: post.excerpt || undefined,
     openGraph: {
       title: post.title,

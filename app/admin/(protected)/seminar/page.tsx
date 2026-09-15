@@ -1,4 +1,5 @@
 import { listSeminarRegistrations } from "@/lib/seminar-registrations";
+import { SeminarTable, type SeminarRow } from "@/components/admin/seminar-table";
 import { formatWebinarDate, formatWebinarTime, nextWebinarSession } from "@/lib/next-webinar";
 
 /** Registrations change between page loads, so this can't be cached. */
@@ -15,6 +16,17 @@ export default async function AdminSeminarPage() {
       </div>
     );
   }
+
+  /* Plain values only across the client boundary — see the payments page. */
+  const rows: SeminarRow[] = registrations.map((r) => ({
+    createdAt: new Date(r.createdAt).toISOString(),
+    name: r.name ?? null,
+    email: r.email,
+    phone: r.phone ?? null,
+    country: r.country ?? null,
+    startsAt: new Date(r.startsAt).toISOString(),
+    invited: Boolean(r.invited),
+  }));
 
   const upcoming = next ? registrations.filter((r) => r.startsAt === next.startsAt) : [];
   // A registrant Google never accepted onto the event got no invitation, so
@@ -35,51 +47,7 @@ export default async function AdminSeminarPage() {
         </p>
       </div>
 
-      {registrations.length === 0 ? (
-        <p className="font-noi-grotesk text-[14px] text-neutral-50">No registrations yet.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-2xl bg-white">
-          <table className="w-full min-w-[760px] border-collapse font-noi-grotesk text-[14px]">
-            <thead>
-              <tr className="border-b border-neutral-90/8 text-left text-neutral-50">
-                <th className="px-4 py-3 font-medium">Registered</th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Country</th>
-                <th className="px-4 py-3 font-medium">Session</th>
-                <th className="px-4 py-3 font-medium">Invite</th>
-              </tr>
-            </thead>
-            <tbody>
-              {registrations.map((r, i) => (
-                <tr key={i} className="border-b border-neutral-90/6 last:border-0">
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-50">
-                    {new Date(r.createdAt).toLocaleString("en-IN", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </td>
-                  <td className="px-4 py-3">{r.name || "—"}</td>
-                  <td className="px-4 py-3">{r.email}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">{r.phone || "—"}</td>
-                  <td className="px-4 py-3">{r.country || "—"}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-50">
-                    {formatWebinarDate(new Date(r.startsAt))}
-                  </td>
-                  <td className="px-4 py-3">
-                    {r.invited ? (
-                      <span className="text-[#5d7a00]">sent</span>
-                    ) : (
-                      <span className="text-[#c0392b]">not sent</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <SeminarTable rows={rows} />
     </div>
   );
 }

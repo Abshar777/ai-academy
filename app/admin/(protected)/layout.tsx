@@ -3,15 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminRequestAuthenticated } from "@/lib/admin-auth";
 import { LogoutButton } from "@/components/admin/logout-button";
-
-const NAV = [
-  { label: "Overview", href: "/admin" },
-  { label: "Payments", href: "/admin/payments" },
-  { label: "Coupons", href: "/admin/coupons" },
-  { label: "Blog", href: "/admin/blog" },
-  { label: "Devices", href: "/admin/devices" },
-  { label: "Seminar", href: "/admin/seminar" },
-];
+import { AdminNav } from "@/components/admin/admin-nav";
+import { DeltaWordmark } from "@/components/delta-logo";
 
 export default async function AdminProtectedLayout({ children }: { children: ReactNode }) {
   if (!(await isAdminRequestAuthenticated())) {
@@ -20,25 +13,24 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
 
   return (
     <div className="min-h-screen bg-neutral-10">
+      {/* Two rows rather than one. Brand, six sections and a logout button
+          abreast needed more width than a laptop has: the name broke onto three
+          lines, the last section clipped, and Logout left the screen entirely
+          with nothing to scroll to it. */}
       <header className="border-b border-neutral-90/8 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-8">
-            <span className="font-noi-grotesk text-[15px] font-medium tracking-[-0.015em] text-neutral-90">
-              Delta AI Academy — Admin
-            </span>
-            <nav className="flex items-center gap-5">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="font-noi-grotesk text-[14px] text-neutral-50 transition-colors duration-150 hover:text-neutral-90"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="flex items-center justify-between gap-4 pt-4 pb-3">
+            <Link href="/admin" className="flex items-center gap-2.5" aria-label="Admin — Overview">
+              <DeltaWordmark className="h-7 w-[74px] shrink-0 object-contain" />
+              <span className="font-noi-grotesk text-[15px] tracking-[-0.015em] whitespace-nowrap text-neutral-50">
+                Admin
+              </span>
+            </Link>
+            <LogoutButton />
           </div>
-          <LogoutButton />
+          <div className="pb-2">
+            <AdminNav />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>

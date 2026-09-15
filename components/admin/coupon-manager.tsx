@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { DataTable, type Column } from "./data-table";
 
 export type PlainCoupon = {
   code: string;
@@ -115,6 +116,65 @@ export function CouponManager({ initialCoupons }: { initialCoupons: PlainCoupon[
       setCoupons((prev) => prev.map((c) => (c.code === code ? { ...c, active: !active } : c)));
     }
   }
+
+  const couponColumns = useMemo<Column<PlainCoupon>[]>(
+    () => [
+      {
+        key: "code",
+        header: "Code",
+        className: "tabular-nums",
+        cell: (c) => c.code,
+        search: (c) => c.code,
+      },
+      {
+        key: "discount",
+        header: "Discount",
+        cell: (c) => formatDiscount(c),
+        search: (c) => formatDiscount(c),
+      },
+      {
+        key: "uses",
+        header: "Uses",
+        className: "tabular-nums",
+        cell: (c) => `${c.usedCount} / ${c.maxUses}`,
+      },
+      {
+        key: "note",
+        header: "Note",
+        className: "text-neutral-50",
+        cell: (c) => c.note ?? "—",
+        search: (c) => c.note,
+      },
+      {
+        key: "created",
+        header: "Created",
+        className: "whitespace-nowrap text-neutral-50",
+        cell: (c) => new Date(c.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" }),
+      },
+      {
+        key: "status",
+        header: "Status",
+        cell: (c) => (
+          <button
+            type="button"
+            onClick={() => toggleActive(c.code, !c.active)}
+            className={
+              "rounded-full px-2.5 py-1 text-[12px] font-medium " +
+              (c.active
+                ? "bg-lime-30/25 text-neutral-90 hover:bg-lime-30/40"
+                : "bg-neutral-90/8 text-neutral-50 hover:bg-neutral-90/15")
+            }
+          >
+            {c.active ? "Active" : "Disabled"}
+          </button>
+        ),
+        // So "disabled" narrows to the codes that have been switched off.
+        search: (c) => (c.active ? "active" : "disabled"),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -262,49 +322,13 @@ export function CouponManager({ initialCoupons }: { initialCoupons: PlainCoupon[
               Export to Excel (CSV)
             </button>
           </div>
-          <div className="overflow-x-auto rounded-2xl bg-white">
-            <table className="w-full min-w-[720px] border-collapse font-noi-grotesk text-[14px]">
-              <thead>
-                <tr className="border-b border-neutral-90/8 text-left text-neutral-50">
-                  <th className="px-4 py-3 font-medium">Code</th>
-                  <th className="px-4 py-3 font-medium">Discount</th>
-                  <th className="px-4 py-3 font-medium">Uses</th>
-                  <th className="px-4 py-3 font-medium">Note</th>
-                  <th className="px-4 py-3 font-medium">Created</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {coupons.map((c) => (
-                  <tr key={c.code} className="border-b border-neutral-90/6 last:border-0">
-                    <td className="px-4 py-3 tabular-nums">{c.code}</td>
-                    <td className="px-4 py-3">{formatDiscount(c)}</td>
-                    <td className="px-4 py-3 tabular-nums">
-                      {c.usedCount} / {c.maxUses}
-                    </td>
-                    <td className="px-4 py-3 text-neutral-50">{c.note ?? "—"}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-neutral-50">
-                      {new Date(c.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => toggleActive(c.code, !c.active)}
-                        className={
-                          "rounded-full px-2.5 py-1 text-[12px] font-medium " +
-                          (c.active
-                            ? "bg-lime-30/25 text-neutral-90 hover:bg-lime-30/40"
-                            : "bg-neutral-90/8 text-neutral-50 hover:bg-neutral-90/15")
-                        }
-                      >
-                        {c.active ? "Active" : "Disabled"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            rows={coupons}
+            columns={couponColumns}
+            filterPlaceholder="Filter by code, note, status…"
+            empty="No coupons yet."
+            minWidth={720}
+          />
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DataTable, type Column } from "./data-table";
 
 export type DeviceView = {
   id: string;
@@ -97,6 +98,85 @@ export function DeviceManager({ initialDevices }: { initialDevices: DeviceView[]
     }
   }
 
+  const deviceColumns = useMemo<Column<DeviceView>[]>(
+    () => [
+      {
+        key: "buyer",
+        header: "Buyer",
+        className: "align-top",
+        cell: (d) => (
+          <>
+            <p className="font-noi-grotesk text-[14px] text-neutral-90">{d.email}</p>
+            {d.phone ? (
+              <p className="font-noi-grotesk text-[12px] text-neutral-50">{d.phone}</p>
+            ) : null}
+          </>
+        ),
+        search: (d) => `${d.email} ${d.phone ?? ""} ${d.name ?? ""}`,
+      },
+      {
+        key: "device",
+        header: "Device",
+        className: "align-top font-noi-grotesk text-[13px] text-neutral-70",
+        cell: (d) => (
+          <>
+            {d.label ?? "Unknown device"}
+            {d.ip ? <span className="block text-neutral-50">{d.ip}</span> : null}
+          </>
+        ),
+        search: (d) => `${d.label ?? ""} ${d.ip ?? ""}`,
+      },
+      {
+        key: "status",
+        header: "Status",
+        className: "align-top",
+        cell: (d) => <StatusBadge status={d.status} isMain={d.isMain} />,
+        search: (d) => d.status,
+      },
+      {
+        key: "lastSeen",
+        header: "Last seen",
+        className: "align-top font-noi-grotesk text-[13px] text-neutral-50",
+        cell: (d) => (d.lastSeenAt ? timeAgo(d.lastSeenAt) : "—"),
+      },
+      {
+        key: "action",
+        header: "Action",
+        className: "text-right align-top",
+        cell: (d) => {
+          const atLimit = (approvedByUser.get(d.userId) ?? 0) >= 2;
+          if (d.status === "approved") {
+            return (
+              <button
+                className={`${BTN} bg-neutral-90/8 text-neutral-70 hover:bg-neutral-90/15`}
+                disabled={busy === d.id}
+                onClick={() => act(d.id, "revoke")}
+              >
+                Revoke
+              </button>
+            );
+          }
+          if (d.status === "revoked") {
+            return (
+              <button
+                className={`${BTN} bg-neutral-90 text-white hover:bg-neutral-100`}
+                disabled={busy === d.id || atLimit}
+                title={atLimit ? "Buyer already has 2 approved devices" : undefined}
+                onClick={() => act(d.id, "approve")}
+              >
+                Re-approve
+              </button>
+            );
+          }
+          return <span className="font-noi-grotesk text-[13px] text-neutral-40">—</span>;
+        },
+      },
+    ],
+    // `act` is redefined every render; the rest is what actually changes a cell.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [approvedByUser, busy],
+  );
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -171,74 +251,13 @@ export function DeviceManager({ initialDevices }: { initialDevices: DeviceView[]
       {/* All devices. */}
       <section className="flex flex-col gap-3">
         <h2 className="font-noi-grotesk text-[15px] font-medium text-neutral-90">All devices</h2>
-        <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-neutral-90/8">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-neutral-90/8 text-left font-noi-grotesk text-[12px] font-medium tracking-[0.04em] text-neutral-50 uppercase">
-                <th className="px-4 py-3">Buyer</th>
-                <th className="px-4 py-3">Device</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Last seen</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {devices.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center font-noi-grotesk text-[14px] text-neutral-50">
-                    No devices yet.
-                  </td>
-                </tr>
-              ) : (
-                devices.map((d) => {
-                  const atLimit = (approvedByUser.get(d.userId) ?? 0) >= 2;
-                  return (
-                    <tr key={d.id} className="border-b border-neutral-90/6 last:border-b-0">
-                      <td className="px-4 py-3 align-top">
-                        <p className="font-noi-grotesk text-[14px] text-neutral-90">{d.email}</p>
-                        {d.phone ? (
-                          <p className="font-noi-grotesk text-[12px] text-neutral-50">{d.phone}</p>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3 align-top font-noi-grotesk text-[13px] text-neutral-70">
-                        {d.label ?? "Unknown device"}
-                        {d.ip ? <span className="block text-neutral-50">{d.ip}</span> : null}
-                      </td>
-                      <td className="px-4 py-3 align-top">
-                        <StatusBadge status={d.status} isMain={d.isMain} />
-                      </td>
-                      <td className="px-4 py-3 align-top font-noi-grotesk text-[13px] text-neutral-50">
-                        {d.lastSeenAt ? timeAgo(d.lastSeenAt) : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right align-top">
-                        {d.status === "approved" ? (
-                          <button
-                            className={`${BTN} bg-neutral-90/8 text-neutral-70 hover:bg-neutral-90/15`}
-                            disabled={busy === d.id}
-                            onClick={() => act(d.id, "revoke")}
-                          >
-                            Revoke
-                          </button>
-                        ) : d.status === "revoked" ? (
-                          <button
-                            className={`${BTN} bg-neutral-90 text-white hover:bg-neutral-100`}
-                            disabled={busy === d.id || atLimit}
-                            title={atLimit ? "Buyer already has 2 approved devices" : undefined}
-                            onClick={() => act(d.id, "approve")}
-                          >
-                            Re-approve
-                          </button>
-                        ) : (
-                          <span className="font-noi-grotesk text-[13px] text-neutral-40">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={devices}
+          columns={deviceColumns}
+          filterPlaceholder="Filter by buyer, device, status…"
+          empty="No devices yet."
+          minWidth={680}
+        />
       </section>
     </div>
   );

@@ -1,52 +1,45 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "./mongodb";
+import {
+  LEAD_STATUSES,
+  plainFollowUp,
+  type FollowUpTarget,
+  type LeadStatus,
+  type PlainFollowUp,
+} from "./lead-status";
 
 /**
- * Follow-up state on a lead: whether someone has called them, and a note.
+ * Writing follow-up state onto a lead: whether someone has called them, where
+ * they stand, and a note.
  *
  * Kept on the lead's own document as a `followUp` sub-document rather than in
  * a table of its own, so the admin lists that already read enrolments and
  * seminar registrations show it with no second query. Absent means the
- * default — not called, nothing written — which is every lead until an admin
- * says otherwise.
+ * default — not called, status "new", nothing written — which is every lead
+ * until an admin says otherwise.
  *
- * Two kinds of lead, addressed the way each collection is keyed: an enrolment
- * by its id, a seminar registration by email and session (its unique index).
+ * Server-only: this imports the Mongo driver. Anything a client component
+ * needs — the statuses, their labels, the plain shapes — lives in
+ * lead-status.ts, which imports nothing.
  */
-
-export type FollowUp = {
-  called: boolean;
-  note: string;
-  updatedAt: Date;
-};
-
-export type FollowUpTarget =
-  | { kind: "enrollment"; id: string }
-  | { kind: "seminar"; email: string; startsAt: string };
-
-/** What a page hands a client component: plain values, nothing from Mongo. */
-export type PlainFollowUp = { called: boolean; note: string; updatedAt: string | null };
 
 const NOTE_LIMIT = 2000;
 
-export function plainFollowUp(value: unknown): PlainFollowUp {
-  const raw = (value ?? {}) as Partial<FollowUp>;
-  return {
-    called: raw.called === true,
-    note: typeof raw.note === "string" ? raw.note : "",
-    updatedAt: raw.updatedAt ? new Date(raw.updatedAt).toISOString() : null,
-  };
-}
-
 export async function setFollowUp(
   target: FollowUpTarget,
-  patch: { called?: boolean; note?: string },
+  patch: { called?: boolean; status?: LeadStatus; note?: string },
 ): Promise<{ ok: true; followUp: PlainFollowUp } | { ok: false; error: string; status: number }> {
   const db = await getDb();
   if (!db) return { ok: false, error: "MongoDB is not configured.", status: 503 };
 
   const set: Record<string, unknown> = { "followUp.updatedAt": new Date() };
   if (patch.called !== undefined) set["followUp.called"] = patch.called;
+  if (patch.status !== undefined) {
+    if (!LEAD_STATUSES.includes(patch.status)) {
+      return { ok: false, error: "Unknown status.", status: 400 };
+    }
+    set["followUp.status"] = patch.status;
+  }
   if (patch.note !== undefined) set["followUp.note"] = patch.note.slice(0, NOTE_LIMIT);
 
   let collection: string;

@@ -1,6 +1,6 @@
 import { listEnrollments } from "@/lib/enrollments";
 import { PaymentsTable, type PaymentRow } from "@/components/admin/payments-table";
-import { plainFollowUp } from "@/lib/lead-followup";
+import { plainFollowUp } from "@/lib/lead-status";
 
 export default async function AdminPaymentsPage() {
   const enrollments = await listEnrollments({ limit: 300 });

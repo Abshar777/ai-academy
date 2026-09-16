@@ -9,7 +9,7 @@ import {
 } from "./google-calendar";
 import { WEBINAR_TIME_ZONE, type WebinarSession } from "./next-webinar";
 import type { InviteContent } from "./seminar-invite";
-import type { FollowUp } from "./lead-followup";
+import type { FollowUp } from "./lead-status";
 
 /**
  * Who booked a seat at a free seminar, and which Google Calendar event each

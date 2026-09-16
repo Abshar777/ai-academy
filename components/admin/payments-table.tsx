@@ -2,7 +2,7 @@
 
 import { DataTable, type Column } from "./data-table";
 import { FollowUpCell } from "./follow-up-cell";
-import type { PlainFollowUp } from "@/lib/lead-followup";
+import { LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
 
 export type PaymentRow = {
   /** The enrolment's own id — how a follow-up note is addressed back to it. */
@@ -73,9 +73,11 @@ const COLUMNS: Column<PaymentRow>[] = [
     // Searchable, so "not called" narrows the list to the people still owed a
     // call — which is the whole reason for the column.
     // "not called" contains "called", so each state also gets a word of its
-    // own: "pending" finds only the uncalled, "done" only the called.
+    // own: "pending" finds only the uncalled, "done" only the called. The
+    // status label is searchable too, so "Call back" lists everyone owed one.
     search: (row) =>
-      `${row.followUp.called ? "called done" : "not called pending"} ${row.followUp.note}`,
+      `${row.followUp.called ? "called done" : "not called pending"} ` +
+      `${LEAD_STATUS_LABEL[row.followUp.status]} ${row.followUp.note}`,
   },
 ];
 

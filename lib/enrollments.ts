@@ -1,6 +1,6 @@
 import type { Collection, WithId } from "mongodb";
 import { getDb } from "./mongodb";
-import type { FollowUp } from "./lead-followup";
+import type { FollowUp } from "./lead-status";
 
 /**
  * The one record of "someone actually enrolled" — written once, right after

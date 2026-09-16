@@ -1,7 +1,7 @@
 import { listSeminarRegistrations } from "@/lib/seminar-registrations";
 import { SeminarTable, type SeminarRow } from "@/components/admin/seminar-table";
 import { SeminarReminders } from "@/components/admin/seminar-reminders";
-import { plainFollowUp } from "@/lib/lead-followup";
+import { plainFollowUp } from "@/lib/lead-status";
 import { formatWebinarDate, formatWebinarTime, nextWebinarSession } from "@/lib/next-webinar";
 
 /** Registrations change between page loads, so this can't be cached. */

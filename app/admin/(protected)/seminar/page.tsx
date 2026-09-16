@@ -1,6 +1,7 @@
 import { listSeminarRegistrations } from "@/lib/seminar-registrations";
 import { SeminarTable, type SeminarRow } from "@/components/admin/seminar-table";
 import { SeminarReminders } from "@/components/admin/seminar-reminders";
+import { plainFollowUp } from "@/lib/lead-followup";
 import { formatWebinarDate, formatWebinarTime, nextWebinarSession } from "@/lib/next-webinar";
 
 /** Registrations change between page loads, so this can't be cached. */
@@ -25,8 +26,13 @@ export default async function AdminSeminarPage() {
     email: r.email,
     phone: r.phone ?? null,
     country: r.country ?? null,
-    startsAt: new Date(r.startsAt).toISOString(),
+    // Exactly as stored, not normalised to UTC: this value addresses the row
+    // back to Mongo when a follow-up note is saved, and "…T14:00:00.000Z"
+    // matches nothing against the stored "…T19:30:00+05:30". It is already a
+    // plain string, so it crosses to the client untouched.
+    startsAt: r.startsAt,
     invited: Boolean(r.invited),
+    followUp: plainFollowUp(r.followUp),
   }));
 
   const upcoming = next ? registrations.filter((r) => r.startsAt === next.startsAt) : [];

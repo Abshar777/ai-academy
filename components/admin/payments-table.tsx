@@ -1,8 +1,12 @@
 "use client";
 
 import { DataTable, type Column } from "./data-table";
+import { FollowUpCell } from "./follow-up-cell";
+import type { PlainFollowUp } from "@/lib/lead-followup";
 
 export type PaymentRow = {
+  /** The enrolment's own id — how a follow-up note is addressed back to it. */
+  id: string;
   createdAt: string | number | Date;
   name?: string | null;
   email: string;
@@ -11,6 +15,7 @@ export type PaymentRow = {
   currency: string;
   source: string;
   couponCode?: string | null;
+  followUp: PlainFollowUp;
 };
 
 function formatAmount(amountMinorUnits: number, currency: string) {
@@ -60,6 +65,18 @@ const COLUMNS: Column<PaymentRow>[] = [
     cell: (row) => row.couponCode ?? "—",
     search: (row) => row.couponCode,
   },
+  {
+    key: "followUp",
+    header: "Follow-up",
+    className: "align-top",
+    cell: (row) => <FollowUpCell target={{ kind: "enrollment", id: row.id }} initial={row.followUp} />,
+    // Searchable, so "not called" narrows the list to the people still owed a
+    // call — which is the whole reason for the column.
+    // "not called" contains "called", so each state also gets a word of its
+    // own: "pending" finds only the uncalled, "done" only the called.
+    search: (row) =>
+      `${row.followUp.called ? "called done" : "not called pending"} ${row.followUp.note}`,
+  },
 ];
 
 export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
@@ -67,9 +84,10 @@ export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
     <DataTable
       rows={rows}
       columns={COLUMNS}
-      filterPlaceholder="Filter by name, email, coupon…"
+      filterPlaceholder="Filter by name, email, coupon, called…"
       empty="No enrolments yet."
-      minWidth={720}
+      minWidth={980}
+      rowKey={(row) => row.id}
     />
   );
 }

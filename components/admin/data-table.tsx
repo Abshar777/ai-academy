@@ -30,6 +30,7 @@ export function DataTable<T>({
   filterPlaceholder = "Filter…",
   empty = "Nothing here yet.",
   minWidth = 720,
+  rowKey,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -37,6 +38,11 @@ export function DataTable<T>({
   filterPlaceholder?: string;
   empty?: ReactNode;
   minWidth?: number;
+  /** Something stable that identifies a row. Required in practice for any
+   *  table whose cells hold state of their own: keyed by position instead, a
+   *  half-typed note would stay behind on the row number while filtering or
+   *  paging moved a different lead into it. */
+  rowKey?: (row: T) => string;
 }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -110,7 +116,10 @@ export function DataTable<T>({
             </thead>
             <tbody>
               {visible.map((row, index) => (
-                <tr key={start + index} className="border-b border-neutral-90/6 last:border-0">
+                <tr
+                  key={rowKey ? rowKey(row) : start + index}
+                  className="border-b border-neutral-90/6 last:border-0"
+                >
                   {columns.map((column) => (
                     <td key={column.key} className={`px-4 py-3 ${column.className ?? ""}`}>
                       {column.cell(row)}

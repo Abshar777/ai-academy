@@ -1,6 +1,8 @@
 "use client";
 
 import { DataTable, type Column } from "./data-table";
+import { FollowUpCell } from "./follow-up-cell";
+import type { PlainFollowUp } from "@/lib/lead-followup";
 
 export type SeminarRow = {
   createdAt: string | number | Date;
@@ -10,6 +12,7 @@ export type SeminarRow = {
   country?: string | null;
   startsAt: string | number | Date;
   invited?: boolean;
+  followUp: PlainFollowUp;
 };
 
 const dateTime = (value: SeminarRow["createdAt"]) =>
@@ -62,6 +65,23 @@ const COLUMNS: Column<SeminarRow>[] = [
     // Searchable so "not sent" narrows to the people still waiting on an invite.
     search: (row) => (row.invited ? "sent" : "not sent"),
   },
+  {
+    key: "followUp",
+    header: "Follow-up",
+    className: "align-top",
+    cell: (row) => (
+      <FollowUpCell
+        target={{ kind: "seminar", email: row.email, startsAt: String(row.startsAt) }}
+        initial={row.followUp}
+      />
+    ),
+    // Searchable, so "not called" narrows the list to the people still owed a
+    // call — which is the whole reason for the column.
+    // "not called" contains "called", so each state also gets a word of its
+    // own: "pending" finds only the uncalled, "done" only the called.
+    search: (row) =>
+      `${row.followUp.called ? "called done" : "not called pending"} ${row.followUp.note}`,
+  },
 ];
 
 export function SeminarTable({ rows }: { rows: SeminarRow[] }) {
@@ -69,9 +89,10 @@ export function SeminarTable({ rows }: { rows: SeminarRow[] }) {
     <DataTable
       rows={rows}
       columns={COLUMNS}
-      filterPlaceholder="Filter by name, email, country…"
+      filterPlaceholder="Filter by name, email, country, called…"
       empty="No registrations yet."
-      minWidth={760}
+      minWidth={1020}
+      rowKey={(row) => `${row.email}|${String(row.startsAt)}`}
     />
   );
 }

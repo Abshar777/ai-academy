@@ -1,5 +1,6 @@
-import type { Collection } from "mongodb";
+import type { Collection, WithId } from "mongodb";
 import { getDb } from "./mongodb";
+import type { FollowUp } from "./lead-followup";
 
 /**
  * The one record of "someone actually enrolled" — written once, right after
@@ -33,6 +34,9 @@ export type Enrollment = {
   stripeSessionId?: string;
   stripePaymentIntentId?: string;
   createdAt: Date;
+  /** Whether anyone has called this lead, and what they wrote down. Absent
+   *  until an admin touches it — which reads as "not called", the default. */
+  followUp?: FollowUp;
 };
 
 const COLLECTION = "enrollments";
@@ -172,7 +176,7 @@ export async function getEnrollmentStats(): Promise<EnrollmentStats | null> {
 export async function listEnrollments({
   limit = 100,
   skip = 0,
-}: { limit?: number; skip?: number } = {}): Promise<Enrollment[] | null> {
+}: { limit?: number; skip?: number } = {}): Promise<WithId<Enrollment>[] | null> {
   const db = await getDb();
   if (!db) return null;
   return db

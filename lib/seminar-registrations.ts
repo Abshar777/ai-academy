@@ -9,6 +9,7 @@ import {
 } from "./google-calendar";
 import { WEBINAR_TIME_ZONE, type WebinarSession } from "./next-webinar";
 import type { InviteContent } from "./seminar-invite";
+import type { FollowUp } from "./lead-followup";
 
 /**
  * Who booked a seat at a free seminar, and which Google Calendar event each
@@ -34,6 +35,9 @@ export type SeminarRegistration = {
   /** Whether Google accepted them onto the event and sent the invitation. */
   invited: boolean;
   createdAt: Date;
+  /** Whether anyone has called this lead, and what they wrote down. Absent
+   *  until an admin touches it — which reads as "not called", the default. */
+  followUp?: FollowUp;
 };
 
 type SeminarSession = {

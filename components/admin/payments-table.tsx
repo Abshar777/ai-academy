@@ -1,8 +1,9 @@
 "use client";
 
-import { DataTable, type Column } from "./data-table";
+import { useMemo } from "react";
+import { DataTable, type Column, type Facet } from "./data-table";
 import { FollowUpCell } from "./follow-up-cell";
-import { LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
+import { LEAD_STATUSES, LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
 
 export type PaymentRow = {
   /** The enrolment's own id — how a follow-up note is addressed back to it. */
@@ -17,6 +18,8 @@ export type PaymentRow = {
   couponCode?: string | null;
   followUp: PlainFollowUp;
 };
+
+const title = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
 
 function formatAmount(amountMinorUnits: number, currency: string) {
   if (amountMinorUnits === 0) return "Free";
@@ -82,11 +85,43 @@ const COLUMNS: Column<PaymentRow>[] = [
 ];
 
 export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
+  const facets = useMemo<Facet<PaymentRow>[]>(
+    () => [
+      {
+        key: "status",
+        label: "Any status",
+        options: LEAD_STATUSES.map((value) => ({ value, label: LEAD_STATUS_LABEL[value] })),
+        valueOf: (row) => row.followUp.status,
+      },
+      {
+        key: "called",
+        label: "Called or not",
+        options: [
+          { value: "no", label: "Not called" },
+          { value: "yes", label: "Called" },
+        ],
+        valueOf: (row) => (row.followUp.called ? "yes" : "no"),
+      },
+      {
+        key: "source",
+        // Only the gateways that actually appear, so the list never offers one
+        // this account has never taken a payment through.
+        label: "Any source",
+        options: [...new Set(rows.map((row) => row.source))]
+          .sort()
+          .map((value) => ({ value, label: title(value) })),
+        valueOf: (row) => row.source,
+      },
+    ],
+    [rows],
+  );
+
   return (
     <DataTable
       rows={rows}
       columns={COLUMNS}
-      filterPlaceholder="Filter by name, email, coupon, called…"
+      facets={facets}
+      filterPlaceholder="Search name, email, coupon…"
       empty="No enrolments yet."
       minWidth={980}
       rowKey={(row) => row.id}

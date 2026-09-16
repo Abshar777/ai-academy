@@ -1,8 +1,9 @@
 "use client";
 
-import { DataTable, type Column } from "./data-table";
+import { useMemo } from "react";
+import { DataTable, type Column, type Facet } from "./data-table";
 import { FollowUpCell } from "./follow-up-cell";
-import { LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
+import { LEAD_STATUSES, LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
 
 export type SeminarRow = {
   createdAt: string | number | Date;
@@ -87,11 +88,53 @@ const COLUMNS: Column<SeminarRow>[] = [
 ];
 
 export function SeminarTable({ rows }: { rows: SeminarRow[] }) {
+  const facets = useMemo<Facet<SeminarRow>[]>(
+    () => [
+      {
+        key: "status",
+        label: "Any status",
+        options: LEAD_STATUSES.map((value) => ({ value, label: LEAD_STATUS_LABEL[value] })),
+        valueOf: (row) => row.followUp.status,
+      },
+      {
+        key: "called",
+        label: "Called or not",
+        options: [
+          { value: "no", label: "Not called" },
+          { value: "yes", label: "Called" },
+        ],
+        valueOf: (row) => (row.followUp.called ? "yes" : "no"),
+      },
+      {
+        key: "session",
+        // Sessions run weekly, so last week's registrants pile up behind this
+        // week's; this is how you get to one evening's list.
+        label: "Any session",
+        options: [...new Set(rows.map((row) => String(row.startsAt)))]
+          .sort()
+          .reverse()
+          .map((value) => ({ value, label: sessionDate(value) })),
+        valueOf: (row) => String(row.startsAt),
+      },
+      {
+        key: "invite",
+        label: "Invite sent?",
+        options: [
+          { value: "no", label: "Not sent" },
+          { value: "yes", label: "Sent" },
+        ],
+        valueOf: (row) => (row.invited ? "yes" : "no"),
+      },
+    ],
+    [rows],
+  );
+
   return (
     <DataTable
       rows={rows}
       columns={COLUMNS}
-      filterPlaceholder="Filter by name, email, country, called…"
+      facets={facets}
+      filterPlaceholder="Search name, email, country…"
       empty="No registrations yet."
       minWidth={1020}
       rowKey={(row) => `${row.email}|${String(row.startsAt)}`}

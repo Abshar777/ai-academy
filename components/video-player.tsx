@@ -84,6 +84,50 @@ function VolumeIcon({ muted, className = "size-5" }: { muted: boolean; className
   );
 }
 
+/* iPhone Safari implements none of the Fullscreen API, and TypeScript's DOM
+   lib does not declare what it offers instead. These fill that gap — see
+   toggleFullscreen for why each one is needed. */
+type FullscreenCapableElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+type FullscreenCapableVideo = HTMLVideoElement & {
+  webkitEnterFullscreen?: () => void;
+  webkitExitFullscreen?: () => void;
+  webkitDisplayingFullscreen?: boolean;
+};
+type FullscreenCapableDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
+
+/** Whatever is filling the screen, however this browser reports it. */
+function fullscreenElementOf(doc: FullscreenCapableDocument): Element | null {
+  return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+}
+
+/** A 16:9 video on an upright phone is a stamp across the middle of the
+ *  screen, so ask for landscape once fullscreen is granted. Android honours
+ *  it; desktop refuses and iOS has no such API, and neither matters. */
+function lockLandscape() {
+  const orientation = screen?.orientation as (ScreenOrientation & {
+    lock?: (o: string) => Promise<void>;
+  }) | undefined;
+  try {
+    void orientation?.lock?.("landscape").catch(() => {});
+  } catch {
+    /* Refused, which is the expected answer nearly everywhere. */
+  }
+}
+
+function releaseOrientation() {
+  const orientation = screen?.orientation as (ScreenOrientation & { unlock?: () => void }) | undefined;
+  try {
+    orientation?.unlock?.();
+  } catch {
+    /* Nothing was locked. */
+  }
+}
+
 function FullscreenIcon({ active, className = "size-5" }: { active: boolean; className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
@@ -270,20 +314,80 @@ export function VideoPlayer({
     video.currentTime = Math.min(Math.max(seconds, 0), video.duration);
   }, []);
 
+  /**
+   * Enter or leave fullscreen by whichever route this browser offers.
+   *
+   * iPhone Safari has no Fullscreen API at all: no Element.requestFullscreen,
+   * no document.fullscreenElement, no exitFullscreen. This used to call
+   * `wrap.requestFullscreen?.()`, and on a phone that optional call quietly
+   * evaluated to undefined — the button did nothing whatsoever.
+   *
+   * The one fullscreen an iPhone has is its native video player, entered
+   * through the non-standard video.webkitEnterFullscreen(). It arrives with
+   * iOS's own controls rather than ours; that is how every video on iOS
+   * behaves and a page cannot override it.
+   *
+   * Desktop Safari and older Android take the webkit-prefixed *element*
+   * method, so the order is: standard, prefixed element, then the video.
+   */
   const toggleFullscreen = useCallback(() => {
-    const wrap = wrapRef.current;
+    const wrap = wrapRef.current as FullscreenCapableElement | null;
+    const video = videoRef.current as FullscreenCapableVideo | null;
+    const doc = document as FullscreenCapableDocument;
     if (!wrap) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
-    } else {
-      wrap.requestFullscreen?.().catch(() => {});
+
+    if (fullscreenElementOf(doc)) {
+      void Promise.resolve(doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.()).catch(() => {});
+      return;
     }
+    // The iPhone's native player is not a fullscreen *element*, so it has to
+    // be asked separately whether it is up.
+    if (video?.webkitDisplayingFullscreen) {
+      video.webkitExitFullscreen?.();
+      return;
+    }
+
+    if (wrap.requestFullscreen) {
+      void wrap.requestFullscreen().then(lockLandscape, () => {
+        // Safari can refuse the element even where the method exists; the
+        // native player is still there.
+        video?.webkitEnterFullscreen?.();
+      });
+      return;
+    }
+    if (wrap.webkitRequestFullscreen) {
+      void Promise.resolve(wrap.webkitRequestFullscreen()).then(lockLandscape, () => {});
+      return;
+    }
+    video?.webkitEnterFullscreen?.();
   }, []);
 
+  // Each route announces itself differently: the standard event, the
+  // webkit-prefixed one, and — for the iPhone's native player — events on the
+  // video element rather than the document.
   useEffect(() => {
-    const onChange = () => setFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
+    const video = videoRef.current as FullscreenCapableVideo | null;
+    const doc = document as FullscreenCapableDocument;
+
+    const sync = () => {
+      const active =
+        Boolean(fullscreenElementOf(doc)) ||
+        Boolean((videoRef.current as FullscreenCapableVideo | null)?.webkitDisplayingFullscreen);
+      setFullscreen(active);
+      if (!active) releaseOrientation();
+    };
+
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
+    video?.addEventListener("webkitbeginfullscreen", sync);
+    video?.addEventListener("webkitendfullscreen", sync);
+    return () => {
+      document.removeEventListener("fullscreenchange", sync);
+      document.removeEventListener("webkitfullscreenchange", sync);
+      video?.removeEventListener("webkitbeginfullscreen", sync);
+      video?.removeEventListener("webkitendfullscreen", sync);
+      releaseOrientation();
+    };
   }, []);
 
   // Swap source, keeping the viewer's place.
@@ -454,7 +558,7 @@ export function VideoPlayer({
       onKeyDown={onKeyDown}
       onPointerMove={showChrome}
       onPointerLeave={() => playing && setChromeVisible(false)}
-      className={`group relative aspect-video w-full overflow-hidden rounded-2xl bg-black outline-none select-none focus-visible:ring-2 focus-visible:ring-lime-30 ${className}`}
+      className={`video-shell group relative aspect-video w-full overflow-hidden rounded-2xl bg-black outline-none select-none focus-visible:ring-2 focus-visible:ring-lime-30 ${className}`}
     >
       <video
         ref={videoRef}

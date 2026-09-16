@@ -979,3 +979,16 @@ a.lp-btn:active {
     transform: none;
   }
 }
+
+/* ── The video shell, once it IS the screen ──────────────────────────────
+   The player is normally a rounded 16:9 card, and those two rules survive
+   into fullscreen: the element would keep its aspect ratio and corners and
+   sit as a letterboxed card against black instead of filling the display.
+   Both prefixes are needed — Safari only matches its own. */
+.video-shell:fullscreen,
+.video-shell:-webkit-full-screen {
+  aspect-ratio: auto;
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+}

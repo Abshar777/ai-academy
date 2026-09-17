@@ -72,6 +72,10 @@ export const metadata: Metadata = {
   },
 };
 
+/* The container id, in one place: the loader in <head> and the noscript
+   iframe in <body> have to name the same one. */
+const GTM_ID = "GTM-T9W3FGBC";
+
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   colorScheme: "light",
@@ -117,9 +121,34 @@ export default function RootLayout({
             __html: ldJson(siteGraph()),
           }}
         />
+
+        {/* Google Tag Manager. Last in <head> so the font preloads above are
+            the first thing the parser meets; the strategy, not the position,
+            is what decides when this runs. */}
+        <Script id="google-tag-manager" strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${GTM_ID}');
+          `}
+        </Script>
       </head>
 
       <body className="min-h-full">
+        {/* Google Tag Manager, for browsers running without JavaScript. It has
+            to be the first thing in <body>, and it is plain markup rather than
+            a <Script>, since the point is that no script runs. */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+
         <DisableContextMenu />
         {/* Google Analytics */}
         <Script

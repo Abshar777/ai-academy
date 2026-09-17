@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { ldJson, siteGraph } from "@/lib/schema";
 import { ContactProvider } from "@/components/contact-dialog";
 import { EpisodeProvider } from "@/components/episode-dialog";
 import { DisableContextMenu } from "@/components/disable-context-menu";
@@ -78,15 +79,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const ORGANIZATION_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "EducationalOrganization",
-  name: SITE_NAME,
-  url: SITE_URL,
-  logo: `${SITE_URL}/icons/icon-512.png`,
-  description: SITE_DESCRIPTION,
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -122,7 +114,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(ORGANIZATION_JSON_LD),
+            __html: ldJson(siteGraph()),
           }}
         />
       </head>

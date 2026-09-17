@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPost, readingMinutes } from "@/lib/blog";
+import { blogPostingGraph, ldJson } from "@/lib/schema";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,10 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt || undefined,
+    // Without this a post reachable by more than one URL competes with itself.
+    alternates: { canonical: `${SITE_URL}/blog/${slug}` },
     openGraph: {
+      url: `${SITE_URL}/blog/${slug}`,
       title: post.title,
       description: post.excerpt || undefined,
       type: "article",
@@ -41,6 +46,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="page-surface">
+      {/* The post as structured data. It has to be emitted here: the editor's
+          own HTML is sanitised against an allowlist with no <script> in it, so
+          a schema block pasted into the body would simply be stripped. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: ldJson(blogPostingGraph(post)) }}
+      />
       <article className="mx-auto w-full max-w-[720px] px-5 pt-16 pb-20 sm:px-6 sm:pt-20 md:pt-24">
         <Link href="/blog" className="font-noi-grotesk text-[14px] text-neutral-50 hover:underline">
           ← Blog

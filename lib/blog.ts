@@ -106,6 +106,31 @@ export type ListPostsOptions = {
   limit?: number;
 };
 
+/**
+ * Cover images are stored with whatever URL the uploader returned, and the
+ * media host hands back `http://…` even though it serves the same file over
+ * TLS and 301s the plain request. That URL is mixed content on an https page:
+ * browsers block or silently upgrade the <img>, scrapers reading the
+ * OpenGraph tag often refuse a redirect, and it lands in the post's structured
+ * data as an address Google has to be talked out of.
+ *
+ * Upgraded on the way out rather than migrated in the database, so existing
+ * posts are fixed without a rewrite. Loopback is left alone — a dev server on
+ * plain http is the one case where the upgrade would break the image.
+ */
+function secureMediaUrl(url: string | undefined): string | undefined {
+  if (!url?.startsWith("http://")) return url;
+  const host = url.slice(7).split("/")[0].split(":")[0];
+  if (host === "localhost" || host === "127.0.0.1" || host === "[::1]") return url;
+  return `https://${url.slice(7)}`;
+}
+
+/** Every read goes through here, so no caller has to remember. */
+function readPost<T extends BlogPost | null>(post: T): T {
+  if (!post) return post;
+  return { ...post, coverImage: secureMediaUrl(post.coverImage) } as T;
+}
+
 export async function listPosts(options: ListPostsOptions = {}): Promise<BlogPost[] | null> {
   const coll = await collection();
   if (!coll) return null;
@@ -116,13 +141,14 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<BlogPos
     // — which is the order somebody coming back to unfinished work wants.
     .sort({ publishedAt: -1, updatedAt: -1 })
     .limit(options.limit ?? 200)
-    .toArray();
+    .toArray()
+    .then((posts) => posts.map(readPost));
 }
 
 export async function getPost(slug: string): Promise<BlogPost | null> {
   const coll = await collection();
   if (!coll) return null;
-  return coll.findOne({ slug }, { projection: { _id: 0 } });
+  return readPost(await coll.findOne({ slug }, { projection: { _id: 0 } }));
 }
 
 export type PostInput = {

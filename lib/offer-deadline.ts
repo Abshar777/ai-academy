@@ -1,6 +1,7 @@
 /**
- * The launch price ends on a fixed date: Friday 18 September 2026, at the
- * close of the day in India.
+ * The launch price ends on a fixed date: Wednesday 30 September 2026, at the
+ * close of the day in India. The end of the month is a cut-off that explains
+ * itself, which matters when somebody asks why the price moved.
  *
  * It used to roll forward to the next Sunday every week, which meant the
  * countdown never reached zero — every Monday it quietly started again from a
@@ -17,7 +18,7 @@
  * the site counting down to a deadline that has already passed.
  */
 
-const OFFER_ENDS_AT = "2026-09-18T23:59:59+05:30";
+const OFFER_ENDS_AT = "2026-09-30T23:59:59+05:30";
 
 export function offerDeadline(): Date {
   return new Date(OFFER_ENDS_AT);

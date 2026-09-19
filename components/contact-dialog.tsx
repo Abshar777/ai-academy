@@ -43,8 +43,6 @@ const ERROR =
  */
 const PAYMENT_METHODS = [
   { value: "full", label: "Pay in full" },
-  { value: "tabby", label: "Tabby" },
-  { value: "tamara", label: "Tamara" },
   { value: "razorpay", label: "Razorpay" },
 ] as const;
 

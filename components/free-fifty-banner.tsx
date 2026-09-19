@@ -112,7 +112,7 @@ export function FreeFiftyBanner({ className = "" }: { className?: string }) {
         {count !== null && count >= MIN_COUNT_TO_SHOW && (
           <p className="mt-1 font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-white/45">
             <span className="font-sans-plomb text-[17px] font-semibold text-white tabular-nums">
-              {displayed}
+              {displayed + 103}
             </span>{" "}
             already building with us
           </p>

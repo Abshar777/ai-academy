@@ -6,13 +6,15 @@
  * so it's kept as an explicit named entry rather than derived from a
  * conversion rate that would drift.
  *
- * Every other country falls back to the AED plan with Tabby, Tamara and
- * Razorpay all offered — Razorpay stays available outside India too since it
- * settles internationally, not just in INR. A defined set of Middle East
- * countries also get Abzer Pay (AED, hosted-redirect) — see lib/abzer.ts —
- * the only one of these four that's actually wired to a real gateway for
- * non-India countries; Tabby/Tamara/Razorpay there still just route to a
- * static payment link or a "team will follow up" fallback.
+ * Every other country falls back to the AED plan, paying by card (Stripe) or
+ * Razorpay — which stays available outside India since it settles
+ * internationally, not just in INR. A defined set of Middle East countries
+ * also get Abzer Pay (AED, hosted-redirect) — see lib/abzer.ts.
+ *
+ * Tabby and Tamara were offered here and are not any more: instalments read
+ * oddly against AED 99, and neither ever had a checkout URL configured, so
+ * picking one could not take a payment. Their ids survive below so the option
+ * can be restored without unpicking the type.
  */
 
 export type PaymentMethodId = "razorpay" | "stripe" | "tabby" | "tamara" | "abzer";
@@ -78,7 +80,12 @@ export const DEFAULT_PLAN: PricingPlan = {
   // figure. Adjust both this and originalAmount together if the rate moves.
   originalLabel: "AED 440",
   originalAmount: 440,
-  methods: ["razorpay", "stripe", "tabby", "tamara"],
+  // Tabby and Tamara are deliberately absent: instalments read oddly
+  // against AED 99, and neither had a checkout URL configured, so
+  // choosing one could not take a payment — it fell through to the
+  // "team will follow up" path while the copy promised instalments.
+  // The ids and links stay in place so they can be switched back on.
+  methods: ["razorpay", "stripe"],
 };
 
 const DEFAULT = DEFAULT_PLAN;
@@ -108,9 +115,7 @@ export function planForCountry(countryCode: string | undefined | null): PricingP
   if (countryCode === "IN") return INDIA;
   if (countryCode && ABZER_COUNTRIES.has(countryCode)) {
     // Razorpay leads, Abzer behind it. Both complete a payment now that
-    // checkout charges this plan's own currency rather than only INR;
-    // Tabby/Tamara stay listed but still fall through to the "team will
-    // follow up" path.
+    // checkout charges this plan's own currency rather than only INR.
     const [first, ...rest] = DEFAULT.methods;
     return { ...DEFAULT, methods: [first!, "abzer", ...rest] };
   }

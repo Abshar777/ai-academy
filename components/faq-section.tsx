@@ -41,7 +41,7 @@ const FAQS = [
   },
   {
     q: "How can I pay?",
-    a: "Pay in full, or split the {price} into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
+    a: "Pay the {price} in full at enrolment, by card or through Razorpay.",
   },
 ];
 

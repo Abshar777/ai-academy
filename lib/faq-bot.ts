@@ -149,7 +149,7 @@ export const FAQ_BOT_ENTRIES: FaqEntry[] = [
     question: "How can I pay?",
     keywords: ["pay", "payment", "installment", "instalment", "tabby", "tamara", "razorpay", "emi"],
     answer:
-      "Pay in full, or split the {price} into instalments through Tabby or Tamara at enrolment. Razorpay is also accepted.",
+      "Pay the {price} in full at enrolment, by card or through Razorpay. We don't offer Tabby or Tamara instalments.",
   },
 ];
 

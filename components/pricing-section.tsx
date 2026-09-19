@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ContactButton } from "./contact-dialog";
 import { Reveal } from "./reveal";
@@ -26,7 +25,7 @@ const HOW_TO_JOIN = [
   {
     step: "02",
     title: "Choose how to pay",
-    body: "Pick pay in full, or split it with Tabby or Tamara, or Razorpay — right there in the same form.",
+    body: "Pay by card or through Razorpay — right there in the same form.",
   },
   {
     step: "03",
@@ -309,27 +308,6 @@ export function PricingSection() {
                     Razorpay
                   </span>
                 </span>
-                {/* Real Tabby and Tamara badge artwork, supplied directly —
-                    both are self-coloured, so they render as-is rather than
-                    through the mask+colour technique the monochrome logos
-                    use. Tamara's source file had generous transparent padding
-                    around the badge; cropped to its real content bounds
-                    (public/tools/tamara.png) so it sits at the same visual
-                    weight as the others instead of reading smaller. */}
-                <Image
-                  src="/tools/tabby.svg"
-                  alt="Tabby"
-                  width={95}
-                  height={37}
-                  className="h-9 w-auto"
-                />
-                <Image
-                  src="/tools/tamara.png"
-                  alt="Tamara"
-                  width={113}
-                  height={36}
-                  className="h-9 w-auto"
-                />
               </div>
             </div>
           </div>

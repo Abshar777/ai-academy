@@ -129,12 +129,12 @@ export function OrderForm({
 
   const plan = useMemo(() => planForCountry(country), [country]);
 
-  // Derived, not synced via an effect: switching from AE (tabby/tamara/
-  // razorpay) to IN (razorpay only) shouldn't leave "tabby" selected with no
-  // matching button shown, but that's a property of what's valid to render
-  // right now, not state that needs an effect keeping it in sync after the
-  // fact — an effect here would just cause an extra render on every country
-  // change for no benefit.
+  // Derived, not synced via an effect: switching from AE (card and Razorpay,
+  // plus Abzer in some countries) to IN (Razorpay only) shouldn't leave a
+  // method selected with no matching button shown. That's a property of what's
+  // valid to render right now, not state that needs an effect keeping it in
+  // sync after the fact — an effect here would just cause an extra render on
+  // every country change for no benefit.
   const paymentMethod = plan.methods.includes(paymentMethodChoice)
     ? paymentMethodChoice
     : plan.methods[0];

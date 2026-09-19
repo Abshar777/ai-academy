@@ -134,7 +134,7 @@ export default function CoursePage() {
           delay={0.3}
           className="font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-neutral-50 [--translateY-from:10%]"
         >
-          Pay in full, or split it with Tabby or Tamara at enrolment. Razorpay accepted too.
+          Pay in full by card or through Razorpay at enrolment.
         </Reveal>
       </section>
     </main>

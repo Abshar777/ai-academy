@@ -16,6 +16,7 @@ import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
+import { OfferCountdown } from "./offer-countdown";
 import { FreeFiftyBanner } from "./free-fifty-banner";
 import { PROGRAMME_NAME } from "@/lib/site";
 
@@ -353,16 +354,23 @@ export function OrderForm({
                 </span>
               </div>
             ) : (
-              <div className="flex flex-wrap items-baseline gap-3">
-                {plan.originalLabel && (
-                  <span className="font-sans-plomb text-[28px] leading-[0.9] font-semibold tracking-[-0.015em] text-neutral-50 line-through">
-                    {plan.originalLabel}
+              <>
+                <div className="flex flex-wrap items-baseline gap-3">
+                  {plan.originalLabel && (
+                    <span className="font-sans-plomb text-[28px] leading-[0.9] font-semibold tracking-[-0.015em] text-neutral-50 line-through">
+                      {plan.originalLabel}
+                    </span>
+                  )}
+                  <span className="font-sans-plomb text-[56px] leading-[0.9] font-semibold tracking-[-0.015em]">
+                    {plan.label}
                   </span>
-                )}
-                <span className="font-sans-plomb text-[56px] leading-[0.9] font-semibold tracking-[-0.015em]">
-                  {plan.label}
-                </span>
-              </div>
+                </div>
+                {/* Only against a struck-through price: a countdown next to a
+                    price that was never discounted is a deadline on nothing.
+                    Every plan that has one gets it, so INR reads the same as
+                    AED without either being spelled out here. */}
+                {plan.originalLabel && <OfferCountdown className="mt-1" />}
+              </>
             )}
           </div>
 

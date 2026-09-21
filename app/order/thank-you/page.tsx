@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfettiBurst } from "@/components/confetti-burst";
+import { OrderPhonePrompt } from "@/components/order-phone-prompt";
 import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
 import { grantCourseAccess } from "@/lib/course-access";
 import { getAbzerOrder } from "@/lib/abzer-orders";
@@ -119,6 +120,15 @@ export default async function ThankYouPage({
       ? `/api/invoice?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}`
       : null;
 
+  // The same reference the invoice download proves itself with, handed to the
+  // phone prompt so it can ask the server whether this order still wants a
+  // number — and prove which order it is when one is given.
+  const orderQuery = new URLSearchParams(
+    Object.entries({ orderId, paymentId, session_id: stripeSessionId }).filter(
+      (entry): entry is [string, string] => Boolean(entry[1]),
+    ),
+  ).toString();
+
   return (
     <main className="page-surface flex min-h-screen flex-col items-center justify-center gap-6 overflow-x-clip px-6 pt-28 pb-20 text-center md:pt-36 md:pb-32">
       <ConfettiBurst />
@@ -147,6 +157,12 @@ export default async function ThankYouPage({
         Welcome to Delta AI Academy! Your invoice and the full course details are on their
         way to your email.
       </p>
+
+      {orderQuery && (
+        <div className="w-full max-w-md">
+          <OrderPhonePrompt query={orderQuery} />
+        </div>
+      )}
 
       <div className="mt-2 flex flex-col gap-3 sm:flex-row">
         <Link

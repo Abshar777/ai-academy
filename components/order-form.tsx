@@ -201,7 +201,11 @@ export function OrderForm({
     if (name.trim().length < 2) errors.name = "Please enter your name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()))
       errors.email = "Please enter a valid email address.";
-    if (phone.replace(/\D/g, "").length < 7) errors.phone = "Please enter a valid phone number.";
+    // Not required: one less field between somebody and paying. A number that
+    // was actually typed still has to look like one, so a slip is caught here
+    // rather than stored as rubbish — /order/thank-you asks for it afterwards.
+    if (phone.trim() !== "" && phone.replace(/\D/g, "").length < 7)
+      errors.phone = "Please enter a valid phone number.";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -509,7 +513,7 @@ export function OrderForm({
 
           <div className="flex flex-col gap-2">
             <label className={LABEL} htmlFor="order-phone">
-              Phone number
+              Phone number <span className="text-neutral-50">(optional)</span>
             </label>
             <input
               id="order-phone"
@@ -596,6 +600,26 @@ export function OrderForm({
                 ? "Claim free access"
                 : "Buy now"}
           </button>
+
+          {/* At the point of commitment, where the reassurance is worth most. */}
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-noi-grotesk text-[13px] leading-none text-neutral-50">
+            <span className="inline-flex items-center gap-1.5">
+              <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true">
+                <path
+                  d="M3 6V4a3 3 0 0 1 6 0v2m-7 0h8a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Secure checkout
+            </span>
+            <span aria-hidden="true" className="text-neutral-50/50">
+              ·
+            </span>
+            <span>7-day money-back guarantee</span>
+          </p>
         </form>
       </div>
     </main>

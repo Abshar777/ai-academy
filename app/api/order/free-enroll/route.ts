@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isValidEmail, isValidName, isValidPhone } from "@/lib/contact-validation";
+import { isValidEmail, isValidName, isValidOptionalPhone } from "@/lib/contact-validation";
 import { planForCountry } from "@/lib/pricing";
 import { computeDiscountedAmount, lookupCoupon, redeemCoupon } from "@/lib/coupons";
 import { recordEnrollment } from "@/lib/enrollments";
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const country = typeof body.country === "string" ? body.country.trim() : "";
   const couponCode = typeof body.couponCode === "string" ? body.couponCode.trim() : "";
 
-  if (!isValidName(name) || !isValidEmail(email) || !isValidPhone(phone)) {
+  if (!isValidName(name) || !isValidEmail(email) || !isValidOptionalPhone(phone)) {
     return NextResponse.json({ error: "Missing or invalid contact details." }, { status: 400 });
   }
   if (!couponCode) {

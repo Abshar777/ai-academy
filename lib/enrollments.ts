@@ -16,7 +16,9 @@ export type EnrollmentSource = "razorpay" | "stripe" | "abzer" | "coupon";
 export type Enrollment = {
   name: string;
   email: string;
-  phone: string;
+  /** Optional: checkout no longer asks for one. Filled in later from the
+   *  thank-you page when the buyer adds it — see app/api/order/phone. */
+  phone?: string;
   country: string;
   amountMinorUnits: number;
   currency: string;
@@ -126,6 +128,49 @@ export async function recordEnrollment(
 
 /** Returns null (not 0) when Mongo isn't configured, so callers can tell
  *  "no database" apart from "zero enrollments" and fall back accordingly. */
+/**
+ * The phone number on a paid enrolment, and how to fill it in later.
+ *
+ * Checkout stopped asking for one, so the row is written without it and
+ * /order/thank-you offers to add it afterwards. The caller has already proved
+ * the payment is real against the gateway it belongs to — see
+ * app/api/order/phone — so this only has to find the right row.
+ */
+export type EnrollmentRef =
+  | { gateway: "razorpay"; orderId: string }
+  | { gateway: "abzer"; orderId: string }
+  | { gateway: "stripe"; sessionId: string };
+
+function filterFor(ref: EnrollmentRef): Record<string, string> {
+  if (ref.gateway === "razorpay") return { razorpayOrderId: ref.orderId };
+  if (ref.gateway === "abzer") return { abzerOrderId: ref.orderId };
+  return { stripeSessionId: ref.sessionId };
+}
+
+/** The stored number, "" when there is none, or null when no such enrolment
+ *  exists — which the caller reports as "nothing to ask about" rather than an
+ *  error, since a missing row is not the buyer's problem. */
+export async function enrollmentPhone(ref: EnrollmentRef): Promise<string | null> {
+  const coll = await collection();
+  if (!coll) return null;
+  const row = await coll.findOne(filterFor(ref), { projection: { phone: 1 } });
+  if (!row) return null;
+  return row.phone ?? "";
+}
+
+/** Writes the number the buyer added afterwards. Only ever fills a gap: a row
+ *  that already has one is left alone, so a replayed request cannot overwrite
+ *  a number with a different one. */
+export async function setEnrollmentPhone(ref: EnrollmentRef, phone: string): Promise<boolean> {
+  const coll = await collection();
+  if (!coll) return false;
+  const result = await coll.updateOne(
+    { ...filterFor(ref), $or: [{ phone: { $exists: false } }, { phone: "" }] },
+    { $set: { phone } },
+  );
+  return result.matchedCount > 0;
+}
+
 export async function countEnrollments(): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;

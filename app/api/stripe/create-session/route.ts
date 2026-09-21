@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStripeClient, StripeNotConfiguredError } from "@/lib/stripe";
 import { normalizeCountry, planForCountry } from "@/lib/pricing";
-import { isValidEmail, isValidName, isValidPhone } from "@/lib/contact-validation";
+import { isValidEmail, isValidName, isValidOptionalPhone } from "@/lib/contact-validation";
 import { computeDiscountedAmount, lookupCoupon } from "@/lib/coupons";
 import { PROGRAMME_NAME, SITE_URL } from "@/lib/site";
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const country = typeof body.country === "string" ? body.country.trim() : "";
   const couponCode = typeof body.couponCode === "string" ? body.couponCode.trim() : "";
 
-  if (!isValidName(name) || !isValidEmail(email) || !isValidPhone(phone)) {
+  if (!isValidName(name) || !isValidEmail(email) || !isValidOptionalPhone(phone)) {
     return NextResponse.json({ error: "Missing or invalid contact details." }, { status: 400 });
   }
 

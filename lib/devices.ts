@@ -1,5 +1,6 @@
 import { ObjectId, type Collection } from "mongodb";
 import { getDb } from "./mongodb";
+import { getDeviceSettings } from "./device-settings";
 
 /**
  * The device whitelist, shared with the course API (../academy-api writes these
@@ -103,8 +104,12 @@ export async function approveDevice(id: string): Promise<ApproveResult> {
   if (!device) return { ok: false, reason: "not_found" };
   if (device.status === "approved") return { ok: true };
 
+  // The configured ceiling, not the built-in one — and no ceiling at all while
+  // the whitelist is switched off, since approving by hand is then just
+  // tidying up a row rather than granting a scarce slot.
+  const settings = await getDeviceSettings();
   const approvedCount = await coll.countDocuments({ userId: device.userId, status: "approved" });
-  if (approvedCount >= MAX_APPROVED_DEVICES) return { ok: false, reason: "limit" };
+  if (settings.enabled && approvedCount >= settings.maxApproved) return { ok: false, reason: "limit" };
 
   await coll.updateOne(
     { _id: device._id },

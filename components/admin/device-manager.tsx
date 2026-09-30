@@ -184,8 +184,8 @@ export function DeviceManager({ initialDevices }: { initialDevices: DeviceView[]
           Devices
         </h1>
         <p className="mt-1 font-noi-grotesk text-[14px] text-neutral-50">
-          Buyers may use two devices. The first is auto-approved; a second needs your approval here.
-          Revoking a device frees a slot and ends its session within minutes.
+          The limit is set above. Revoking a device frees a slot and ends its session within
+          minutes.
         </p>
       </div>
 

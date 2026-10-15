@@ -57,9 +57,9 @@ export function discountPercent(plan: PricingPlan): number | null {
  *  anything the client sends — see app/api/razorpay/create-order/route.ts. */
 export const INDIA_PLAN: PricingPlan = {
   country: "IN",
-  amount: 999,
+  amount: 1499,
   currency: "INR",
-  label: "₹999",
+  label: "₹1,499",
   originalLabel: "₹10,000",
   originalAmount: 10000,
   methods: ["razorpay", "stripe"],

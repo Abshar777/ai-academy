@@ -173,7 +173,7 @@ const FAQ = [
     "Yes. The program includes live weekly sessions, questions support, code reviews and project reviews.",
   ],
   ["Is Malayalam support available?", "Yes. Support is available in English and Malayalam."],
-  ["How much does the beginner course cost?", "The current launch price is ₹999."],
+  ["How much does the beginner course cost?", "The current launch price is ₹1,499."],
 ] as const;
 
 /* ── Structured data ────────────────────────────────────────────────────── */
@@ -197,7 +197,7 @@ const COURSE_LD = {
   description: DESCRIPTION,
   url: URL,
   provider: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
-  offers: { "@type": "Offer", price: "999", priceCurrency: "INR", url: `${SITE_URL}/order` },
+  offers: { "@type": "Offer", price: "1499", priceCurrency: "INR", url: `${SITE_URL}/order` },
 };
 
 /* ── Small pieces ───────────────────────────────────────────────────────── */
@@ -561,13 +561,13 @@ export default function BeginnersLandingPage() {
               <span className="lp-chip !bg-white/15 !text-white/80">10</span>
               <h2 className="lp-h2 mt-5 !text-white max-w-[16ch]">Start Your AI Development Journey</h2>
               <div className="mt-8 flex flex-wrap items-baseline gap-x-5 gap-y-3">
-                <p className="lp-price">₹999</p>
+                <p className="lp-price">₹1,499</p>
                 <p className="lp-was">₹4,000</p>
                 <span className="lp-off">75% off</span>
               </div>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                 <Link href="/order" className="lp-btn lp-btn-white">
-                  Start learning for ₹999 <Arrow />
+                  Start learning for ₹1,499 <Arrow />
                 </Link>
                 <Link href="/watch" className="lp-btn lp-btn-glass">
                   Watch free AI class

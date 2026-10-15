@@ -4,7 +4,7 @@ import { planForCountry } from "./pricing";
 import { useCountry } from "./use-country";
 
 /**
- * The current plan's display price ("₹999", "AED 99") for the visitor's
+ * The current plan's display price ("₹1,499", "AED 99") for the visitor's
  * country, so prose that quotes a price can't contradict what /order
  * actually charges.
  *

@@ -17,6 +17,10 @@ import { WhatsAppIcon } from "./contact-icons";
  * corner by itself is decoration; next to the thing it is meant to make easier
  * to press, it is a reason to press it.
  *
+ * The button is dark with the mark in WhatsApp green, not the usual green
+ * circle: beside the count pill, which is dark, a solid green disc read as a
+ * third-party badge stuck onto the page rather than part of it.
+ *
  * Positioning mirrors ai-chat-widget.tsx exactly, on the other side. Both lift
  * clear of components/enroll-bar.tsx on phones, where that bar spans very
  * nearly the full width and would otherwise be sat on; on sm and up the bar is
@@ -39,7 +43,7 @@ export function FloatingContact() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat with us on WhatsApp"
-        className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)] transition duration-150 ease-in-out hover:scale-105 hover:bg-[#1FBA57] active:scale-95 sm:size-13"
+        className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-neutral-90/95 text-[#25D366] shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)] backdrop-blur-md transition duration-150 ease-in-out hover:scale-105 hover:border-[#25D366]/40 hover:text-[#2DF177] active:scale-95 sm:size-13"
       >
         <WhatsAppIcon className="size-6 sm:size-7" />
       </a>

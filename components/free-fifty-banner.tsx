@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, useReducedMotion } from "motion/react";
+import { useStudentCount } from "@/lib/use-student-count";
 
 /**
  * The one card on the page whose entire job is to catch a scrolling thumb and
@@ -17,10 +18,6 @@ import { motion, useInView, useReducedMotion } from "motion/react";
  * already doing it; next to a number in single figures it lands worse than
  * saying nothing, so it stays hidden until it helps.
  */
-
-/** Below this, the count argues against the copy rather than for it. It
- *  appears on its own once real enrolments pass the line. */
-const MIN_COUNT_TO_SHOW = 25;
 
 /** Counts 0 -> target once, starting only when the caller flips `start` to
  *  true (gated on scroll-into-view — see useInView below — rather than on
@@ -64,27 +61,12 @@ function LiveDot() {
 }
 
 export function FreeFiftyBanner({ className = "" }: { className?: string }) {
-  const [count, setCount] = useState<number | null>(null);
+  const student = useStudentCount();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
   const reducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/students-count")
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled && typeof data?.count === "number") setCount(data.count);
-      })
-      .catch(() => {
-        // Best-effort — the promo copy still reads fine with no count shown.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const displayed = useCountUp(count, inView || Boolean(reducedMotion));
+  const displayed = useCountUp(student?.headline ?? null, inView || Boolean(reducedMotion));
 
   return (
     <motion.div
@@ -109,12 +91,12 @@ export function FreeFiftyBanner({ className = "" }: { className?: string }) {
           Everything you need to build is here.
         </p>
 
-        {count !== null && count >= MIN_COUNT_TO_SHOW && (
+        {student && (
           <p className="mt-1 font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-white/45">
             <span className="font-sans-plomb text-[17px] font-semibold text-white tabular-nums">
-              {displayed + 1036}
+              {displayed.toLocaleString("en-IN")}
             </span>{" "}
-            already building with us
+            successful students
           </p>
         )}
       </div>

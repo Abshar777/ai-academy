@@ -4,6 +4,7 @@ import { BrochureLink } from "./brochure-link";
 import { PlanPrice } from "./plan-price";
 import { WebinarCta } from "./webinar-cta";
 import { Reveal } from "./reveal";
+import { StudentCountLine } from "./student-count-line";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
 
@@ -117,6 +118,10 @@ export function Hero() {
             className="mt-8 flex w-full justify-center [--translateY-from:20%] sm:mt-10"
           >
             <WebinarCta />
+          </Reveal>
+
+          <Reveal delay={0.68} className="mt-4 flex w-full justify-center [--translateY-from:20%]">
+            <StudentCountLine />
           </Reveal>
 
           {/* Phone-only: an action and the headline numbers land above the

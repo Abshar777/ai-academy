@@ -8,6 +8,7 @@ import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
 import { AiChatWidget } from "./ai-chat-widget";
 import { EnrollBar } from "./enroll-bar";
+import { FloatingContact } from "./floating-contact";
 import { SitePopups } from "./site-popups";
 import { EnrollmentToasts } from "./enrollment-toasts";
 
@@ -46,6 +47,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       <SiteFooter />
       <AiChatWidget />
       {selling && <EnrollBar />}
+      {selling && <FloatingContact />}
       <SitePopups />
       {selling && <EnrollmentToasts />}
     </>

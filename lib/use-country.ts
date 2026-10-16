@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { COUNTRY_CHANGE_EVENT, readCountryCookie } from "./country-cookie";
+import { COUNTRY_CHANGE_EVENT, readCountryCookie, writeCountryCookie } from "./country-cookie";
+import { countryFromTimezone } from "./country-from-timezone";
 import { normalizeCountry } from "./pricing";
 
 /**
@@ -21,7 +22,19 @@ export function useCountry(): string {
   const [country, setCountry] = useState("");
 
   useEffect(() => {
-    const sync = () => setCountry(readCountryCookie());
+    const sync = () => {
+      const saved = readCountryCookie();
+      if (saved) return setCountry(saved);
+
+      // Nothing saved: ask the browser where it thinks it is, and remember the
+      // answer so every other price on the page reads the same thing. A
+      // timezone we cannot read leaves the cookie alone and falls through to
+      // normalizeCountry's default rather than guessing.
+      const detected = countryFromTimezone();
+      if (!detected) return setCountry("");
+      writeCountryCookie(detected);
+      setCountry(detected);
+    };
 
     // Deferred: the lint rule flags a setState the effect body can reach
     // synchronously, and a cookie read during render would disagree with the

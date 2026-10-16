@@ -14,6 +14,7 @@ import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
 import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
+import { countryFromTimezone } from "@/lib/country-from-timezone";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
 import { OfferCountdown } from "./offer-countdown";
@@ -86,8 +87,32 @@ export function OrderForm({
   // does not rewrite the cookie with the value just read out of it.
   useEffect(() => {
     const id = window.setTimeout(() => {
-      const fromCookie = normalizeCountry(readCountryCookie());
-      if (country && country !== fromCookie) writeCountryCookie(country);
+      const saved = readCountryCookie();
+
+      // A country named in the link wins over everything, and has to be
+      // published so the bar and the banner follow the form.
+      if (initialCountry) {
+        if (country && country !== normalizeCountry(saved)) writeCountryCookie(country);
+        return;
+      }
+
+      // No link. Adopt whatever is already known — including what the rest of
+      // the page has just worked out from the browser's clock. This used to
+      // run the other way: the form published its own default instead, and
+      // since the server sends an empty country that normalizes to India, it
+      // quietly overwrote a correctly detected AE with IN a tick after the
+      // page settled.
+      if (saved) {
+        setCountry(normalizeCountry(saved));
+        return;
+      }
+
+      // Nothing known anywhere: ask the clock ourselves.
+      const detected = countryFromTimezone();
+      if (detected) {
+        setCountry(normalizeCountry(detected));
+        writeCountryCookie(detected);
+      }
     }, 0);
     return () => window.clearTimeout(id);
     // Mount only: later changes go through handleCountryChange, which already

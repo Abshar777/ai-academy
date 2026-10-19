@@ -13,14 +13,16 @@ import { useEffect, useState } from "react";
  * the end of the page is where someone has finished reading and is deciding,
  * which is the last moment to take the way in away from them.
  *
- * /order and /seminar show it from the top. The scroll threshold exists to
- * clear the home page hero and its own call to action, and neither of those
- * pages has a hero — waiting there would just mean the bar is missing at the
- * moment someone arrives.
+ * /seminar shows it from the top. The scroll threshold exists to clear the
+ * home page hero and its own call to action, and /seminar has no hero —
+ * waiting there would just mean the bar is missing at the moment someone
+ * arrives.
  *
- * It stays off for people who have already bought: /learn and the pages after
- * payment. Offering to enrol someone sitting in the thing they bought reads
- * as not knowing who they are.
+ * It stays off entirely on two kinds of page. /learn and the pages after
+ * payment, because offering to enrol someone sitting in the thing they bought
+ * reads as not knowing who they are. And /order itself, where the page is
+ * already the checkout: a floating bar repeating the price over the top of
+ * the form asking for it is one more thing covering the fields.
  */
 
 const SHOW_AFTER_PX = 480;
@@ -28,18 +30,13 @@ const SHOW_AFTER_PX = 480;
 export function useEnrollBarVisible(): boolean {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  // Checked before the /order prefix below, or thank-you and payment-return
-  // would match it and show the bar to somebody who has just paid.
-  const alreadyBought =
-    (pathname?.startsWith("/order/thank-you") ||
-      pathname?.startsWith("/order/payment-return") ||
-      pathname?.startsWith("/learn")) ??
-    false;
-  const noHeroToClear =
-    (pathname?.startsWith("/order") || pathname?.startsWith("/seminar")) ?? false;
+  // /order covers checkout and everything after it — thank-you and
+  // payment-return included.
+  const hidden = (pathname?.startsWith("/order") || pathname?.startsWith("/learn")) ?? false;
+  const noHeroToClear = pathname?.startsWith("/seminar") ?? false;
 
   useEffect(() => {
-    if (alreadyBought) {
+    if (hidden) {
       const id = window.setTimeout(() => setVisible(false), 0);
       return () => window.clearTimeout(id);
     }
@@ -57,7 +54,7 @@ export function useEnrollBarVisible(): boolean {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [alreadyBought, noHeroToClear]);
+  }, [hidden, noHeroToClear]);
 
   return visible;
 }

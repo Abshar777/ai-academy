@@ -18,6 +18,7 @@ import { countryFromTimezone } from "@/lib/country-from-timezone";
 import { CheckIcon } from "./check-icon";
 import { VideoPreview } from "./video-preview";
 import { OfferCountdown } from "./offer-countdown";
+import { CredentialBadges } from "./credential-badges";
 import { FreeFiftyBanner } from "./free-fifty-banner";
 import { PROGRAMME_NAME } from "@/lib/site";
 
@@ -402,6 +403,10 @@ export function OrderForm({
               </>
             )}
           </div>
+
+          {/* Between the price and the first field — read right after the
+              number, while it is still the thing being weighed up. */}
+          <CredentialBadges className="justify-start" />
 
           <form
             onSubmit={handleApplyCoupon}

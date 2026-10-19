@@ -4,6 +4,7 @@ import { BrochureLink } from "./brochure-link";
 import { PlanPrice } from "./plan-price";
 import { WebinarCta } from "./webinar-cta";
 import { Reveal } from "./reveal";
+import { CredentialBadges } from "./credential-badges";
 import { StudentCountLine } from "./student-count-line";
 import { SplitReveal } from "./split-reveal";
 import { StaggerGroup, StaggerItem } from "./stagger";
@@ -98,7 +99,7 @@ export function Hero() {
             unit="chars"
             start="intro"
             delay={0.15}
-            className="mt-5 max-w-[820px] pb-2 font-sans-plomb text-[16vw] lg:max-w-[900px] xl:max-w-[1120px] leading-[0.88] font-semibold tracking-[-0.02em] uppercase sm:mt-0 sm:text-[76px] sm:leading-[0.9] sm:tracking-[-0.015em] md:pb-4 md:text-[110px] lg:text-[120px] xl:text-[150px]"
+            className="mt-4 max-w-[820px] pb-2 font-sans-plomb text-[16vw] lg:max-w-[900px] xl:max-w-[1120px] leading-[0.88] font-semibold tracking-[-0.02em] uppercase sm:mt-0 sm:text-[76px] sm:leading-[0.9] sm:tracking-[-0.015em] md:pb-4 md:text-[110px] lg:text-[120px] xl:text-[150px]"
           >
             Build websites and apps in minutes with AI
           </SplitReveal>
@@ -112,6 +113,14 @@ export function Hero() {
             Even if you&rsquo;ve never coded before. We make AI development
             simple and accessible for beginners.
           </SplitReveal>
+
+          {/* Under the headline and the description, above the call to
+              action: the claim is read first, then what backs it, then the
+              way in. Above the headline it was the first thing on the page,
+              which put the proof before anyone knew what it was proof of. */}
+          <Reveal delay={0.56} className="mt-6 flex w-full justify-center [--translateY-from:20%] sm:mt-8">
+            <CredentialBadges />
+          </Reveal>
 
           <Reveal
             delay={0.6}

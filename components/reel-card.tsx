@@ -56,6 +56,19 @@ export function ReelCard({ reel }: { reel: Reel }) {
 
   return (
     <figure className="group relative aspect-[9/16] w-[232px] shrink-0 overflow-hidden rounded-2xl bg-neutral-90 sm:w-[260px]">
+      {/* A clip that isn't vertical sits over a blurred, scaled copy of its
+          own poster, so the card is still full-bleed without cropping the
+          picture. The poster rather than a second <video>: two elements
+          decoding the same stream to fill a background is a lot of work for
+          something nobody looks at. */}
+      {reel.fit === "contain" && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 scale-110 bg-cover bg-center blur-xl"
+          style={{ backgroundImage: `url(${reel.poster})` }}
+        />
+      )}
+
       <video
         ref={videoRef}
         src={reel.src}
@@ -65,7 +78,7 @@ export function ReelCard({ reel }: { reel: Reel }) {
         playsInline
         preload="none"
         aria-label={reel.caption}
-        className="size-full object-cover"
+        className={`relative size-full ${reel.fit === "contain" ? "object-contain" : "object-cover"}`}
       />
 
       {/* Reads over both a bright frame and a dark one. */}

@@ -1,6 +1,7 @@
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
 import { ReelCard } from "./reel-card";
+import { InstagramIcon } from "./contact-icons";
 import { INSTAGRAM_URL, REELS } from "@/lib/reels";
 
 /**
@@ -40,7 +41,12 @@ export function ReelsSection() {
         {/* Full-bleed: the row runs to both edges so the last card is cut off
             rather than ending in a tidy margin, which is what says to scroll. */}
         <Reveal className="w-full [--translateY-from:12%]">
-          <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 sm:gap-4 lg:justify-center">
+          {/* w-fit + mx-auto rather than justify-center: a centred flex row
+              that overflows puts its first item off the left edge and makes
+              it unreachable, because there is no scroll range before the
+              start. This way the row centres when it fits and scrolls from
+              the beginning when it doesn't. */}
+          <ul className="mx-auto flex w-fit max-w-full snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 sm:gap-4">
             {REELS.map((reel) => (
               <li key={reel.src} className="snap-start">
                 <ReelCard reel={reel} />
@@ -55,8 +61,9 @@ export function ReelsSection() {
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-11 items-center rounded-full border border-neutral-90 px-6 font-noi-grotesk text-[15px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-neutral-90 px-6 font-noi-grotesk text-[15px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8"
             >
+              <InstagramIcon className="size-[18px]" />
               Follow on Instagram
             </a>
           </Reveal>

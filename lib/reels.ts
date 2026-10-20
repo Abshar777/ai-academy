@@ -28,9 +28,60 @@ export type Reel = {
   href?: string;
   /** What the clip shows — used as the accessible label, not displayed. */
   caption: string;
+  /** "contain" for a clip that isn't vertical: it is letterboxed over a
+   *  blurred still of itself rather than cropped to a centre strip. */
+  fit?: "cover" | "contain";
 };
 
-export const REELS: Reel[] = [];
+/**
+ * The six reels on the account as of 20 October 2026, newest first — the
+ * order they appear on the profile.
+ *
+ * The files are the originals, re-encoded to 640px and H.264 for the web.
+ * They are ~1-4MB each and nothing is fetched until a card scrolls into
+ * view, so the 13MB on disk is not 13MB on anyone's connection.
+ */
+export const REELS: Reel[] = [
+  {
+    src: "/reels/reel-1.mp4",
+    poster: "/reels/reel-1.jpg",
+    href: "https://www.instagram.com/delta_ai_academy/reel/DetQUGFoIu5/",
+    caption: "Trending now — a mentor shows a game landing page built on a laptop",
+  },
+  {
+    src: "/reels/reel-2.mp4",
+    poster: "/reels/reel-2.jpg",
+    href: "https://www.instagram.com/delta_ai_academy/reel/Deb8Sq4kfi8/",
+    caption: "A walk through the Delta AI Academy studio",
+    // The one clip shot landscape. Cropped to a vertical strip it loses the
+    // room, which is the whole subject.
+    fit: "contain",
+  },
+  {
+    src: "/reels/reel-3.mp4",
+    poster: "/reels/reel-3.jpg",
+    href: "https://www.instagram.com/delta_ai_academy/reel/DeT7j6yj9CQ/",
+    caption: "Building an AI-driven digital marketing site from scratch",
+  },
+  {
+    src: "/reels/reel-4.mp4",
+    poster: "/reels/reel-4.jpg",
+    href: "https://www.instagram.com/delta_ai_academy/reel/DeHShPBjvdd/",
+    caption: "Build websites — walking through a finished architecture firm site",
+  },
+  {
+    src: "/reels/reel-5.mp4",
+    poster: "/reels/reel-5.jpg",
+    href: "https://www.instagram.com/delta_ai_academy/reel/Dd87mqIjROh/",
+    caption: "Making a 3D animated website",
+  },
+  {
+    src: "/reels/reel-6.mp4",
+    poster: "/reels/reel-6.jpg",
+    href: "https://www.instagram.com/delta_ai_academy/reel/DdtZuWHCtLB/",
+    caption: "What a student earned from their first freelance build",
+  },
+];
 
 /** The profile the "follow" link points at. Empty hides the link. */
-export const INSTAGRAM_URL = "";
+export const INSTAGRAM_URL = "https://www.instagram.com/delta_ai_academy/";

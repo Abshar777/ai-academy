@@ -992,3 +992,65 @@ a.lp-btn:active {
   width: 100%;
   border-radius: 0;
 }
+
+/* The marketing film's scrub bar (components/ad-player.tsx).
+   The input itself is 16px tall so there is something to actually grab —
+   a 4px strip is a miss on a trackpad and hopeless on a phone — while the
+   visible track stays thin, drawn by the track pseudo-element rather than
+   the input's own background. --progress is set inline from playback.
+   WebKit and Firefox share none of these pseudo-elements, hence the two
+   sets; Firefox has ::-moz-range-progress for the filled part, WebKit has
+   to do it with a gradient. */
+.ad-scrub {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 16px;
+  background: transparent;
+}
+
+.ad-scrub::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--color-lime-30) var(--progress, 0%),
+    rgb(255 255 255 / 0.25) var(--progress, 0%)
+  );
+}
+
+.ad-scrub::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  /* Centres the thumb on a 4px track: (4 - 13) / 2. */
+  margin-top: -4.5px;
+  border-radius: 9999px;
+  background: var(--color-lime-30);
+  cursor: pointer;
+}
+
+.ad-scrub::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.25);
+}
+
+.ad-scrub::-moz-range-progress {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--color-lime-30);
+}
+
+.ad-scrub::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-lime-30);
+  cursor: pointer;
+}
+
+.ad-scrub:disabled {
+  cursor: default;
+}

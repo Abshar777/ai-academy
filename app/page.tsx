@@ -1,5 +1,6 @@
 import { Hero } from "@/components/hero";
 import { AiTools } from "@/components/ai-tools";
+import { HeroAd } from "@/components/hero-ad";
 import { ProjectsSection } from "@/components/projects-section";
 import { WhyDelta } from "@/components/why-delta";
 import { CertificateSection } from "@/components/certificate-section";
@@ -21,6 +22,7 @@ export default function Home() {
       <Preloader />
       <main className="page-surface overflow-x-clip">
         <Hero />
+        <HeroAd />
         <AiTools />
         {/* Third, before anything is asked for: the feed is what the academy
             looks like from outside, and it reads better as evidence than it

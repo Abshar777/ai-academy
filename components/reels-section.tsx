@@ -45,8 +45,10 @@ export function ReelsSection() {
               that overflows puts its first item off the left edge and makes
               it unreachable, because there is no scroll range before the
               start. This way the row centres when it fits and scrolls from
-              the beginning when it doesn't. */}
-          <ul className="mx-auto flex w-fit max-w-full snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 sm:gap-4">
+              the beginning when it doesn't. scroll-px-6 matches the padding,
+              or the first snap point lands flush against the edge and eats
+              it. */}
+          <ul className="mx-auto flex w-fit max-w-full snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto px-6 pb-2 sm:gap-4">
             {REELS.map((reel) => (
               <li key={reel.src} className="snap-start">
                 <ReelCard reel={reel} />

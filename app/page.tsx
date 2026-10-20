@@ -22,6 +22,11 @@ export default function Home() {
       <main className="page-surface overflow-x-clip">
         <Hero />
         <AiTools />
+        {/* Third, before anything is asked for: the feed is what the academy
+            looks like from outside, and it reads better as evidence than it
+            does as an afterthought below the testimonials. Outside the padded
+            wrapper below, because the card rail runs to both edges. */}
+        <ReelsSection />
         
         <div className="mx-auto flex w-full max-w-[1440px] flex-col px-6 lg:px-36">
           <PricingSection />
@@ -37,7 +42,6 @@ export default function Home() {
           <MentorsSection />
          
           <Testimonials />
-          <ReelsSection />
           <FaqSection />
         </div>
       </main>

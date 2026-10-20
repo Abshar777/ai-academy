@@ -6,6 +6,7 @@ import { CertificateSection } from "@/components/certificate-section";
 import { MentorsSection } from "@/components/mentors-section";
 import { VibeCoding } from "@/components/vibe-coding";
 import { CurriculumPreview } from "@/components/curriculum-preview";
+import { ReelsSection } from "@/components/reels-section";
 import { Testimonials } from "@/components/testimonials";
 import { PricingSection } from "@/components/pricing-section";
 import { FaqSection } from "@/components/faq-section";
@@ -36,6 +37,7 @@ export default function Home() {
           <MentorsSection />
          
           <Testimonials />
+          <ReelsSection />
           <FaqSection />
         </div>
       </main>

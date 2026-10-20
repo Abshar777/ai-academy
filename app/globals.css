@@ -1054,3 +1054,14 @@ a.lp-btn:active {
 .ad-scrub:disabled {
   cursor: default;
 }
+
+/* A scroll container that says so by moving, not by showing a bar
+   (components/reels-rail.tsx). Firefox and the WebKit/Blink pseudo-element
+   are both needed; neither alone covers every browser. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

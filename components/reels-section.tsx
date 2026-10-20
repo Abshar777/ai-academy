@@ -1,6 +1,6 @@
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
-import { ReelCard } from "./reel-card";
+import { ReelsRail } from "./reels-rail";
 import { InstagramIcon } from "./contact-icons";
 import { INSTAGRAM_URL, REELS } from "@/lib/reels";
 
@@ -13,7 +13,8 @@ import { INSTAGRAM_URL, REELS } from "@/lib/reels";
  *
  * The row scrolls horizontally on every size rather than wrapping into a
  * grid. Reels are a feed and read as one; a 3x2 block of them reads as a
- * gallery, and the overflow is what tells someone there are more.
+ * gallery. It also drifts along by itself — see components/reels-rail.tsx,
+ * which owns the motion and the manual scrolling both.
  */
 export function ReelsSection() {
   if (REELS.length === 0) return null;
@@ -38,23 +39,10 @@ export function ReelsSection() {
           </SplitReveal>
         </div>
 
-        {/* Full-bleed: the row runs to both edges so the last card is cut off
-            rather than ending in a tidy margin, which is what says to scroll. */}
+        {/* Full-bleed: the rail runs to both edges, drifting on its own
+            until someone takes hold of it. */}
         <Reveal className="w-full [--translateY-from:12%]">
-          {/* w-fit + mx-auto rather than justify-center: a centred flex row
-              that overflows puts its first item off the left edge and makes
-              it unreachable, because there is no scroll range before the
-              start. This way the row centres when it fits and scrolls from
-              the beginning when it doesn't. scroll-px-6 matches the padding,
-              or the first snap point lands flush against the edge and eats
-              it. */}
-          <ul className="mx-auto flex w-fit max-w-full snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto px-6 pb-2 sm:gap-4">
-            {REELS.map((reel) => (
-              <li key={reel.src} className="snap-start">
-                <ReelCard reel={reel} />
-              </li>
-            ))}
-          </ul>
+          <ReelsRail reels={REELS} />
         </Reveal>
 
         {INSTAGRAM_URL && (

@@ -16,7 +16,7 @@ import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
 import { countryFromTimezone } from "@/lib/country-from-timezone";
 import { CheckIcon } from "./check-icon";
-import { VideoPreview } from "./video-preview";
+import { AdPlayer } from "./ad-player";
 import { OfferCountdown } from "./offer-countdown";
 import { CredentialBadges } from "./credential-badges";
 import { FreeFiftyBanner } from "./free-fifty-banner";
@@ -459,7 +459,16 @@ export function OrderForm({
               </p>
             )}
           </form>
-          <VideoPreview />
+          {/* The film, not the free episode. It is the thing that explains
+              the programme in thirty seconds, and someone already on the
+              checkout page does not need to be sent off to a class. Silent
+              by default — this sits beside the form. */}
+          <AdPlayer
+            src="/ad/academy-ad.mp4"
+            poster="/ad/academy-ad.jpg"
+            label="Delta AI Academy — what the programme is"
+            startMuted
+          />
 
           <ul className="flex list-none flex-col gap-3">
             {INCLUDED.map((item) => (

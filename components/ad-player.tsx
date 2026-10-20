@@ -46,12 +46,19 @@ export function AdPlayer({
   src,
   poster,
   label,
+  startMuted = false,
   className = "",
 }: {
   src: string;
   poster: string;
   /** Accessible name for the video itself. */
   label: string;
+  /**
+   * Start silent and don't even ask for sound. For the copy on /order, which
+   * sits beside the form: a video that starts talking at someone filling in
+   * their card details is a reason to close the tab.
+   */
+  startMuted?: boolean;
   className?: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -121,6 +128,13 @@ export function AdPlayer({
       const video = videoRef.current;
       if (!video) return;
       started.current = true;
+      if (startMuted) {
+        video.muted = true;
+        setMuted(true);
+        setNeedsSound(true);
+        await video.play().catch(() => {});
+        return;
+      }
       try {
         video.muted = false;
         await video.play();
@@ -152,7 +166,7 @@ export function AdPlayer({
     );
     observer.observe(video);
     return () => observer.disconnect();
-  }, []);
+  }, [startMuted]);
 
   // Fullscreen can also be left with Escape or the system control, so the
   // button's own state is not the source of truth.

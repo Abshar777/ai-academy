@@ -48,7 +48,10 @@ export function EpisodeProvider({ children }: { children: ReactNode }) {
       // Opening from a click counts as the user gesture autoplay needs, but
       // the player may not exist yet on the very first open.
       window.setTimeout(() => {
-        dialog.querySelector("video")?.play().catch(() => {});
+        dialog
+          .querySelector("video")
+          ?.play()
+          .catch(() => {});
       }, 60);
     }
   }, []);
@@ -93,6 +96,7 @@ export function EpisodeProvider({ children }: { children: ReactNode }) {
       >
         <div className="relative overflow-hidden rounded-3xl bg-neutral-90 text-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)]">
           <button
+            id="episode-dialog-close"
             type="button"
             onClick={close}
             aria-label="Close"
@@ -120,6 +124,7 @@ export function EpisodeProvider({ children }: { children: ReactNode }) {
               </p>
             </div>
             <Link
+              id="episode-open-full-page"
               href={EPISODE_PAGE_PATH}
               onClick={close}
               className="inline-flex h-11 shrink-0 items-center justify-center rounded-full border border-white/25 px-6 font-noi-grotesk text-[14px] leading-none font-semibold text-white transition duration-150 ease-in-out hover:bg-white/10"

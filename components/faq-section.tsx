@@ -105,6 +105,7 @@ export function FaqSection() {
                 className="flex flex-col gap-y-6 border-b border-current/15 last:border-b-0"
               >
                 <button
+                  id={`faq-question-${i}`}
                   type="button"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}

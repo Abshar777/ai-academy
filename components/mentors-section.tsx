@@ -157,6 +157,7 @@ export function MentorsSection() {
             "talk to a mentor" should actually start one. */}
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
           <a
+            id="mentors-whatsapp"
             href={CONTACT_WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
@@ -166,6 +167,7 @@ export function MentorsSection() {
             Talk to a mentor
           </a>
           <a
+            id="mentors-call"
             href={CONTACT_CALL_URL}
             className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full border border-white/25 px-7 font-noi-grotesk text-[15px] leading-none font-semibold text-white transition duration-150 ease-in-out hover:bg-white/10 active:scale-[0.98]"
           >

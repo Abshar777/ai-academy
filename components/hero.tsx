@@ -20,6 +20,10 @@ const FACTS: { value: ReactNode; label: string }[] = [
   { value: <PlanPrice />, label: "one plan" },
 ];
 
+/** Turns a card title into something usable as an element id. */
+const slug = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
 type HeroCardProps = {
   title: string;
   body: string;
@@ -72,9 +76,11 @@ function HeroCard({
       {extra}
       <div className="mt-auto">
         {action === "brochure" ? (
-          <BrochureLink className={ctaClassName}>{cta}</BrochureLink>
+          <BrochureLink id={`hero-card-${slug(title)}`} className={ctaClassName}>
+            {cta}
+          </BrochureLink>
         ) : (
-          <Link href="/order" className={ctaClassName}>
+          <Link id={`hero-card-${slug(title)}`} href="/order" className={ctaClassName}>
             {cta}
           </Link>
         )}
@@ -140,12 +146,13 @@ export function Hero() {
             className="mt-7 flex w-full max-w-sm flex-col gap-3 [--translateY-from:20%] sm:hidden"
           >
             <Link
+              id="hero-mobile-join"
               href="/order"
               className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-neutral-90 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] text-white transition duration-150 ease-in-out active:scale-[0.98]"
             >
               Join now
             </Link>
-            <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-90/25 bg-white/60 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] backdrop-blur-sm transition duration-150 ease-in-out active:scale-[0.98]">
+            <BrochureLink id="hero-mobile-brochure" className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-neutral-90/25 bg-white/60 px-5 text-[16px] leading-none font-medium tracking-[-0.015em] backdrop-blur-sm transition duration-150 ease-in-out active:scale-[0.98]">
               Get the brochure
             </BrochureLink>
           </Reveal>

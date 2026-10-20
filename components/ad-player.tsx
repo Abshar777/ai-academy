@@ -46,11 +46,15 @@ export function AdPlayer({
   src,
   poster,
   label,
+  idPrefix,
   startMuted = false,
   className = "",
 }: {
   src: string;
   poster: string;
+  /** Prefixes every control's id. The player appears on more than one page
+   *  and the two are worth counting separately. */
+  idPrefix: string;
   /** Accessible name for the video itself. */
   label: string;
   /**
@@ -67,7 +71,7 @@ export function AdPlayer({
   const started = useRef(false);
 
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(startMuted);
   const [needsSound, setNeedsSound] = useState(false);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
@@ -182,6 +186,45 @@ export function AdPlayer({
     };
   }, []);
 
+  /**
+   * When the browser refused sound, take it at the visitor's first gesture.
+   *
+   * Autoplay policy blocks an unmuted play() until the page has been
+   * interacted with — but the moment it has been, by any click, key or tap
+   * anywhere on the page, the block lifts. Without this the film stays
+   * silent until someone notices the small control in the corner, which for
+   * most visitors means never, and "plays with sound" is true only on paper.
+   *
+   * Only while the film is on screen and actually running. Unmuting one the
+   * visitor has already scrolled past, because they clicked something else
+   * entirely, is a noise coming from nowhere.
+   *
+   * Never for a startMuted player — /order is meant to stay quiet.
+   */
+  useEffect(() => {
+    if (startMuted || !needsSound) return;
+
+    function take() {
+      const video = videoRef.current;
+      if (!video || video.paused) return;
+      const box = video.getBoundingClientRect();
+      if (box.bottom <= 0 || box.top >= window.innerHeight) return;
+      video.muted = false;
+      setMuted(false);
+      setNeedsSound(false);
+    }
+
+    const opts = { once: true, passive: true } as const;
+    document.addEventListener("pointerdown", take, opts);
+    document.addEventListener("keydown", take, opts);
+    document.addEventListener("touchstart", take, opts);
+    return () => {
+      document.removeEventListener("pointerdown", take);
+      document.removeEventListener("keydown", take);
+      document.removeEventListener("touchstart", take);
+    };
+  }, [startMuted, needsSound]);
+
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
@@ -237,6 +280,10 @@ export function AdPlayer({
         ref={videoRef}
         src={src}
         poster={poster}
+        // Silent from the first frame, not from whenever the observer gets
+        // round to it. Without this the element is unmuted until JS runs,
+        // which on /order is a window where the film can be heard.
+        muted={startMuted}
         loop
         playsInline
         preload="metadata"
@@ -265,6 +312,7 @@ export function AdPlayer({
           enough, and a disc over the middle of the picture is in the way. */}
       {!playing && (
         <button
+          id={`${idPrefix}-play-overlay`}
           type="button"
           onClick={togglePlay}
           aria-label="Play"
@@ -278,6 +326,7 @@ export function AdPlayer({
 
       {needsSound && (
         <button
+          id={`${idPrefix}-tap-for-sound`}
           type="button"
           onClick={toggleMute}
           className="absolute top-3 right-3 inline-flex h-9 items-center gap-2 rounded-full bg-black/55 pr-4 pl-3 font-noi-grotesk text-[13px] leading-none font-medium text-white backdrop-blur-sm transition duration-150 ease-in-out hover:bg-black/75 sm:top-4 sm:right-4"
@@ -305,17 +354,28 @@ export function AdPlayer({
           onPointerCancel={() => setScrubbing(false)}
           onKeyDown={wakeChrome}
           disabled={duration === 0}
+          id={`${idPrefix}-seek`}
           aria-label="Seek"
           className="ad-scrub w-full cursor-pointer outline-none"
           style={{ "--progress": `${progress}%` } as React.CSSProperties}
         />
 
         <div className="mt-2.5 flex items-center gap-3 text-white">
-          <button type="button" onClick={togglePlay} aria-label={playing ? "Pause" : "Play"}>
+          <button
+            id={`${idPrefix}-playpause`}
+            type="button"
+            onClick={togglePlay}
+            aria-label={playing ? "Pause" : "Play"}
+          >
             {playing ? <PauseIcon className="size-5" /> : <PlayIcon className="size-5" />}
           </button>
 
-          <button type="button" onClick={toggleMute} aria-label={muted ? "Unmute" : "Mute"}>
+          <button
+            id={`${idPrefix}-mute`}
+            type="button"
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
             {muted ? <MutedIcon className="size-5" /> : <SoundIcon className="size-5" />}
           </button>
 
@@ -325,6 +385,7 @@ export function AdPlayer({
 
           <div className="relative ml-auto">
             <button
+              id={`${idPrefix}-speed`}
               type="button"
               onClick={() => setSpeedOpen((open) => !open)}
               aria-label="Playback speed"
@@ -339,6 +400,7 @@ export function AdPlayer({
                 {SPEEDS.map((rate) => (
                   <li key={rate}>
                     <button
+                      id={`${idPrefix}-speed-${String(rate).replace(".", "-")}`}
                       type="button"
                       onClick={() => pickSpeed(rate)}
                       className={
@@ -355,6 +417,7 @@ export function AdPlayer({
           </div>
 
           <button
+            id={`${idPrefix}-fullscreen`}
             type="button"
             onClick={toggleFullscreen}
             aria-label={fullscreen ? "Exit full screen" : "Full screen"}

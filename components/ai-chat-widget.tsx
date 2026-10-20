@@ -209,6 +209,7 @@ export function AiChatWidget() {
                 </span>
               </div>
               <button
+                id="chat-close"
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close chat"
@@ -278,6 +279,7 @@ export function AiChatWidget() {
                     into the chat, not another canned answer. */}
                 {!showAllQuestions && (
                   <button
+                    id="chat-enrol-now"
                     type="button"
                     onClick={startEnroll}
                     disabled={pending}
@@ -334,6 +336,7 @@ export function AiChatWidget() {
                 className="h-11 flex-1 rounded-xl border border-neutral-90/12 bg-neutral-10/60 px-4 font-noi-grotesk text-[16px] tracking-[-0.015em] outline-none transition-colors duration-150 focus:border-neutral-90/30"
               />
               <button
+                id="chat-send"
                 type="submit"
                 disabled={pending || !draft.trim()}
                 aria-label="Send"
@@ -351,6 +354,7 @@ export function AiChatWidget() {
       <motion.button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        id="chat-launcher"
         aria-label={open ? "Close chat" : "Chat with AI"}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}

@@ -151,6 +151,7 @@ export function WebinarCta({ className = "" }: { className?: string }) {
           {/* Straight to the registration form rather than the general
               enquiry modal — booking a seat is its own flow. */}
           <Link
+            id="hero-webinar-book-seat"
             href={WEBINAR_BOOKING_URL}
             className="group inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-full bg-lime-30 px-6 font-noi-grotesk text-[14px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 active:scale-[0.98] sm:w-auto sm:text-[15px]"
           >

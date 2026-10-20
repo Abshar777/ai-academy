@@ -80,12 +80,13 @@ export function ClosingCta() {
         <Reveal delay={0.45} className="mt-8 w-full max-w-sm [--translateY-from:20%] sm:w-auto sm:max-w-none">
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
+              id="closing-cta-enroll"
               href="/order"
               className="inline-flex h-12 w-full items-center justify-center rounded-full bg-neutral-90 px-8 sm:w-auto text-[16px] leading-none font-medium tracking-[-0.015em] text-white transition duration-150 ease-in-out hover:scale-[1.02] hover:bg-neutral-100"
             >
               Join now
             </Link>
-            <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 sm:w-auto text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8">
+            <BrochureLink id="closing-cta-brochure" className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 sm:w-auto text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8">
               Get the brochure
             </BrochureLink>
           </div>

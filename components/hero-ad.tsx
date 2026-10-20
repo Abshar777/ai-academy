@@ -14,6 +14,7 @@ export function HeroAd() {
         src="/ad/academy-ad.mp4"
         poster="/ad/academy-ad.jpg"
         label="Delta AI Academy — what the programme is"
+        idPrefix="hero-film"
       />
     </section>
   );

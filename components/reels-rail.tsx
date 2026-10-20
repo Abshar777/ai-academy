@@ -81,9 +81,9 @@ export function ReelsRail({ reels }: { reels: Reel[] }) {
       {/* Two copies. The second is decoration as far as a screen reader is
           concerned — the same six clips, announced once. */}
       {[0, 1].map((copy) =>
-        reels.map((reel) => (
+        reels.map((reel, index) => (
           <li key={`${reel.src}-${copy}`} aria-hidden={copy === 1 ? true : undefined}>
-            <ReelCard reel={reel} />
+            <ReelCard reel={reel} instanceId={`reel-${index + 1}-copy-${copy + 1}`} />
           </li>
         )),
       )}

@@ -162,6 +162,7 @@ export function EnrollmentToasts({
           </span>
         </div>
         <button
+          id="enrollment-toast-dismiss"
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"

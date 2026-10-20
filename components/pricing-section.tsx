@@ -97,6 +97,7 @@ function ClassPreview() {
     // A button, not a decorative card: the play affordance promised a class,
     // so pressing it opens the free episode rather than doing nothing.
     <button
+      id="pricing-watch-class"
       type="button"
       onClick={() => openEpisode({ autoPlay: true })}
       aria-label="Watch a class — play the free episode"
@@ -270,12 +271,14 @@ export function PricingSection() {
                   the enquiry modal is reserved for "Talk to our team", which
                   is the button that actually wants a conversation. */}
               <Link
+                id="pricing-join-now"
                 href="/order"
                 className="inline-flex h-12 shrink-0 items-center justify-center rounded-lg bg-neutral-90 sm:flex-1 px-5 text-[18px] leading-none font-medium text-white transition duration-150 ease-in-out hover:bg-neutral-70"
               >
                 Join now
               </Link>
               <ContactButton
+                id="pricing-talk-to-team"
                 source="pricing"
                 className="inline-flex h-12 shrink-0 items-center justify-center rounded-lg border border-neutral-90 sm:flex-1 px-5 text-[18px] leading-none font-medium transition duration-150 ease-in-out hover:bg-neutral-90/8"
               >

@@ -39,6 +39,7 @@ export function FloatingContact() {
       }
     >
       <a
+        id="floating-whatsapp"
         href={CONTACT_WHATSAPP_URL}
         target="_blank"
         rel="noopener noreferrer"

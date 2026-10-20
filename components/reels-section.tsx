@@ -48,6 +48,7 @@ export function ReelsSection() {
         {INSTAGRAM_URL && (
           <Reveal delay={0.1} className="[--translateY-from:20%]">
             <a
+              id="reels-follow-instagram"
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"

@@ -63,7 +63,11 @@ export function FreeEpisodePlayer({ className = "" }: { className?: string }) {
       >
         <p className="max-w-xs font-noi-grotesk text-[15px] leading-[1.45] text-white/70">
           The episode couldn&rsquo;t load just now. Refresh the page, or{" "}
-          <a href="/order" className="text-lime-30 underline underline-offset-4">
+          <a
+            id="episode-error-join"
+            href="/order"
+            className="text-lime-30 underline underline-offset-4"
+          >
             join the programme
           </a>{" "}
           to watch the rest.

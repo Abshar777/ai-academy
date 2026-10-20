@@ -61,6 +61,7 @@ export function OfferBanner() {
   return (
     <div className="site-announcement fixed inset-x-0 top-0 z-[60] bg-lime-30 text-neutral-90">
       <Link
+        id="offer-banner-enroll"
         href="/order"
         className="mx-auto flex h-(--announcement-height) w-full max-w-[1200px] items-center justify-center gap-2.5 px-3 font-noi-grotesk text-[13px] leading-none tracking-[-0.01em] transition-opacity duration-150 hover:opacity-80 sm:gap-3 sm:px-4 sm:text-[13px]"
       >

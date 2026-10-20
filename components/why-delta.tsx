@@ -170,6 +170,7 @@ export function WhyDelta() {
           </StaggerGroup>
 
           <Link
+            id="why-delta-curriculum"
             href="/course"
             className="mt-8 inline-flex items-center gap-2 font-noi-grotesk text-[16px] leading-[1.4] tracking-[-0.015em] underline decoration-neutral-90/25 underline-offset-4 transition-colors duration-150 hover:decoration-neutral-90"
           >

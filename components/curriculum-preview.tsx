@@ -95,6 +95,7 @@ export function CurriculumPreview() {
 
       <Reveal className="mx-auto mt-10 flex max-w-6xl justify-center [--translateY-from:15%]">
         <Link
+          id="curriculum-see-full"
           href="/course"
           className="inline-flex h-12 items-center justify-center rounded-full bg-neutral-90 px-8 text-[16px] leading-none font-medium tracking-[-0.015em] text-white transition duration-150 ease-in-out hover:scale-[1.02] hover:bg-neutral-100"
         >

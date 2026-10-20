@@ -159,6 +159,7 @@ export function ProjectsSection() {
                 </div>
 
                 <Link
+                  id={`project-brief-${project.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                   href="#"
                   className="mt-1 inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-5 text-[18px] leading-none font-medium text-white transition duration-150 ease-in-out hover:bg-neutral-70"
                 >

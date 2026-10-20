@@ -125,7 +125,7 @@ export default function CoursePage() {
           >
             Join now
           </Link>
-          <BrochureLink className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8 sm:w-auto">
+          <BrochureLink id="course-page-brochure" className="inline-flex h-12 w-full items-center justify-center rounded-full border border-neutral-90 px-8 text-[16px] leading-none font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-neutral-90/8 sm:w-auto">
             Get the brochure
           </BrochureLink>
         </Reveal>

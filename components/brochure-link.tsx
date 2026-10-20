@@ -4,6 +4,9 @@ import { BROCHURE_HREF } from "@/lib/site";
 type BrochureLinkProps = {
   children: ReactNode;
   className?: string;
+  /** For analytics. Every brochure link on the site is a separate one to
+   *  count, so the id names the place rather than the action. */
+  id?: string;
 };
 
 /**
@@ -14,9 +17,15 @@ type BrochureLinkProps = {
  * and needs no `typeof window` guard — onClick handlers only ever run in the
  * browser regardless, so that guard was never doing anything.
  */
-export function BrochureLink({ children, className }: BrochureLinkProps) {
+export function BrochureLink({ children, className, id }: BrochureLinkProps) {
   return (
-    <a href={BROCHURE_HREF} target="_blank" rel="noopener noreferrer" className={className}>
+    <a
+      id={id}
+      href={BROCHURE_HREF}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+    >
       {children}
     </a>
   );

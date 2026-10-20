@@ -84,6 +84,7 @@ export function EnrollBar() {
 
               {onOrderPage ? (
                 <button
+                  id="enroll-bar-complete-order"
                   type="button"
                   onClick={scrollToForm}
                   className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
@@ -92,6 +93,7 @@ export function EnrollBar() {
                 </button>
               ) : (
                 <Link
+                  id="enroll-bar-enroll"
                   href="/order"
                   className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-lime-30 px-5 font-noi-grotesk text-[12px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 sm:h-10 sm:px-6 sm:text-[13px]"
                 >

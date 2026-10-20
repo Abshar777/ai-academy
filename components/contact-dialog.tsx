@@ -146,6 +146,7 @@ function ContactDialog({
           </div>
 
           <button
+            id="contact-dialog-close"
             type="button"
             onClick={() => dialogRef.current?.close()}
             aria-label="Close"
@@ -262,6 +263,7 @@ function ContactDialog({
             ) : null}
 
             <button
+              id="contact-send-details"
               type="submit"
               disabled={status === "sending"}
               className="mt-1 inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-5 font-noi-grotesk text-[18px] leading-none font-medium text-white transition duration-150 hover:bg-neutral-70 disabled:opacity-60"
@@ -320,6 +322,7 @@ function SentToast({
         </div>
 
         <button
+          id="contact-toast-dismiss"
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
@@ -398,14 +401,18 @@ export function ContactButton({
   children,
   className,
   source,
+  id,
 }: {
   children: ReactNode;
   className?: string;
   source?: string;
+  /** For analytics — this button appears in several places and each is
+   *  worth counting on its own. */
+  id?: string;
 }) {
   const { open } = useContact();
   return (
-    <button type="button" className={className} onClick={() => open(source)}>
+    <button id={id} type="button" className={className} onClick={() => open(source)}>
       {children}
     </button>
   );

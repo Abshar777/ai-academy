@@ -155,6 +155,7 @@ export function MobileNav() {
       <div className={`mobile-nav-bar fixed top-(--mobile-top-offset) left-1/2 h-(--mobile-nav-height) w-[calc(100vw-var(--mobile-nav-offset))] -translate-x-1/2 rounded-xl p-(--nav-padding) ${open&&"w-full h-full p-4 shadow-none"}`}>
         <div className="flex h-[calc(var(--mobile-nav-height)-var(--nav-padding)*2)] w-full items-center justify-between">
           <Link
+            id="mobile-nav-logo"
             href="/"
             aria-label="Delta AI Academy home"
             className={"relative flex items-center " + (open ? "h-12" : "h-8")}
@@ -178,6 +179,7 @@ export function MobileNav() {
                 Hidden while the drawer is open — it offers the same thing. */}
             {!open && (
               <Link
+                id="mobile-nav-cta"
                 href={cta.href}
                 className="inline-flex h-9 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-none font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out active:scale-[0.97]"
               >
@@ -186,6 +188,7 @@ export function MobileNav() {
             )}
 
             <button
+              id="mobile-nav-toggle"
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? "Close menu" : "Open menu"}
@@ -214,6 +217,7 @@ export function MobileNav() {
               style={{ ["--i" as string]: String(i) }}
             >
               <Link
+                id={`mobile-nav-${item.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className="group flex items-center justify-between py-5 font-noi-grotesk text-[26px] leading-[1.15] tracking-[-0.025em] active:translate-x-1 active:transition-transform active:duration-150"
@@ -248,13 +252,14 @@ export function MobileNav() {
           style={{ ["--i" as string]: String(NAV.length) }}
         >
           <Link
+            id="mobile-nav-drawer-cta"
             href={cta.href}
             onClick={() => setOpen(false)}
             className="inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-5 text-[16px] leading-none font-medium text-white"
           >
             {cta.label}
           </Link>
-          <BrochureLink className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-5 text-[16px] leading-none font-medium">
+          <BrochureLink id="mobile-nav-brochure" className="inline-flex h-12 items-center justify-center rounded-lg border border-neutral-90 px-5 text-[16px] leading-none font-medium">
             Brochure
           </BrochureLink>
         </div>

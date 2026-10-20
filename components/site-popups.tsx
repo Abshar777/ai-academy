@@ -59,6 +59,7 @@ function isSuppressed(pathname: string | null): boolean {
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button
+      id="popup-close"
       type="button"
       onClick={onClick}
       aria-label="Close"
@@ -88,9 +89,12 @@ export function SitePopups() {
   /** Guards the hand-off so closing the episode dialog can't reopen anything. */
   const stage = useRef<"idle" | "seminar" | "episode" | "done">("idle");
 
-  const close = useCallback((ref: React.RefObject<HTMLDialogElement | null>) => {
-    ref.current?.close();
-  }, []);
+  const close = useCallback(
+    (ref: React.RefObject<HTMLDialogElement | null>) => {
+      ref.current?.close();
+    },
+    [],
+  );
 
   // Kicks off on every visit — nothing is remembered between page loads, by
   // design. The `stage` ref is the only guard, and it lives for the life of
@@ -196,6 +200,7 @@ export function SitePopups() {
 
           <div className="flex flex-col gap-3 p-5">
             <Link
+              id="seminar-popup-book"
               href={WEBINAR_BOOKING_URL}
               onClick={() => close(seminarRef)}
               className="inline-flex h-12 w-full items-center justify-center rounded-full bg-lime-30 px-6 font-noi-grotesk text-[15px] leading-none font-semibold text-neutral-90 transition duration-150 ease-in-out hover:bg-lime-40 active:scale-[0.98]"
@@ -203,6 +208,7 @@ export function SitePopups() {
               Book your free slot
             </Link>
             <button
+              id="seminar-popup-dismiss"
               type="button"
               onClick={() => close(seminarRef)}
               className="font-noi-grotesk text-[13px] leading-none text-white/55 transition-colors duration-150 hover:text-white"

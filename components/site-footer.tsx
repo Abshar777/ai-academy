@@ -2,6 +2,11 @@ import Link from "next/link";
 import { CONTACT_CALL_URL, CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/site";
 import { DeltaLogo, DeltaWordmark } from "./delta-logo";
 import { BrochureLink } from "./brochure-link";
+
+/** Label -> id fragment, so every footer link is countable without each one
+ *  being named by hand. */
+const slug = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 import { PhoneIcon, WhatsAppIcon } from "./contact-icons";
 import { Reveal } from "./reveal";
 import { SplitReveal } from "./split-reveal";
@@ -58,12 +63,12 @@ export function SiteFooter() {
               </SplitReveal>
               <StaggerGroup className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap" delay={0.15}>
                 <StaggerItem distance={16}>
-                  <BrochureLink className={BADGE_CLASS}>
+                  <BrochureLink id="footer-brochure" className={BADGE_CLASS}>
                     Download brochure
                   </BrochureLink>
                 </StaggerItem>
                 <StaggerItem distance={16}>
-                  <Link href="/order" className={BADGE_CLASS}>
+                  <Link id="footer-enroll" href="/order" className={BADGE_CLASS}>
                     Join the program
                   </Link>
                 </StaggerItem>
@@ -76,6 +81,7 @@ export function SiteFooter() {
               </span>
               <div className="flex flex-wrap items-center gap-3">
                 <a
+                  id="footer-call"
                   href={CONTACT_CALL_URL}
                   className="inline-flex items-center gap-2 font-noi-grotesk text-[20px] leading-none font-semibold tracking-[-0.015em] transition-colors duration-150 hover:text-lime-30 md:text-[24px]"
                 >
@@ -83,6 +89,7 @@ export function SiteFooter() {
                   {CONTACT_PHONE_DISPLAY}
                 </a>
                 <a
+                  id="footer-whatsapp"
                   href={CONTACT_WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -122,11 +129,18 @@ export function SiteFooter() {
                           return (
                             <li key={link}>
                               {link === "Brochure" ? (
-                                <BrochureLink className={linkClassName}>
+                                <BrochureLink
+                                  id={`footer-link-${slug(link)}`}
+                                  className={linkClassName}
+                                >
                                   {link}
                                 </BrochureLink>
                               ) : (
-                                <Link href="#" className={linkClassName}>
+                                <Link
+                                  id={`footer-link-${slug(link)}`}
+                                  href="#"
+                                  className={linkClassName}
+                                >
                                   {link}
                                 </Link>
                               )}
@@ -145,6 +159,7 @@ export function SiteFooter() {
               {LEGAL.map((item) => (
                 <Link
                   key={item}
+                  id={`footer-legal-${slug(item)}`}
                   href="#"
                   className="font-noi-grotesk text-[14px] leading-[1.4] tracking-[-0.015em] text-white/70 transition-colors duration-150 hover:text-lime-30"
                 >

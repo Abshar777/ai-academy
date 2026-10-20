@@ -56,6 +56,7 @@ export function SiteHeader() {
           <div className="site-nav-bar flex items-center rounded-2xl py-2">
             <div className="relative m-0 flex size-full items-center justify-between px-2">
               <Link
+                id="nav-logo"
                 href="/"
                 aria-label="Delta AI Academy home"
                 className="relative flex shrink-0"
@@ -71,6 +72,7 @@ export function SiteHeader() {
                 {NAV.map((item) => (
                   <li key={item.label} className="relative flex items-center">
                     <Link
+                      id={`nav-${item.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                       href={item.href}
                       className="site-nav-link rounded-lg px-4 py-3 text-[14px] leading-[1.4] tracking-[-0.015em] whitespace-nowrap transition-colors duration-400"
                     >
@@ -81,10 +83,11 @@ export function SiteHeader() {
               </ul>
 
               <div className="flex shrink-0 items-center gap-2">
-                <BrochureLink className="inline-flex h-10 items-center justify-center rounded-lg border border-current px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-current/10">
+                <BrochureLink id="nav-brochure" className="inline-flex h-10 items-center justify-center rounded-lg border border-current px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] transition duration-150 ease-in-out hover:bg-current/10">
                   Brochure
                 </BrochureLink>
                 <Link
+                id="nav-cta"
                 href={cta.href}
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-lime-30 px-4 text-[14px] leading-[1.1] font-medium tracking-[-0.015em] text-black transition duration-150 ease-in-out hover:bg-lime-40"
               >

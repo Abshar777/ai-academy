@@ -426,6 +426,7 @@ export function OrderForm({
                       : `${appliedCoupon.currency} ${appliedCoupon.discountValue} off`}
                 </span>
                 <button
+                  id="order-coupon-remove"
                   type="button"
                   onClick={clearCoupon}
                   className="shrink-0 font-noi-grotesk text-[13px] tracking-[-0.015em] text-neutral-50 underline underline-offset-2 hover:text-neutral-90"
@@ -445,6 +446,7 @@ export function OrderForm({
                   aria-describedby={couponStatus === "error" ? "order-coupon-error" : undefined}
                 />
                 <button
+                  id="order-coupon-apply"
                   type="submit"
                   disabled={couponStatus === "checking" || !couponInput.trim()}
                   className="h-12 shrink-0 rounded-lg border border-neutral-90 px-4 font-noi-grotesk text-[14px] leading-none font-medium transition duration-150 ease-in-out hover:bg-neutral-90/8 disabled:opacity-60"
@@ -467,6 +469,7 @@ export function OrderForm({
             src="/ad/academy-ad.mp4"
             poster="/ad/academy-ad.jpg"
             label="Delta AI Academy — what the programme is"
+            idPrefix="order-film"
             startMuted
           />
 
@@ -500,6 +503,7 @@ export function OrderForm({
                 ad, a second browser — would otherwise be looking at a page
                 asking them to buy what they own, with no way through to it. */}
             <Link
+              id="order-already-enrolled"
               href="/learn"
               className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-neutral-90/15 px-4 py-2.5 text-center font-noi-grotesk text-[14px] leading-[1.3] font-medium transition duration-150 ease-in-out hover:border-neutral-90 hover:bg-neutral-90/5 sm:w-auto"
             >
@@ -602,6 +606,7 @@ export function OrderForm({
                   className="cursor-pointer rounded-full border border-neutral-90/15 px-4 py-2 font-noi-grotesk text-[14px] leading-none tracking-[-0.01em] transition-colors duration-150 has-checked:border-neutral-90 has-checked:bg-neutral-90 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-neutral-90 has-focus-visible:ring-offset-2"
                 >
                   <input
+                    id={`order-payment-${method}`}
                     type="radio"
                     name="paymentMethod"
                     value={method}
@@ -629,6 +634,7 @@ export function OrderForm({
           )}
 
           <button
+            id="order-submit"
             type="submit"
             disabled={status === "sending"}
             className="mt-1 inline-flex h-12 items-center justify-center rounded-lg bg-neutral-90 px-5 font-noi-grotesk text-[18px] leading-none font-medium text-white transition duration-150 hover:bg-neutral-70 disabled:opacity-60"

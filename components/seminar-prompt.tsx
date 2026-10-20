@@ -35,7 +35,8 @@ export function SeminarPrompt({ session }: { session: WebinarSession | null }) {
   // this hydrates into.
   useEffect(() => {
     if (!session) return;
-    if (!window.matchMedia(`(max-width: ${STACKS_BELOW_PX - 1}px)`).matches) return;
+    if (!window.matchMedia(`(max-width: ${STACKS_BELOW_PX - 1}px)`).matches)
+      return;
     const id = window.setTimeout(() => setMobile(true), 0);
     return () => window.clearTimeout(id);
   }, [session]);
@@ -66,6 +67,7 @@ export function SeminarPrompt({ session }: { session: WebinarSession | null }) {
     >
       <div className="relative">
         <button
+          id="seminar-prompt-close"
           type="button"
           onClick={close}
           aria-label="Close"

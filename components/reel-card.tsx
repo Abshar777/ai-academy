@@ -12,11 +12,16 @@ import type { Reel } from "@/lib/reels";
  * scrolls into view, pauses when it leaves, and loads nothing at all until
  * then — the poster carries the card in the meantime.
  *
+ * The rail renders the list twice for its seamless loop, so the id of every
+ * control has to carry which copy it belongs to — two elements sharing an id
+ * is invalid, and analytics would merge the two into one meaningless number.
+ * Hence instanceId, handed down rather than derived here.
+ *
  * Muted because it autoplays; browsers refuse autoplay with sound, and a page
  * that starts talking is worse than one that doesn't. Sound is one tap away
  * and the control says so.
  */
-export function ReelCard({ reel }: { reel: Reel }) {
+export function ReelCard({ reel, instanceId }: { reel: Reel; instanceId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
 
@@ -88,6 +93,7 @@ export function ReelCard({ reel }: { reel: Reel }) {
       />
 
       <button
+        id={`${instanceId}-sound`}
         type="button"
         onClick={toggleSound}
         aria-label={muted ? "Unmute this reel" : "Mute this reel"}
@@ -98,6 +104,7 @@ export function ReelCard({ reel }: { reel: Reel }) {
 
       {reel.href && (
         <a
+          id={`${instanceId}-open`}
           href={reel.href}
           target="_blank"
           rel="noopener noreferrer"

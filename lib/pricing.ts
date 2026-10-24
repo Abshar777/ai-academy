@@ -62,7 +62,9 @@ export const INDIA_PLAN: PricingPlan = {
   label: "₹1,499",
   originalLabel: "₹10,000",
   originalAmount: 10000,
-  methods: ["razorpay", "stripe"],
+  // Stripe is hidden for now — the id and its routes stay, so putting it
+  // back is adding one word here.
+  methods: ["razorpay"],
 };
 
 const INDIA = INDIA_PLAN;
@@ -85,7 +87,11 @@ export const DEFAULT_PLAN: PricingPlan = {
   // choosing one could not take a payment — it fell through to the
   // "team will follow up" path while the copy promised instalments.
   // The ids and links stay in place so they can be switched back on.
-  methods: ["razorpay", "stripe"],
+  //
+  // Stripe is hidden for now too, the same way. Razorpay charges this plan's
+  // own currency, and the Gulf gets Abzer alongside it in planForCountry
+  // below, so nothing here is left without a gateway that can take the money.
+  methods: ["razorpay"],
 };
 
 const DEFAULT = DEFAULT_PLAN;

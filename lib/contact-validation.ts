@@ -12,10 +12,11 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
- * Checkout does not ask for a phone number — one more field between someone
- * and paying, for something we can ask for once they have. Blank passes; a
- * number that was actually typed still has to look like one, so a slip is
- * caught rather than quietly stored.
+ * Blank passes; a number that was actually typed still has to look like one,
+ * so a slip is caught rather than quietly stored.
+ *
+ * Checkout no longer uses this — a phone number is required to buy. Kept for
+ * the forms where it genuinely is optional.
  */
 export function isValidOptionalPhone(phone: string): boolean {
   return phone.trim() === "" || isValidPhone(phone);

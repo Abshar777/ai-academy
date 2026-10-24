@@ -227,10 +227,12 @@ export function OrderForm({
     if (name.trim().length < 2) errors.name = "Please enter your name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()))
       errors.email = "Please enter a valid email address.";
-    // Not required: one less field between somebody and paying. A number that
-    // was actually typed still has to look like one, so a slip is caught here
-    // rather than stored as rubbish — /order/thank-you asks for it afterwards.
-    if (phone.trim() !== "" && phone.replace(/\D/g, "").length < 7)
+    // Required. Every buyer is reached on WhatsApp afterwards, and an
+    // enrolment with no number is one nobody can follow up — the blank ones
+    // had to be chased from /order/thank-you, which only works if they stay
+    // on the page.
+    if (phone.trim() === "") errors.phone = "Please enter your phone number.";
+    else if (phone.replace(/\D/g, "").length < 7)
       errors.phone = "Please enter a valid phone number.";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -556,7 +558,7 @@ export function OrderForm({
 
           <div className="flex flex-col gap-2">
             <label className={LABEL} htmlFor="order-phone">
-              Phone number <span className="text-neutral-50">(optional)</span>
+              Phone number
             </label>
             <input
               id="order-phone"

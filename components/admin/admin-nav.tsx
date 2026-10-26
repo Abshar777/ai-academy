@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { label: "Overview", href: "/admin" },
   { label: "Payments", href: "/admin/payments" },
+  { label: "Course", href: "/admin/course" },
   { label: "Coupons", href: "/admin/coupons" },
   { label: "Blog", href: "/admin/blog" },
   { label: "Devices", href: "/admin/devices" },
@@ -15,7 +16,7 @@ const NAV = [
 /**
  * Admin sections.
  *
- * Scrolls sideways rather than wrapping or clipping: six labels do not fit on a
+ * Scrolls sideways rather than wrapping or clipping: seven labels do not fit on a
  * phone, and the previous single row put Seminar half off the edge with no way
  * to reach it. The negative margin lets the scrolling strip run to both edges
  * of the screen while its contents stay aligned with the page gutter.

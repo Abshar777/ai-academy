@@ -47,6 +47,7 @@ export function DataTable<T>({
   minWidth = 720,
   rowKey,
   facets = [],
+  selection,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -62,6 +63,18 @@ export function DataTable<T>({
   /** Dropdowns beside the search box. Combined with each other and with the
    *  text: a row has to satisfy all of them. */
   facets?: Facet<T>[];
+  /**
+   * Turns on the checkbox column. Needs `rowKey`, because a selection has to
+   * survive filtering and paging, which position cannot.
+   *
+   * The header checkbox covers the rows currently filtered, not the whole
+   * table — ticking it after a search should select what is on screen, which
+   * is what someone searching is looking at.
+   */
+  selection?: {
+    selected: Set<string>;
+    onChange: (next: Set<string>) => void;
+  };
 }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -92,6 +105,25 @@ export function DataTable<T>({
   const current = Math.min(page, pageCount - 1);
   const start = current * pageSize;
   const visible = filtered.slice(start, start + pageSize);
+
+  const selectable = Boolean(selection && rowKey);
+  const filteredKeys = selectable ? filtered.map((row) => rowKey!(row)) : [];
+  const allFilteredSelected =
+    filteredKeys.length > 0 && filteredKeys.every((key) => selection!.selected.has(key));
+
+  function toggleRow(key: string) {
+    const next = new Set(selection!.selected);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    selection!.onChange(next);
+  }
+
+  function toggleAllFiltered() {
+    const next = new Set(selection!.selected);
+    if (allFilteredSelected) filteredKeys.forEach((key) => next.delete(key));
+    else filteredKeys.forEach((key) => next.add(key));
+    selection!.onChange(next);
+  }
 
   const buttonClass =
     "inline-flex h-9 items-center rounded-full border border-neutral-90/15 px-4 font-noi-grotesk text-[13px] text-neutral-90 transition-colors duration-150 hover:border-neutral-90/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-90/15";
@@ -181,6 +213,19 @@ export function DataTable<T>({
           >
             <thead>
               <tr className="border-b border-neutral-90/8 text-left text-neutral-50">
+                {selectable && (
+                  <th className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      onChange={toggleAllFiltered}
+                      aria-label={
+                        allFilteredSelected ? "Clear this selection" : "Select every matching row"
+                      }
+                      className="size-4 cursor-pointer accent-neutral-90"
+                    />
+                  </th>
+                )}
                 {columns.map((column) => (
                   <th key={column.key} className={`px-4 py-3 font-medium ${column.className ?? ""}`}>
                     {column.header}
@@ -192,8 +237,22 @@ export function DataTable<T>({
               {visible.map((row, index) => (
                 <tr
                   key={rowKey ? rowKey(row) : start + index}
-                  className="border-b border-neutral-90/6 last:border-0"
+                  className={
+                    "border-b border-neutral-90/6 last:border-0 " +
+                    (selectable && selection!.selected.has(rowKey!(row)) ? "bg-lime-30/10" : "")
+                  }
                 >
+                  {selectable && (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selection!.selected.has(rowKey!(row))}
+                        onChange={() => toggleRow(rowKey!(row))}
+                        aria-label="Select this row"
+                        className="size-4 cursor-pointer accent-neutral-90"
+                      />
+                    </td>
+                  )}
                   {columns.map((column) => (
                     <td key={column.key} className={`px-4 py-3 ${column.className ?? ""}`}>
                       {column.cell(row)}

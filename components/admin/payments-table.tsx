@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { DataTable, type Column, type Facet } from "./data-table";
 import { FollowUpCell } from "./follow-up-cell";
+import { EnrollmentEditor } from "./enrollment-editor";
 import { LEAD_STATUSES, LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
 
 export type PaymentRow = {
@@ -15,6 +17,7 @@ export type PaymentRow = {
   amountMinorUnits: number;
   currency: string;
   source: string;
+  country?: string | null;
   couponCode?: string | null;
   followUp: PlainFollowUp;
 };
@@ -84,7 +87,42 @@ const COLUMNS: Column<PaymentRow>[] = [
   },
 ];
 
-export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
+export function PaymentsTable({
+  rows,
+  archived = false,
+}: {
+  rows: PaymentRow[];
+  /** Showing the archive rather than the live list. Changes what the bulk
+   *  action does and what the empty state says. */
+  archived?: boolean;
+}) {
+  const router = useRouter();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [editing, setEditing] = useState<PaymentRow | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const columns = useMemo<Column<PaymentRow>[]>(
+    () => [
+      ...COLUMNS,
+      {
+        key: "edit",
+        header: "",
+        className: "text-right",
+        cell: (row) => (
+          <button
+            type="button"
+            onClick={() => setEditing(row)}
+            className="rounded-full border border-neutral-90/15 px-3 py-1 font-noi-grotesk text-[13px] text-neutral-70 transition-colors duration-150 hover:border-neutral-90/40 hover:text-neutral-90"
+          >
+            Edit
+          </button>
+        ),
+      },
+    ],
+    [],
+  );
+
   const facets = useMemo<Facet<PaymentRow>[]>(
     () => [
       {
@@ -116,15 +154,91 @@ export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
     [rows],
   );
 
+  /** What the selection is worth, shown before archiving it — the number
+   *  that is about to leave the revenue figures. */
+  const selectedTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const row of rows) {
+      if (!selected.has(row.id) || row.amountMinorUnits === 0) continue;
+      totals.set(row.currency, (totals.get(row.currency) ?? 0) + row.amountMinorUnits);
+    }
+    return [...totals].map(([currency, amount]) => `${currency} ${(amount / 100).toFixed(2)}`);
+  }, [rows, selected]);
+
+  async function archiveSelected() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/enrollments/archive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selected], archived: !archived }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "That didn't work.");
+      setSelected(new Set());
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That didn't work.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <DataTable
-      rows={rows}
-      columns={COLUMNS}
-      facets={facets}
-      filterPlaceholder="Search name, email, coupon…"
-      empty="No enrolments yet."
-      minWidth={980}
-      rowKey={(row) => row.id}
-    />
+    <div className="flex flex-col gap-3">
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-neutral-90/8 bg-white px-4 py-3">
+          <p className="font-noi-grotesk text-[14px] text-neutral-90">
+            {selected.size} selected
+            {selectedTotals.length > 0 && (
+              <span className="text-neutral-50"> · {selectedTotals.join(" + ")}</span>
+            )}
+          </p>
+          {error && (
+            <p role="alert" className="font-noi-grotesk text-[13px] text-red-600">
+              {error}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="font-noi-grotesk text-[13px] text-neutral-50 transition-colors duration-150 hover:text-neutral-90"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={archiveSelected}
+            disabled={busy}
+            className="ml-auto inline-flex h-9 items-center rounded-full bg-neutral-90 px-4 font-noi-grotesk text-[14px] font-medium text-white transition-colors duration-150 hover:bg-neutral-70 disabled:opacity-40"
+          >
+            {busy ? "Working…" : archived ? "Restore selected" : "Archive selected"}
+          </button>
+        </div>
+      )}
+
+      <DataTable
+        rows={rows}
+        columns={columns}
+        facets={facets}
+        filterPlaceholder="Search name, email, coupon…"
+        empty={archived ? "Nothing archived." : "No enrolments yet."}
+        minWidth={1080}
+        rowKey={(row) => row.id}
+        selection={{ selected, onChange: setSelected }}
+      />
+
+      {editing && (
+        <EnrollmentEditor
+          row={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            router.refresh();
+          }}
+        />
+      )}
+    </div>
   );
 }

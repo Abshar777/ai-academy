@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import type { Collection, WithId } from "mongodb";
 import { getDb } from "./mongodb";
 import type { FollowUp } from "./lead-status";
@@ -11,7 +12,13 @@ import type { FollowUp } from "./lead-status";
  * enrollment would be invisible to anything that only queried Razorpay.
  */
 
-export type EnrollmentSource = "razorpay" | "stripe" | "abzer" | "coupon";
+/**
+ * How the money arrived. "manual" covers a bank transfer or cash recorded by
+ * hand — academy-api's entitlement already accepts it, and without it here a
+ * closing taken outside a gateway has to be filed as one of the others, which
+ * quietly corrupts revenue by source.
+ */
+export type EnrollmentSource = "razorpay" | "stripe" | "abzer" | "coupon" | "manual";
 
 export type Enrollment = {
   name: string;
@@ -39,9 +46,23 @@ export type Enrollment = {
   /** Whether anyone has called this lead, and what they wrote down. Absent
    *  until an admin touches it — which reads as "not called", the default. */
   followUp?: FollowUp;
+  /**
+   * Archived, and when. Absent on everything that is live.
+   *
+   * Archiving rather than deleting, because this collection is the revenue
+   * history and the public student count both — a delete silently rewrites
+   * past totals with no way back. Everything that reads enrolments filters
+   * these out, so an archived row is gone everywhere it matters and still
+   * recoverable.
+   */
+  archivedAt?: Date | null;
 };
 
 const COLLECTION = "enrollments";
+
+/** Everything not archived. Spread into each read so there is one definition
+ *  of "a real enrolment" rather than four that have to agree. */
+const LIVE = { archivedAt: { $in: [null, undefined] } } as const;
 
 let indexesEnsured = false;
 
@@ -174,7 +195,7 @@ export async function setEnrollmentPhone(ref: EnrollmentRef, phone: string): Pro
 export async function countEnrollments(): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
-  return db.collection<Enrollment>(COLLECTION).countDocuments();
+  return db.collection<Enrollment>(COLLECTION).countDocuments(LIVE);
 }
 
 export type EnrollmentStats = {
@@ -193,7 +214,7 @@ export type EnrollmentStats = {
 async function sumAmount(coll: Collection<Enrollment>, source: EnrollmentSource): Promise<number> {
   const agg = await coll
     .aggregate<{ _id: null; total: number }>([
-      { $match: { source } },
+      { $match: { source, ...LIVE } },
       { $group: { _id: null, total: { $sum: "$amountMinorUnits" } } },
     ])
     .toArray();
@@ -207,10 +228,10 @@ export async function getEnrollmentStats(): Promise<EnrollmentStats | null> {
 
   const [total, paidCount, freeCount, abzerPaidCount, totalRevenueMinorUnits, abzerRevenueMinorUnits] =
     await Promise.all([
-      coll.countDocuments(),
-      coll.countDocuments({ source: "razorpay" }),
-      coll.countDocuments({ source: "coupon" }),
-      coll.countDocuments({ source: "abzer" }),
+      coll.countDocuments(LIVE),
+      coll.countDocuments({ source: "razorpay", ...LIVE }),
+      coll.countDocuments({ source: "coupon", ...LIVE }),
+      coll.countDocuments({ source: "abzer", ...LIVE }),
       sumAmount(coll, "razorpay"),
       sumAmount(coll, "abzer"),
     ]);
@@ -221,11 +242,146 @@ export async function getEnrollmentStats(): Promise<EnrollmentStats | null> {
 export async function listEnrollments({
   limit = 100,
   skip = 0,
-}: { limit?: number; skip?: number } = {}): Promise<WithId<Enrollment>[] | null> {
+  archived = false,
+}: { limit?: number; skip?: number; archived?: boolean } = {}): Promise<
+  WithId<Enrollment>[] | null
+> {
   const db = await getDb();
   if (!db) return null;
   return db
     .collection<Enrollment>(COLLECTION)
-    .find({}, { sort: { createdAt: -1 }, limit, skip })
+    .find(archived ? { archivedAt: { $ne: null, $exists: true } } : LIVE, {
+      sort: { createdAt: -1 },
+      limit,
+      skip,
+    })
     .toArray();
+}
+
+/** The fields the admin may change. Everything else about a row — the
+ *  gateway ids, createdAt, the follow-up — is either evidence of what
+ *  happened or has its own editor. */
+export type EnrollmentEdit = {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  country?: string;
+  amountMinorUnits?: number;
+  currency?: string;
+  source?: EnrollmentSource;
+  couponCode?: string | null;
+};
+
+export const EDITABLE_SOURCES: EnrollmentSource[] = [
+  "razorpay",
+  "stripe",
+  "abzer",
+  "coupon",
+  "manual",
+];
+
+/**
+ * Edit one enrolment.
+ *
+ * Amount, currency and source are editable along with the contact details,
+ * which means this can move revenue. That is deliberate — money arrives by
+ * bank transfer often enough that the alternative is a figure nobody can
+ * correct — but it is why every change stamps `updatedAt`: a total that
+ * shifts should at least say when.
+ *
+ * An empty phone or coupon is stored as absent rather than "", so the
+ * "no phone yet" checks elsewhere keep working.
+ */
+export async function updateEnrollment(
+  id: string,
+  edit: EnrollmentEdit,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!ObjectId.isValid(id)) return { ok: false, error: "Bad id." };
+  const coll = await collection();
+  if (!coll) return { ok: false, error: "MongoDB is not configured." };
+
+  const set: Record<string, unknown> = {};
+  const unset: Record<string, ""> = {};
+
+  if (edit.name !== undefined) {
+    const name = edit.name.trim();
+    if (name.length < 2) return { ok: false, error: "Name is too short." };
+    set.name = name;
+  }
+  if (edit.email !== undefined) {
+    const email = edit.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      return { ok: false, error: "That email doesn't look right." };
+    }
+    set.email = email;
+  }
+  if (edit.phone !== undefined) {
+    const phone = (edit.phone ?? "").trim();
+    if (phone) set.phone = phone;
+    else unset.phone = "";
+  }
+  if (edit.country !== undefined) set.country = edit.country.trim();
+  if (edit.amountMinorUnits !== undefined) {
+    if (!Number.isFinite(edit.amountMinorUnits) || edit.amountMinorUnits < 0) {
+      return { ok: false, error: "Amount must be zero or more." };
+    }
+    set.amountMinorUnits = Math.round(edit.amountMinorUnits);
+  }
+  if (edit.currency !== undefined) {
+    const currency = edit.currency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) return { ok: false, error: "Currency must be three letters." };
+    set.currency = currency;
+  }
+  if (edit.source !== undefined) {
+    if (!EDITABLE_SOURCES.includes(edit.source)) return { ok: false, error: "Unknown source." };
+    set.source = edit.source;
+  }
+  if (edit.couponCode !== undefined) {
+    const code = (edit.couponCode ?? "").trim();
+    if (code) set.couponCode = code;
+    else unset.couponCode = "";
+  }
+
+  if (Object.keys(set).length === 0 && Object.keys(unset).length === 0) {
+    return { ok: false, error: "Nothing to change." };
+  }
+  set.updatedAt = new Date();
+
+  const update: Record<string, unknown> = { $set: set };
+  if (Object.keys(unset).length > 0) update.$unset = unset;
+
+  const result = await coll.updateOne({ _id: new ObjectId(id) }, update);
+  if (result.matchedCount === 0) return { ok: false, error: "No such enrolment." };
+  return { ok: true };
+}
+
+/**
+ * Archive or restore rows.
+ *
+ * Nothing is removed. Archived rows drop out of the table, the revenue
+ * figures and the public student count together, because every read shares
+ * the LIVE filter — and come back whole if this was a mistake.
+ *
+ * Note it does not touch course access: the entitlement lives in academy-api
+ * and archiving a payment here leaves the student able to watch. That is the
+ * intended behaviour, not an oversight — revoking is its own deliberate act.
+ */
+export async function setEnrollmentsArchived(
+  ids: string[],
+  archived: boolean,
+): Promise<{ ok: boolean; count: number; error?: string }> {
+  const valid = ids.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+  if (valid.length === 0) return { ok: false, count: 0, error: "No valid ids." };
+  if (valid.length !== ids.length) return { ok: false, count: 0, error: "Bad id in the list." };
+
+  const coll = await collection();
+  if (!coll) return { ok: false, count: 0, error: "MongoDB is not configured." };
+
+  const result = await coll.updateMany(
+    { _id: { $in: valid } },
+    archived
+      ? { $set: { archivedAt: new Date(), updatedAt: new Date() } }
+      : { $set: { updatedAt: new Date() }, $unset: { archivedAt: "" } },
+  );
+  return { ok: true, count: result.modifiedCount };
 }

@@ -166,7 +166,16 @@ export function AdPlayer({
           video.pause();
         }
       },
-      { threshold: 0.5 },
+      {
+        // Starts as soon as any sliver is near the viewport, not at half
+        // visible. The film sits under the hero, and on a phone the hero is
+        // tall enough that half of it was never on screen at load — so it
+        // did not begin until someone scrolled, which is not "from the
+        // start". 100px of margin means it is already running by the time it
+        // is properly in view.
+        threshold: 0.01,
+        rootMargin: "100px 0px",
+      },
     );
     observer.observe(video);
     return () => observer.disconnect();

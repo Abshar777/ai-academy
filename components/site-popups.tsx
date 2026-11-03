@@ -23,7 +23,8 @@ import { useEpisode } from "./episode-dialog";
  * enquiry dialog uses — it gives focus trapping and Escape for free.
  *
  * Nothing is persisted: every page load runs the sequence again, so a
- * returning visitor sees it every time. They are suppressed on the routes
+ * returning visitor sees it every time. The episode half is currently off —
+ * see EPISODE_POPUP_ENABLED. They are suppressed on the routes
  * where an interruption would be in the way (checkout, the watch page itself,
  * admin, the course), and for anyone with a session — offering a free taster
  * to someone who already bought the programme reads as not knowing who they
@@ -41,6 +42,21 @@ const FIRST_POPUP_DELAY_MS = 3000;
  * advertising a date that has already been.
  */
 const SEMINAR_POPUP_ENABLED = true;
+
+/**
+ * The free-episode popup, which used to open itself three seconds into every
+ * visit. Off.
+ *
+ * It was the first thing an ad click met: a modal over the page someone had
+ * just chosen to look at, before they had read a line of it. Paused the same
+ * way as the seminar — the switch, not the code, so turning it back on is one
+ * word.
+ *
+ * This only stops it opening *uninvited*. The dialog itself lives in
+ * components/episode-dialog.tsx and still opens from the buttons that offer
+ * it, which is the version of this nobody minds.
+ */
+const EPISODE_POPUP_ENABLED = false;
 
 /** Routes where an interrupting dialog is the wrong call. */
 function isSuppressed(pathname: string | null): boolean {
@@ -102,6 +118,8 @@ export function SitePopups() {
   // a fresh load starts the sequence again.
   useEffect(() => {
     if (suppressed || stage.current !== "idle") return;
+    // Nothing left to show: no timer, and no modal three seconds in.
+    if (!SEMINAR_POPUP_ENABLED && !EPISODE_POPUP_ENABLED) return;
 
     const timer = window.setTimeout(() => {
       // With the seminar paused there is no dialog to close, so nothing would
@@ -109,7 +127,7 @@ export function SitePopups() {
       // instead.
       if (!SEMINAR_POPUP_ENABLED) {
         stage.current = "done";
-        episode.open();
+        if (EPISODE_POPUP_ENABLED) episode.open();
         return;
       }
 
@@ -118,7 +136,7 @@ export function SitePopups() {
       const next = nextWebinarSession();
       if (!next) {
         stage.current = "done";
-        episode.open();
+        if (EPISODE_POPUP_ENABLED) episode.open();
         return;
       }
       setSession(next);
@@ -152,7 +170,7 @@ export function SitePopups() {
         // opens — stacking showModal() calls in one frame leaves the
         // backdrop stuck on. No autoplay: this one arrives uninvited, so it
         // waits to be pressed.
-        window.setTimeout(() => episode.open(), 260);
+        if (EPISODE_POPUP_ENABLED) window.setTimeout(() => episode.open(), 260);
       }
     };
 

@@ -25,10 +25,19 @@ import { useIdentityStamp } from "@/lib/identity-stamp";
 
 const HIDE_CONTROLS_AFTER_MS = 2600;
 
-/** Steps for the speed control, slowest first. Stepping walks this list, so
- *  the gaps are the increments — fine-grained around 1×, where a class is
- *  actually watched, and coarser at the ends. */
-const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+/** What the −/+ buttons land on, slowest first: fine-grained around 1×,
+ *  where a class is actually watched, and coarser at the ends. Any rate in
+ *  between can still be typed into the readout — these are the stops the
+ *  buttons jump to, not the only rates allowed. */
+const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+/**
+ * Chrome throws NotSupportedError below 0.1 or above 16, so a typed rate has
+ * to be clamped before it reaches the element. These sit well inside that:
+ * past about 3× speech stops being followable, so a higher ceiling would
+ * only buy a silent fast-forward.
+ */
+const MIN_SPEED = SPEEDS[0] ?? 0.25;
+const MAX_SPEED = SPEEDS[SPEEDS.length - 1] ?? 4;
 
 const MIN_ZOOM = 1;
 /** Past about 4× a 1080p class video is showing its own pixels, so more
@@ -372,12 +381,18 @@ export function VideoPlayer({
     return () => window.clearInterval(id);
   }, [watermark]);
 
+  /** Pins the control bar open while something in it is being used — the
+   *  speed box, mid-type. A ref rather than state so showChrome stays stable
+   *  and every caller doesn't have to be rebuilt when it flips. */
+  const chromeHeld = useRef(false);
+
   const showChrome = useCallback(() => {
     setChromeVisible(true);
     window.clearTimeout(hideTimer.current);
     // Only auto-hide while it's actually playing — a paused player keeps its
-    // controls up, which is what people expect when they've stopped to read.
-    if (videoRef.current && !videoRef.current.paused) {
+    // controls up, which is what people expect when they've stopped to read —
+    // and never while a control is mid-use, or it fades out under them.
+    if (videoRef.current && !videoRef.current.paused && !chromeHeld.current) {
       hideTimer.current = window.setTimeout(() => setChromeVisible(false), HIDE_CONTROLS_AFTER_MS);
     }
   }, []);
@@ -415,9 +430,10 @@ export function VideoPlayer({
   const speedRef = useRef(1);
 
   const applySpeed = useCallback((rate: number) => {
-    const first = SPEEDS[0] ?? 0.5;
-    const last = SPEEDS[SPEEDS.length - 1] ?? 2;
-    const next = Math.min(Math.max(rate, first), last);
+    if (!Number.isFinite(rate)) return;
+    // Rounded before it is stored, so a typed 1.333 doesn't print as a rate
+    // nobody can read back, and 0.1 + 0.2 arithmetic never shows through.
+    const next = Math.round(Math.min(Math.max(rate, MIN_SPEED), MAX_SPEED) * 100) / 100;
     const video = videoRef.current;
     if (video) {
       // Both, and defaultPlaybackRate first. The media load algorithm resets
@@ -425,8 +441,14 @@ export function VideoPlayer({
       // actually carries the rate across a language swap — the re-apply in
       // onLoadedMetadata is the belt to this braces, and covers hls.js, which
       // attaches a MediaSource rather than calling load().
-      video.defaultPlaybackRate = next;
-      video.playbackRate = next;
+      // The spec lets a user agent refuse a rate it can't play, so this is
+      // allowed to throw however carefully the value was clamped.
+      try {
+        video.defaultPlaybackRate = next;
+        video.playbackRate = next;
+      } catch {
+        return;
+      }
     }
     speedRef.current = next;
     setSpeed(next);
@@ -435,22 +457,54 @@ export function VideoPlayer({
   const stepSpeed = useCallback(
     (direction: 1 | -1) => {
       const at = speedRef.current;
-      let from = SPEEDS.indexOf(at);
-      if (from < 0) {
-        // Off-list — a browser is allowed to clamp playbackRate to something
-        // it supports. Step from the nearest rate we do offer rather than
-        // snapping back to 1× and losing their place in the list.
-        from = SPEEDS.reduce(
-          (best, rate, index) =>
-            Math.abs(rate - at) < Math.abs((SPEEDS[best] ?? 1) - at) ? index : best,
-          0,
-        );
-      }
-      const next = SPEEDS[Math.min(Math.max(from + direction, 0), SPEEDS.length - 1)];
-      if (next !== undefined) applySpeed(next);
+      // The next stop past wherever they actually are, so a typed 1.3 steps
+      // to 1.5 rather than snapping onto the list from somewhere else. The
+      // epsilon keeps a rate sitting exactly on a stop from finding itself.
+      const next =
+        direction === 1
+          ? SPEEDS.find((rate) => rate > at + 0.001)
+          : [...SPEEDS].reverse().find((rate) => rate < at - 0.001);
+      applySpeed(next ?? (direction === 1 ? MAX_SPEED : MIN_SPEED));
     },
     [applySpeed],
   );
+
+  /* The readout doubles as the way in to any rate the buttons don't stop at:
+     tapping it turns it into a box, with the current value selected so a
+     rate can be typed straight over it. */
+  const [editingSpeed, setEditingSpeed] = useState(false);
+  const [speedDraft, setSpeedDraft] = useState("");
+  const speedInputRef = useRef<HTMLInputElement>(null);
+
+  function openSpeedEditor() {
+    setSpeedDraft(String(Number.parseFloat(speed.toFixed(2))));
+    // Held before the box opens, so the bar can't fade out mid-type.
+    chromeHeld.current = true;
+    setEditingSpeed(true);
+    showChrome();
+  }
+
+  const closeSpeedEditor = useCallback(() => {
+    chromeHeld.current = false;
+    setEditingSpeed(false);
+    showChrome();
+  }, [showChrome]);
+
+  function commitSpeedDraft() {
+    // A comma is the decimal point on a Malayalam or European keyboard.
+    const typed = Number.parseFloat(speedDraft.replace(",", "."));
+    // Anything unreadable leaves the rate where it was rather than guessing.
+    if (Number.isFinite(typed)) applySpeed(typed);
+    closeSpeedEditor();
+  }
+
+  useEffect(() => {
+    if (!editingSpeed) return;
+    const input = speedInputRef.current;
+    if (!input) return;
+    input.focus();
+    input.select();
+  }, [editingSpeed]);
 
   /* ------------------------------------------------------------------ *
    * Zoom and pan
@@ -899,6 +953,19 @@ export function VideoPlayer({
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     const video = videoRef.current;
     if (!video) return;
+    // Typing in a control is not a shortcut. This handler sits on the whole
+    // shell, so without it the "." of a speed like 1.3 would step the speed
+    // as it was typed, and the volume slider's own arrow keys would come
+    // through here too.
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
     const key = event.key.toLowerCase();
     const handled = [
       " ", "k", "arrowleft", "arrowright", "arrowup", "arrowdown", "m", "f",
@@ -945,7 +1012,7 @@ export function VideoPlayer({
       tabIndex={0}
       onKeyDown={onKeyDown}
       onPointerMove={showChrome}
-      onPointerLeave={() => playing && setChromeVisible(false)}
+      onPointerLeave={() => playing && !chromeHeld.current && setChromeVisible(false)}
       className={`video-shell group relative aspect-video w-full overflow-hidden rounded-2xl bg-black outline-none select-none focus-visible:ring-2 focus-visible:ring-lime-30 ${className}`}
     >
       <video
@@ -1232,7 +1299,7 @@ export function VideoPlayer({
                 id={`${idPrefix}-speed-down`}
                 type="button"
                 onClick={() => stepSpeed(-1)}
-                disabled={speed <= (SPEEDS[0] ?? 0.5)}
+                disabled={speed <= MIN_SPEED}
                 aria-label="Slower"
                 title="Slower (,)"
                 className={`inline-flex ${stepperButton}`}
@@ -1241,21 +1308,45 @@ export function VideoPlayer({
                   &minus;
                 </span>
               </button>
-              <button
-                id={`${idPrefix}-speed-reset`}
-                type="button"
-                onClick={() => applySpeed(1)}
-                aria-label={`Speed ${formatRate(speed)} — reset to normal`}
-                title="Normal speed"
-                className="min-w-[38px] shrink-0 px-0.5 font-noi-grotesk text-[12px] leading-none font-medium tabular-nums text-white transition-opacity duration-150 hover:opacity-70"
-              >
-                {formatRate(speed)}
-              </button>
+              {editingSpeed ? (
+                <input
+                  id={`${idPrefix}-speed-input`}
+                  ref={speedInputRef}
+                  type="text"
+                  // Brings up the number pad on a phone without the spinners
+                  // and the strict parsing a number input would impose.
+                  inputMode="decimal"
+                  value={speedDraft}
+                  onChange={(event) => setSpeedDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    // Kept off the shell's shortcut handler as well as the
+                    // target guard there — belt and braces, since every key
+                    // here is a character and none of them is a command.
+                    event.stopPropagation();
+                    if (event.key === "Enter") commitSpeedDraft();
+                    else if (event.key === "Escape") closeSpeedEditor();
+                  }}
+                  onBlur={commitSpeedDraft}
+                  aria-label={`Playback speed, ${MIN_SPEED} to ${MAX_SPEED}`}
+                  className="w-[42px] shrink-0 rounded-full bg-white/20 px-1 py-1.5 text-center font-noi-grotesk text-[12px] leading-none font-medium tabular-nums text-white outline-none focus:bg-white/30"
+                />
+              ) : (
+                <button
+                  id={`${idPrefix}-speed-value`}
+                  type="button"
+                  onClick={openSpeedEditor}
+                  aria-label={`Playback speed ${formatRate(speed)} — set a different one`}
+                  title="Tap to type any speed"
+                  className="min-w-[38px] shrink-0 px-0.5 font-noi-grotesk text-[12px] leading-none font-medium tabular-nums text-white transition-opacity duration-150 hover:opacity-70"
+                >
+                  {formatRate(speed)}
+                </button>
+              )}
               <button
                 id={`${idPrefix}-speed-up`}
                 type="button"
                 onClick={() => stepSpeed(1)}
-                disabled={speed >= (SPEEDS[SPEEDS.length - 1] ?? 2)}
+                disabled={speed >= MAX_SPEED}
                 aria-label="Faster"
                 title="Faster (.)"
                 className={`inline-flex ${stepperButton}`}

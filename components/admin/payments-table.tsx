@@ -99,6 +99,8 @@ export function PaymentsTable({
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<PaymentRow | null>(null);
+  /** Whose receipt is open on screen. One at a time. */
+  const [viewing, setViewing] = useState<PaymentRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,17 +113,18 @@ export function PaymentsTable({
         className: "whitespace-nowrap text-right",
         cell: (row) => (
           <span className="flex items-center justify-end gap-1.5">
-            {/* A plain link, not a fetch: the browser's own download handles
-                the PDF, and there is no state here worth a spinner. Built
-                from the enrolment row, so coupon and manual enrolments get
-                one too — see app/api/admin/receipt. */}
-            <a
+            {/* Opens the receipt on screen; the download sits inside, so the
+                common case — checking what it says before sending it on —
+                doesn't put a file in Downloads first. Built from the
+                enrolment row, so coupon and manual enrolments get one too. */}
+            <button
               id={`receipt-${row.id}`}
-              href={`/api/admin/receipt?id=${encodeURIComponent(row.id)}`}
+              type="button"
+              onClick={() => setViewing(row)}
               className="rounded-full border border-neutral-90/15 px-3 py-1 font-noi-grotesk text-[13px] text-neutral-70 transition-colors duration-150 hover:border-neutral-90/40 hover:text-neutral-90"
             >
               Receipt
-            </a>
+            </button>
             <button
               id={`edit-${row.id}`}
               type="button"
@@ -252,6 +255,61 @@ export function PaymentsTable({
             router.refresh();
           }}
         />
+      )}
+
+      {viewing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-90/55 p-4"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-neutral-90/10 px-5 py-4">
+              <div className="min-w-0">
+                <p className="truncate font-noi-grotesk text-[15px] text-neutral-90">
+                  Receipt — {viewing.name || viewing.email}
+                </p>
+                <p className="mt-0.5 font-noi-grotesk text-[13px] text-neutral-50">
+                  {formatAmount(viewing.amountMinorUnits, viewing.currency)} · {title(viewing.source)}
+                  {viewing.couponCode ? ` · ${viewing.couponCode}` : ""}
+                </p>
+              </div>
+              <span className="flex shrink-0 items-center gap-1.5">
+                {/* The same route, asked for as an attachment rather than
+                    inline — one PDF, two dispositions. */}
+                <a
+                  id={`receipt-download-${viewing.id}`}
+                  href={`/api/admin/receipt?id=${encodeURIComponent(viewing.id)}`}
+                  className="rounded-full bg-neutral-90 px-3.5 py-1.5 font-noi-grotesk text-[13px] leading-none text-white transition-opacity duration-150 hover:opacity-85"
+                >
+                  Download
+                </a>
+                <button
+                  id="receipt-close"
+                  type="button"
+                  onClick={() => setViewing(null)}
+                  className="rounded-full border border-neutral-90/15 px-3.5 py-1.5 font-noi-grotesk text-[13px] leading-none transition-colors duration-150 hover:bg-neutral-90/6"
+                >
+                  Close
+                </button>
+              </span>
+            </div>
+            {/* The fragment is for the browser's PDF viewer, not the server:
+                left to itself it opens the thumbnail rail and drops to 39%
+                in a frame this size, so a one-page receipt arrives as a
+                stamp in the corner. FitH fills the width; navpanes=0 takes
+                the rail off. Unknown keys are ignored, so a viewer that
+                doesn't speak these just shows its own default. */}
+            <iframe
+              id="receipt-frame"
+              title={`Receipt for ${viewing.name || viewing.email}`}
+              src={`/api/admin/receipt?id=${encodeURIComponent(viewing.id)}&inline=1#view=FitH&navpanes=0&toolbar=1`}
+              className="h-[72vh] w-full border-0 bg-neutral-10"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

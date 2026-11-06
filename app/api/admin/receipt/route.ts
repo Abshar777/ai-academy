@@ -27,8 +27,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
-  const id = new URL(request.url).searchParams.get("id") ?? "";
+  const params = new URL(request.url).searchParams;
+  const id = params.get("id") ?? "";
   if (!id) return NextResponse.json({ error: "Missing id." }, { status: 400 });
+  /** Render it in the page instead of saving it — the preview, not the copy
+   *  being sent on. Same bytes either way; only the disposition differs. */
+  const inline = params.get("inline") === "1";
 
   const enrollment = await getEnrollment(id);
   if (!enrollment) {
@@ -74,7 +78,7 @@ export async function GET(request: Request) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition":
-          `attachment; filename="${ascii || `receipt-${id}.pdf`}"; ` +
+          `${inline ? "inline" : "attachment"}; filename="${ascii || `receipt-${id}.pdf`}"; ` +
           `filename*=UTF-8''${encodeURIComponent(label)}`,
         "Cache-Control": "no-store",
       },

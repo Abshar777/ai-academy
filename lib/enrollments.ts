@@ -258,6 +258,18 @@ export async function listEnrollments({
     .toArray();
 }
 
+/**
+ * One enrolment by its own id. Archived rows are included deliberately — this
+ * backs the admin receipt, and a receipt for a payment that was archived is
+ * exactly the one somebody is most likely to come asking for.
+ */
+export async function getEnrollment(id: string): Promise<WithId<Enrollment> | null> {
+  if (!ObjectId.isValid(id)) return null;
+  const db = await getDb();
+  if (!db) return null;
+  return db.collection<Enrollment>(COLLECTION).findOne({ _id: new ObjectId(id) });
+}
+
 /** The fields the admin may change. Everything else about a row — the
  *  gateway ids, createdAt, the follow-up — is either evidence of what
  *  happened or has its own editor. */

@@ -18,6 +18,24 @@ export type InvoiceDetails = {
   paymentId: string;
   orderId: string;
   date: Date;
+  /**
+   * How the money arrived, for the enrolments that have no gateway reference
+   * at all. A third of this project's enrolments are coupon, manual or Abzer
+   * rows with neither a payment nor an order id, and printing two empty
+   * fields on their receipt reads as a broken document rather than a
+   * different kind of sale. Both optional, so the gateway paths that have
+   * real ids are unchanged.
+   */
+  source?: string;
+  couponCode?: string;
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  razorpay: "Razorpay",
+  stripe: "Stripe",
+  abzer: "Abzer",
+  coupon: "Coupon",
+  manual: "Recorded manually",
 };
 
 export function generateInvoicePdf(details: InvoiceDetails): Promise<Buffer> {
@@ -36,8 +54,14 @@ export function generateInvoicePdf(details: InvoiceDetails): Promise<Buffer> {
 
     doc.fillColor("#111111").fontSize(11);
     doc.text(`Invoice date: ${details.date.toDateString()}`);
-    doc.text(`Payment ID: ${details.paymentId}`);
-    doc.text(`Order ID: ${details.orderId}`);
+    // Only the references that exist. A coupon or manual enrolment has
+    // neither id, and prints how it was taken instead.
+    if (details.paymentId) doc.text(`Payment ID: ${details.paymentId}`);
+    if (details.orderId) doc.text(`Order ID: ${details.orderId}`);
+    if (details.source && !details.paymentId && !details.orderId) {
+      doc.text(`Payment method: ${SOURCE_LABEL[details.source] ?? details.source}`);
+    }
+    if (details.couponCode) doc.text(`Coupon: ${details.couponCode}`);
     doc.moveDown();
     doc.text(`Billed to: ${details.name || "—"}`);
     doc.text(details.email);

@@ -108,15 +108,29 @@ export function PaymentsTable({
       {
         key: "edit",
         header: "",
-        className: "text-right",
+        className: "whitespace-nowrap text-right",
         cell: (row) => (
-          <button
-            type="button"
-            onClick={() => setEditing(row)}
-            className="rounded-full border border-neutral-90/15 px-3 py-1 font-noi-grotesk text-[13px] text-neutral-70 transition-colors duration-150 hover:border-neutral-90/40 hover:text-neutral-90"
-          >
-            Edit
-          </button>
+          <span className="flex items-center justify-end gap-1.5">
+            {/* A plain link, not a fetch: the browser's own download handles
+                the PDF, and there is no state here worth a spinner. Built
+                from the enrolment row, so coupon and manual enrolments get
+                one too — see app/api/admin/receipt. */}
+            <a
+              id={`receipt-${row.id}`}
+              href={`/api/admin/receipt?id=${encodeURIComponent(row.id)}`}
+              className="rounded-full border border-neutral-90/15 px-3 py-1 font-noi-grotesk text-[13px] text-neutral-70 transition-colors duration-150 hover:border-neutral-90/40 hover:text-neutral-90"
+            >
+              Receipt
+            </a>
+            <button
+              id={`edit-${row.id}`}
+              type="button"
+              onClick={() => setEditing(row)}
+              className="rounded-full border border-neutral-90/15 px-3 py-1 font-noi-grotesk text-[13px] text-neutral-70 transition-colors duration-150 hover:border-neutral-90/40 hover:text-neutral-90"
+            >
+              Edit
+            </button>
+          </span>
         ),
       },
     ],

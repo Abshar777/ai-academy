@@ -6,6 +6,7 @@ import { CURRICULUM, CURRICULUM_TOPIC_COUNT } from "./curriculum";
 import { generateInvoicePdf } from "./invoice";
 import { emailLayout } from "./email-templates";
 import { PROGRAMME_NAME } from "./site";
+import { logEmail, type EmailAttachmentRef } from "./email-log";
 
 /**
  * Welcome email — fired once a visitor completes any contact form (the
@@ -185,44 +186,82 @@ export async function sendSeminarConfirmationEmail(input: {
     durationMinutes: number;
   };
 }): Promise<{ sent: boolean }> {
+  const subject = `You're registered — ${input.title}, ${input.when}`;
   const mailer = getSeminarTransporter();
   if (!mailer) {
     console.info("[seminar] SMTP not configured — skipping confirmation to", input.email);
+    await logEmail({
+      kind: "seminar-confirmation",
+      to: input.email,
+      subject,
+      status: "skipped",
+      error: "SMTP not configured",
+    });
     return { sent: false };
   }
 
   // One click, and it does not depend on the recipient ever having heard from
   // us — unlike the Google invitation, which their own settings may hold back.
-  const attachments: nodemailer.SendMailOptions["attachments"] = input.calendar
+  const ics = input.calendar
+    ? seminarIcs({
+        eventId: input.calendar.eventId,
+        title: input.title,
+        description: input.calendar.description,
+        location: input.meetLink,
+        startsAt: input.calendar.startsAt,
+        durationMinutes: input.calendar.durationMinutes,
+        organizerName: "Delta AI Academy",
+        organizerEmail: mailer.from,
+      })
+    : null;
+
+  const attachments: nodemailer.SendMailOptions["attachments"] = ics
     ? [
         {
           filename: "delta-ai-academy-seminar.ics",
-          content: seminarIcs({
-            eventId: input.calendar.eventId,
-            title: input.title,
-            description: input.calendar.description,
-            location: input.meetLink,
-            startsAt: input.calendar.startsAt,
-            durationMinutes: input.calendar.durationMinutes,
-            organizerName: "Delta AI Academy",
-            organizerEmail: mailer.from,
-          }),
+          content: ics,
           contentType: "text/calendar; charset=utf-8; method=PUBLISH",
         },
       ]
+    : [];
+
+  const html = seminarEmailHtml({ ...input, hasIcs: attachments.length > 0 });
+  // Kept verbatim rather than as a recipe: the event it describes is gone from
+  // this process the moment the request ends, so a resend could not rebuild it.
+  const logged: EmailAttachmentRef[] = ics
+    ? [{ kind: "ics", filename: "delta-ai-academy-seminar.ics", content: ics }]
     : [];
 
   try {
     await mailer.transport.sendMail({
       from: mailer.from,
       to: input.email,
-      subject: `You're registered — ${input.title}, ${input.when}`,
-      html: seminarEmailHtml({ ...input, hasIcs: attachments.length > 0 }),
+      subject,
+      html,
       attachments,
+    });
+    await logEmail({
+      kind: "seminar-confirmation",
+      to: input.email,
+      subject,
+      status: "sent",
+      mailbox: mailer.from,
+      bodyHtml: html,
+      attachments: logged,
     });
     return { sent: true };
   } catch (err) {
     console.error("[seminar] confirmation email failed for", input.email, err);
+    await logEmail({
+      kind: "seminar-confirmation",
+      to: input.email,
+      subject,
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+      mailbox: mailer.from,
+      bodyHtml: html,
+      attachments: logged,
+    });
     return { sent: false };
   }
 }
@@ -282,20 +321,49 @@ export async function sendSeminarReminderEmail(input: {
   minutesBefore: number;
   meetLink: string;
 }): Promise<{ sent: boolean; error?: string }> {
-  const mailer = getSeminarTransporter();
-  if (!mailer) return { sent: false, error: "SMTP not configured" };
   const copy = REMINDER_COPY[input.minutesBefore] ?? REMINDER_COPY[0];
+  const subject = `${copy.subject} — ${input.title}`;
+  const mailer = getSeminarTransporter();
+  if (!mailer) {
+    await logEmail({
+      kind: "seminar-reminder",
+      to: input.email,
+      subject,
+      status: "skipped",
+      error: "SMTP not configured",
+    });
+    return { sent: false, error: "SMTP not configured" };
+  }
+  const html = seminarReminderEmailHtml(input);
   try {
     await mailer.transport.sendMail({
       from: mailer.from,
       to: input.email,
-      subject: `${copy.subject} — ${input.title}`,
-      html: seminarReminderEmailHtml(input),
+      subject,
+      html,
+    });
+    await logEmail({
+      kind: "seminar-reminder",
+      to: input.email,
+      subject,
+      status: "sent",
+      mailbox: mailer.from,
+      bodyHtml: html,
     });
     return { sent: true };
   } catch (err) {
     console.error("[seminar] reminder email failed for", input.email, err);
-    return { sent: false, error: err instanceof Error ? err.message : String(err) };
+    const message = err instanceof Error ? err.message : String(err);
+    await logEmail({
+      kind: "seminar-reminder",
+      to: input.email,
+      subject,
+      status: "failed",
+      error: message,
+      mailbox: mailer.from,
+      bodyHtml: html,
+    });
+    return { sent: false, error: message };
   }
 }
 
@@ -348,18 +416,43 @@ export async function sendCourseAccessEmail(input: {
   lessons: number;
   duration: string;
 }): Promise<{ sent: boolean; error?: string }> {
+  const subject = `Your free access to ${PROGRAMME_NAME}`;
   const transport = getTransporter();
-  if (!transport) return { sent: false, error: "SMTP not configured" };
-  try {
-    await transport.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  if (!transport) {
+    await logEmail({
+      kind: "course-access",
       to: input.email,
-      subject: `Your free access to ${PROGRAMME_NAME}`,
-      html: courseAccessEmailHtml(input),
+      subject,
+      status: "skipped",
+      error: "SMTP not configured",
+    });
+    return { sent: false, error: "SMTP not configured" };
+  }
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const html = courseAccessEmailHtml(input);
+  try {
+    await transport.sendMail({ from, to: input.email, subject, html });
+    await logEmail({
+      kind: "course-access",
+      to: input.email,
+      subject,
+      status: "sent",
+      mailbox: from,
+      bodyHtml: html,
     });
     return { sent: true };
   } catch (err) {
-    return { sent: false, error: err instanceof Error ? err.message : String(err) };
+    const message = err instanceof Error ? err.message : String(err);
+    await logEmail({
+      kind: "course-access",
+      to: input.email,
+      subject,
+      status: "failed",
+      error: message,
+      mailbox: from,
+      bodyHtml: html,
+    });
+    return { sent: false, error: message };
   }
 }
 
@@ -372,29 +465,57 @@ export async function sendWelcomeEmail({
   name: string;
   email: string;
 }): Promise<SendWelcomeEmailResult> {
+  const subject = "Welcome to Delta AI Academy — your brochure and course details";
   const transport = getTransporter();
   if (!transport) {
     console.info("SMTP not configured — skipping welcome email to", email);
+    await logEmail({ kind: "welcome", to: email, subject, status: "skipped", error: "SMTP not configured" });
     return { sent: false };
   }
 
   let attachments: nodemailer.SendMailOptions["attachments"] = [];
+  let logged: EmailAttachmentRef[] = [];
   try {
     attachments = [
       { filename: "Delta AI Academy Brochure.pdf", content: await readFile(BROCHURE_PATH) },
     ];
+    logged = [{ kind: "brochure", filename: "Delta AI Academy Brochure.pdf" }];
   } catch (err) {
     // Missing/unreadable brochure shouldn't block the rest of the welcome
     // email from sending.
     console.error("Could not read brochure PDF for welcome email", err);
   }
 
-  await transport.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const html = welcomeEmailHtml(name);
+
+  // Logged either way, then rethrown: the caller (app/api/send-welcome-email)
+  // turns a throw into a 502, and swallowing it here to make logging tidier
+  // would quietly report a failed send as a success.
+  try {
+    await transport.sendMail({ from, to: email, subject, html, attachments });
+  } catch (err) {
+    await logEmail({
+      kind: "welcome",
+      to: email,
+      subject,
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+      mailbox: from,
+      bodyHtml: html,
+      attachments: logged,
+    });
+    throw err;
+  }
+
+  await logEmail({
+    kind: "welcome",
     to: email,
-    subject: "Welcome to Delta AI Academy — your brochure and course details",
-    html: welcomeEmailHtml(name),
-    attachments,
+    subject,
+    status: "sent",
+    mailbox: from,
+    bodyHtml: html,
+    attachments: logged,
   });
 
   return { sent: true };
@@ -422,14 +543,24 @@ export async function sendInvoiceEmail({
   paymentId: string;
   orderId: string;
 }): Promise<SendWelcomeEmailResult> {
+  const amount = (amountMinorUnits / 100).toFixed(2);
+  const subject = `Your Delta AI Academy invoice — ${currency} ${amount}`;
   const transport = getTransporter();
   if (!transport) {
     console.info("SMTP not configured — skipping invoice email to", email);
+    await logEmail({
+      kind: "invoice",
+      to: email,
+      subject,
+      status: "skipped",
+      error: "SMTP not configured",
+      orderId,
+      paymentId,
+    });
     return { sent: false };
   }
 
   const date = new Date();
-  const amount = (amountMinorUnits / 100).toFixed(2);
   const pdf = await generateInvoicePdf({
     name,
     email,
@@ -440,11 +571,25 @@ export async function sendInvoiceEmail({
     date,
   });
 
-  await transport.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to: email,
-    subject: `Your Delta AI Academy invoice — ${currency} ${amount}`,
-    html: emailLayout({
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const filename = `Delta AI Academy Invoice ${orderId}.pdf`;
+  // The figures rather than the file: the same PDF comes back out of them.
+  const logged: EmailAttachmentRef[] = [
+    {
+      kind: "invoice",
+      filename,
+      invoice: {
+        name,
+        email,
+        amountMinorUnits,
+        currency,
+        paymentId,
+        orderId,
+        date: date.toISOString(),
+      },
+    },
+  ];
+  const html = emailLayout({
       preheader: `Payment confirmed — ${currency} ${amount}. Your invoice is attached.`,
       bodyHtml: `
         <h2 style="margin:0 0 4px;font-size:22px;letter-spacing:-0.01em;">Payment received, thank you${name ? `, ${escapeHtml(name)}` : ""}!</h2>
@@ -460,8 +605,45 @@ export async function sendInvoiceEmail({
         <p style="margin:0;color:#555;">Your invoice is attached to this email. Welcome to the programme — the team will
         be in touch with next steps.</p>
       `,
-    }),
-    attachments: [{ filename: `Delta AI Academy Invoice ${orderId}.pdf`, content: pdf }],
+  });
+
+  // Logged on both paths, then rethrown — the verify and webhook routes each
+  // catch this themselves, and swallowing it here would file a payment whose
+  // receipt never arrived as one that did.
+  try {
+    await transport.sendMail({
+      from,
+      to: email,
+      subject,
+      html,
+      attachments: [{ filename, content: pdf }],
+    });
+  } catch (err) {
+    await logEmail({
+      kind: "invoice",
+      to: email,
+      subject,
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+      mailbox: from,
+      bodyHtml: html,
+      attachments: logged,
+      orderId,
+      paymentId,
+    });
+    throw err;
+  }
+
+  await logEmail({
+    kind: "invoice",
+    to: email,
+    subject,
+    status: "sent",
+    mailbox: from,
+    bodyHtml: html,
+    attachments: logged,
+    orderId,
+    paymentId,
   });
 
   return { sent: true };

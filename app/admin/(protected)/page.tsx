@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { getEnrollmentStats } from "@/lib/enrollments";
+import { formatMinorUnits } from "@/lib/revenue";
+
+/** Revenue moves the moment a payment verifies or an admin edits a row, and
+ *  every other page that reads this collection says the same — a cached
+ *  figure here would be a correct number shown at the wrong time. */
+export const dynamic = "force-dynamic";
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -31,22 +37,10 @@ export default async function AdminOverviewPage() {
         <StatCard label="Paid (Razorpay)" value={String(stats.paidCount)} />
         <StatCard label="Paid (Abzer)" value={String(stats.abzerPaidCount)} />
         <StatCard label="Free (coupon)" value={String(stats.freeCount)} />
-        <StatCard
-          label="Revenue (INR)"
-          value={(stats.totalRevenueMinorUnits / 100).toLocaleString("en-IN", {
-            style: "currency",
-            currency: "INR",
-            maximumFractionDigits: 0,
-          })}
-        />
-        <StatCard
-          label="Revenue (AED)"
-          value={(stats.abzerRevenueMinorUnits / 100).toLocaleString("en-AE", {
-            style: "currency",
-            currency: "AED",
-            maximumFractionDigits: 0,
-          })}
-        />
+        {/* Each currency counts every source — Razorpay bills AED as well as
+            INR, and money taken by hand belongs in the total too. */}
+        <StatCard label="Revenue (INR)" value={formatMinorUnits(stats.inrRevenueMinorUnits, "INR")} />
+        <StatCard label="Revenue (AED)" value={formatMinorUnits(stats.aedRevenueMinorUnits, "AED")} />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -55,6 +49,12 @@ export default async function AdminOverviewPage() {
           className="inline-flex h-10 items-center justify-center rounded-lg bg-neutral-90 px-4 font-noi-grotesk text-[14px] font-medium text-white transition duration-150 hover:bg-neutral-70"
         >
           View payments
+        </Link>
+        <Link
+          href="/admin/reports"
+          className="inline-flex h-10 items-center justify-center rounded-lg border border-neutral-90 px-4 font-noi-grotesk text-[14px] font-medium transition duration-150 hover:bg-neutral-90/8"
+        >
+          Revenue reports
         </Link>
         <Link
           href="/admin/coupons"

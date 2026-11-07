@@ -58,11 +58,11 @@ export type Enrollment = {
   archivedAt?: Date | null;
 };
 
-const COLLECTION = "enrollments";
+export const COLLECTION = "enrollments";
 
 /** Everything not archived. Spread into each read so there is one definition
  *  of "a real enrolment" rather than four that have to agree. */
-const LIVE = { archivedAt: { $in: [null, undefined] } } as const;
+export const LIVE = { archivedAt: { $in: [null, undefined] } } as const;
 
 let indexesEnsured = false;
 
@@ -203,18 +203,28 @@ export type EnrollmentStats = {
   paidCount: number;
   freeCount: number;
   abzerPaidCount: number;
-  /** Summed across "razorpay"-source enrollments only — always INR (see
-   *  lib/razorpay.ts). Kept separate from Abzer's AED total below rather
-   *  than summed together, since they're different currencies. */
-  totalRevenueMinorUnits: number;
-  /** Summed across "abzer"-source enrollments only — always AED. */
-  abzerRevenueMinorUnits: number;
+  /** Every live enrolment charged in rupees, whichever gateway took it.
+   *
+   *  Grouped by the row's own `currency`, never by source. This used to sum
+   *  the "razorpay" source and call it INR on the strength of a comment that
+   *  said Razorpay is "always INR" — it isn't. `lib/razorpay.ts` reads
+   *  `RAZORPAY_CURRENCY`, and `lib/pricing.ts` charges each plan's own
+   *  currency, so Razorpay bills AED for the Gulf plans and nine such rows
+   *  were landing in the rupee total as though AED 891 were ₹891. */
+  inrRevenueMinorUnits: number;
+  /** Every live enrolment charged in dirhams — Abzer, Razorpay or by hand.
+   *  Summing the "abzer" source alone showed AED 297 against AED 1,386
+   *  real, because it could not see AED taken any other way. */
+  aedRevenueMinorUnits: number;
 };
 
-async function sumAmount(coll: Collection<Enrollment>, source: EnrollmentSource): Promise<number> {
+/** Summed over one currency, across every source. The currency a row was
+ *  charged in is the only field that says what the number means; `source`
+ *  says how the money arrived, which lib/revenue.ts reports separately. */
+async function sumByCurrency(coll: Collection<Enrollment>, currency: string): Promise<number> {
   const agg = await coll
     .aggregate<{ _id: null; total: number }>([
-      { $match: { source, ...LIVE } },
+      { $match: { currency, ...LIVE } },
       { $group: { _id: null, total: { $sum: "$amountMinorUnits" } } },
     ])
     .toArray();
@@ -226,17 +236,17 @@ export async function getEnrollmentStats(): Promise<EnrollmentStats | null> {
   if (!db) return null;
   const coll = db.collection<Enrollment>(COLLECTION);
 
-  const [total, paidCount, freeCount, abzerPaidCount, totalRevenueMinorUnits, abzerRevenueMinorUnits] =
+  const [total, paidCount, freeCount, abzerPaidCount, inrRevenueMinorUnits, aedRevenueMinorUnits] =
     await Promise.all([
       coll.countDocuments(LIVE),
       coll.countDocuments({ source: "razorpay", ...LIVE }),
       coll.countDocuments({ source: "coupon", ...LIVE }),
       coll.countDocuments({ source: "abzer", ...LIVE }),
-      sumAmount(coll, "razorpay"),
-      sumAmount(coll, "abzer"),
+      sumByCurrency(coll, "INR"),
+      sumByCurrency(coll, "AED"),
     ]);
 
-  return { total, paidCount, freeCount, abzerPaidCount, totalRevenueMinorUnits, abzerRevenueMinorUnits };
+  return { total, paidCount, freeCount, abzerPaidCount, inrRevenueMinorUnits, aedRevenueMinorUnits };
 }
 
 export async function listEnrollments({

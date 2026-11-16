@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getAbzerOrder, markAbzerOrderPaid } from "@/lib/abzer-orders";
 import { recordEnrollment } from "@/lib/enrollments";
 import { grantCourseAccess } from "@/lib/course-access";
-import { sendInvoiceEmail } from "@/lib/email";
+import { sendEnrolmentAlertEmail, sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 import { redeemCoupon } from "@/lib/coupons";
 
@@ -138,6 +138,18 @@ export async function POST(request: Request) {
       notifyAdminWhatsApp(
         `Payment received (Abzer): ${amountLabel} from ${order.name || "Unknown"} (${order.email}${order.phone ? `, ${order.phone}` : ""})`,
       ),
+      sendEnrolmentAlertEmail({
+        name: order.name,
+        email: order.email,
+        phone: order.phone,
+        country: order.country,
+        amountMinorUnits: order.amountMinorUnits,
+        currency: order.currency,
+        source: "abzer",
+        paymentId: receiptId,
+        orderId,
+        couponCode: order.couponCode,
+      }),
     ]);
 
     console.info(`[abzer] order ${orderId} fulfilled — invoiceSent=${invoiceSent}`);

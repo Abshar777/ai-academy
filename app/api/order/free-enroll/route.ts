@@ -4,7 +4,7 @@ import { planForCountry } from "@/lib/pricing";
 import { computeDiscountedAmount, lookupCoupon, redeemCoupon } from "@/lib/coupons";
 import { recordEnrollment } from "@/lib/enrollments";
 import { grantCourseAccess } from "@/lib/course-access";
-import { sendInvoiceEmail } from "@/lib/email";
+import { sendEnrolmentAlertEmail, sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
@@ -115,6 +115,17 @@ export async function POST(request: Request) {
     notifyAdminWhatsApp(
       `Free enrolment via coupon ${redeemed.code}: ${name || "Unknown"} (${email}${phone ? `, ${phone}` : ""})`,
     ),
+    sendEnrolmentAlertEmail({
+      name,
+      email,
+      phone,
+      country,
+      amountMinorUnits: 0,
+      currency: plan.currency,
+      source: "coupon",
+      paymentId: `coupon:${redeemed.code}`,
+      couponCode: redeemed.code,
+    }),
   ]);
 
   return NextResponse.json({ enrolled: true, emailSent, handoffToken });

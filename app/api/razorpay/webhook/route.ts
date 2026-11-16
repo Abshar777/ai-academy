@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { recordEnrollment } from "@/lib/enrollments";
 import { grantCourseAccess } from "@/lib/course-access";
 import { redeemCoupon } from "@/lib/coupons";
-import { sendInvoiceEmail } from "@/lib/email";
+import { sendEnrolmentAlertEmail, sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
@@ -166,6 +166,18 @@ export async function POST(request: Request) {
       notifyAdminWhatsApp(
         `Payment received (webhook): ${amountLabel} from ${name || "Unknown"} (${email}${phone ? `, ${phone}` : ""})`,
       ),
+      sendEnrolmentAlertEmail({
+        name,
+        email,
+        phone,
+        country,
+        amountMinorUnits,
+        currency,
+        source: "razorpay",
+        paymentId,
+        orderId,
+        couponCode,
+      }),
     ]);
 
     console.info(`[razorpay] payment ${paymentId} fulfilled via webhook — invoiceSent=${invoiceSent}`);

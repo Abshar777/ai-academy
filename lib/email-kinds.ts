@@ -18,7 +18,12 @@ export type EmailKind =
   | "seminar-reminder"
   | "sign-in-code"
   | "login-link"
-  | "device-approval";
+  | "device-approval"
+  /* The only kind addressed to us rather than to a customer — see
+     sendEnrolmentAlertEmail in lib/email.ts. It is logged like every other
+     email so /admin/emails stays the one place that answers "did that go
+     out?", including for our own alerts. */
+  | "enrolment-alert";
 
 export const EMAIL_KIND_LABEL: Record<EmailKind, string> = {
   welcome: "Welcome + brochure",
@@ -29,6 +34,7 @@ export const EMAIL_KIND_LABEL: Record<EmailKind, string> = {
   "sign-in-code": "Sign-in code",
   "login-link": "Sign-in link",
   "device-approval": "Device approval notice",
+  "enrolment-alert": "New enrolment (internal)",
 };
 
 /**

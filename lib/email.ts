@@ -648,3 +648,166 @@ export async function sendInvoiceEmail({
 
   return { sent: true };
 }
+
+/* ─────────────────────────────────────────────────────
+   Internal alert — a new enrolment landed
+
+   The one email here addressed to us rather than to a customer. It is sent
+   from the same five places that send the customer their receipt, and from
+   inside the same `created` guard: those routes note that "everything below
+   is a one-time side effect, so it only runs for whichever path actually
+   created the row". Razorpay reports a payment twice — once from the
+   browser callback and once from the webhook — so sending from anywhere
+   else would mean two alerts for one payment.
+
+   Deliberately quiet about failure in the same way notifyAdminWhatsApp is:
+   an alert to ourselves must never be able to turn a captured payment into
+   an error for the person who just paid. The caller treats it as
+   best-effort; this returns rather than throws, and logEmail records what
+   happened either way.
+───────────────────────────────────────────────────── */
+
+/** Where the alert goes. Overridable without a code change, but defaulted so
+ *  it works on a server whose env was never touched. */
+const ENROLMENT_ALERT_TO = process.env.ADMIN_ALERT_EMAIL || "abshar@deltainstitutions.com";
+
+/** How the money arrived, in words — the raw value is a slug. */
+const SOURCE_WORDING: Record<string, string> = {
+  razorpay: "Razorpay",
+  stripe: "Stripe",
+  abzer: "Abzer",
+  manual: "recorded by hand",
+  coupon: "free, with a coupon",
+};
+
+function row(label: string, value: string): string {
+  return `<tr>
+    <td style="padding:6px 16px 6px 0;color:#737373;font-size:14px;white-space:nowrap;vertical-align:top;">${label}</td>
+    <td style="padding:6px 0;color:#171717;font-size:14px;font-weight:600;">${value}</td>
+  </tr>`;
+}
+
+/** Escapes what a buyer typed — a name with an angle bracket must not become markup. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export type EnrolmentAlert = {
+  name: string;
+  email: string;
+  phone?: string;
+  country?: string;
+  amountMinorUnits: number;
+  currency: string;
+  source: string;
+  paymentId?: string;
+  orderId?: string;
+  couponCode?: string;
+};
+
+/** "AED 99.00", or plain "Free" for a coupon enrolment at zero — printing
+ *  "INR 0.00" for a free place reads like a failed payment. */
+function alertMoney(input: EnrolmentAlert): string {
+  return input.amountMinorUnits <= 0
+    ? "Free"
+    : `${input.currency} ${(input.amountMinorUnits / 100).toFixed(2)}`;
+}
+
+function alertWho(input: EnrolmentAlert): string {
+  return input.name?.trim() || input.email;
+}
+
+/** Split from the sender the same way courseAccessEmailHtml is, so the body
+ *  can be rendered and looked at without sending anything. */
+export function enrolmentAlertEmailHtml(input: EnrolmentAlert): string {
+  const money = alertMoney(input);
+  const how = SOURCE_WORDING[input.source] ?? input.source;
+
+  const rows = [
+    row("Name", esc(input.name || "—")),
+    row("Email", esc(input.email)),
+    input.phone ? row("Phone", esc(input.phone)) : "",
+    input.country ? row("Country", esc(input.country)) : "",
+    row("Amount", esc(money)),
+    row("How", esc(how)),
+    input.couponCode ? row("Coupon", esc(input.couponCode)) : "",
+    input.paymentId ? row("Payment id", esc(input.paymentId)) : "",
+    input.orderId ? row("Order id", esc(input.orderId)) : "",
+  ]
+    .filter(Boolean)
+    .join("");
+
+  return emailLayout({
+    /* Escaped like every other buyer-supplied value here: emailLayout drops
+       the preheader straight into the markup, so a name carrying a tag would
+       otherwise land as markup rather than as text. */
+    preheader: esc(`${alertWho(input)} — ${money}`),
+    bodyHtml: `
+      <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#171717;">New enrolment</h1>
+      <p style="margin:0 0 20px;font-size:14px;color:#737373;">
+        ${esc(money)} · ${esc(how)}
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+        ${rows}
+      </table>
+      <p style="margin:24px 0 0;font-size:13px;color:#a3a3a3;">
+        Sent automatically when the enrolment was recorded. The full list is in
+        the admin under Payments.
+      </p>`,
+  });
+}
+
+export async function sendEnrolmentAlertEmail(
+  input: EnrolmentAlert,
+): Promise<{ sent: boolean; error?: string }> {
+  const subject = `New enrolment — ${alertWho(input)} · ${alertMoney(input)}`;
+
+  const transport = getTransporter();
+  if (!transport) {
+    await logEmail({
+      kind: "enrolment-alert",
+      to: ENROLMENT_ALERT_TO,
+      subject,
+      status: "skipped",
+      error: "SMTP not configured",
+      orderId: input.orderId,
+      paymentId: input.paymentId,
+    });
+    return { sent: false, error: "SMTP not configured" };
+  }
+
+  const html = enrolmentAlertEmailHtml(input);
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  try {
+    await transport.sendMail({ from, to: ENROLMENT_ALERT_TO, subject, html });
+    await logEmail({
+      kind: "enrolment-alert",
+      to: ENROLMENT_ALERT_TO,
+      subject,
+      status: "sent",
+      mailbox: from,
+      bodyHtml: html,
+      orderId: input.orderId,
+      paymentId: input.paymentId,
+    });
+    return { sent: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await logEmail({
+      kind: "enrolment-alert",
+      to: ENROLMENT_ALERT_TO,
+      subject,
+      status: "failed",
+      error: message,
+      mailbox: from,
+      bodyHtml: html,
+      orderId: input.orderId,
+      paymentId: input.paymentId,
+    });
+    return { sent: false, error: message };
+  }
+}

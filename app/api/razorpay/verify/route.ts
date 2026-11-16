@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getRazorpayClient } from "@/lib/razorpay";
-import { sendInvoiceEmail } from "@/lib/email";
+import { sendEnrolmentAlertEmail, sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 import { redeemCoupon } from "@/lib/coupons";
 import { recordEnrollment } from "@/lib/enrollments";
@@ -151,6 +151,18 @@ export async function POST(request: Request) {
       notifyAdminWhatsApp(
         `Payment received: ${amountLabel} from ${name || "Unknown"} (${email}${phone ? `, ${phone}` : ""})`,
       ),
+      sendEnrolmentAlertEmail({
+        name,
+        email,
+        phone,
+        country,
+        amountMinorUnits,
+        currency,
+        source: "razorpay",
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        couponCode,
+      }),
     ]);
   } catch (err) {
     console.error("Failed to send invoice email", err);

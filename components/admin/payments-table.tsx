@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DataTable, type Column, type Facet } from "./data-table";
 import { FollowUpCell } from "./follow-up-cell";
 import { EnrollmentEditor } from "./enrollment-editor";
+import { DeleteStudentDialog } from "./delete-student-dialog";
 import { LEAD_STATUSES, LEAD_STATUS_LABEL, type PlainFollowUp } from "@/lib/lead-status";
 
 export type PaymentRow = {
@@ -103,6 +104,12 @@ export function PaymentsTable({
   const [viewing, setViewing] = useState<PaymentRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /* Which payment's buyer is being deleted. The dialog is handed the email
+     rather than an account id, because that is all a payment row knows — see
+     findStudentByEmail in lib/student-access.ts for what happens when no
+     account answers to it. */
+  const [deleting, setDeleting] = useState<PaymentRow | null>(null);
+  const [deleted, setDeleted] = useState<string | null>(null);
 
   const columns = useMemo<Column<PaymentRow>[]>(
     () => [
@@ -132,6 +139,17 @@ export function PaymentsTable({
               className="rounded-full border border-neutral-90/15 px-3 py-1 font-noi-grotesk text-[13px] text-neutral-70 transition-colors duration-150 hover:border-neutral-90/40 hover:text-neutral-90"
             >
               Edit
+            </button>
+            {/* Ends their access to the course. It does not touch this payment
+                row: the receipt and the revenue figures are a separate
+                question from whether they can still watch. */}
+            <button
+              id={`delete-${row.id}`}
+              type="button"
+              onClick={() => setDeleting(row)}
+              className="rounded-full border border-red-600/25 px-3 py-1 font-noi-grotesk text-[13px] text-red-600 transition-colors duration-150 hover:border-red-600/50 hover:bg-red-50"
+            >
+              Delete
             </button>
           </span>
         ),
@@ -235,16 +253,37 @@ export function PaymentsTable({
         </div>
       )}
 
+      {deleted && (
+        <p
+          role="status"
+          className="rounded-2xl bg-white px-4 py-3 font-noi-grotesk text-[14px] text-neutral-90"
+        >
+          {deleted} is deleted — signed out, no access. This payment record is untouched.
+        </p>
+      )}
+
       <DataTable
         rows={rows}
         columns={columns}
         facets={facets}
         filterPlaceholder="Search name, email, coupon…"
         empty={archived ? "Nothing archived." : "No enrolments yet."}
-        minWidth={1080}
+        minWidth={1180}
         rowKey={(row) => row.id}
         selection={{ selected, onChange: setSelected }}
       />
+
+      {deleting && (
+        <DeleteStudentDialog
+          lookup={{ email: deleting.email }}
+          onClose={() => setDeleting(null)}
+          onDeleted={(email) => {
+            setDeleting(null);
+            setDeleted(email);
+            router.refresh();
+          }}
+        />
+      )}
 
       {editing && (
         <EnrollmentEditor

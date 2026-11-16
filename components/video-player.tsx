@@ -336,6 +336,30 @@ export function VideoPlayer({
   const [speed, setSpeed] = useState(1);
   const [zoom, setZoom] = useState(1);
 
+  /* ------------------------------------------------------------------ *
+   * Picture quality
+   *
+   * Only an adaptive manifest has rungs to choose between, and only hls.js
+   * exposes them — native HLS decides on its own and offers no way in. So
+   * `levels` is empty for an MP4 and for any browser hls.js can't drive,
+   * and the control hides itself rather than offering a choice that does
+   * nothing.
+   * ------------------------------------------------------------------ */
+
+  /** Rungs of the ladder, highest first. Empty means "no choice to offer". */
+  const [levels, setLevels] = useState<{ index: number; height: number }[]>([]);
+  /** What the viewer picked: -1 is Auto. */
+  const [levelIndex, setLevelIndex] = useState(-1);
+  /** What Auto actually settled on, so the readout can say "Auto 720p". */
+  const [autoHeight, setAutoHeight] = useState<number | null>(null);
+  const [qualityOpen, setQualityOpen] = useState(false);
+
+  /** Remembered by height rather than by index, because a re-minted URL
+   *  rebuilds hls from scratch and the indices need not line up. Without it a
+   *  viewer who chose 480p on a weak connection is silently put back on Auto
+   *  an hour later, mid-class — the same trap speedRef exists to avoid. */
+  const preferredHeight = useRef<number | null>(null);
+
   // Moves so it can't be cropped out of a recording, and cycles clear of the
   // language toggle and the control bar rather than sitting under either.
   // While this player carries the viewer's identity, the page-wide watermark
@@ -843,36 +867,86 @@ export function VideoPlayer({
     hlsRef.current?.destroy();
     hlsRef.current = null;
 
-    // A Cloudflare Stream manifest rather than a file. Safari plays HLS
-    // natively; everywhere else needs hls.js, which is loaded on demand so the
-    // marketing pages don't carry it for a video they may never open.
+    // A fresh source has its own ladder; the old rungs mean nothing now.
+    setLevels([]);
+    setAutoHeight(null);
+
+    // A Cloudflare Stream manifest rather than a file. A file has no ladder,
+    // so it never reaches hls.js.
     if (!isHls(currentSrc)) {
       video.load();
       return;
     }
 
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    /** Native HLS. Safari decides quality by itself and exposes no way to
+     *  choose, so `levels` stays empty and the control stays hidden. */
+    const playNatively = () => {
       video.src = currentSrc;
       video.load();
-      return;
-    }
+    };
 
     let cancelled = false;
     void import("hls.js").then(({ default: Hls }) => {
       if (cancelled || !videoRef.current) return;
+
+      /* hls.js in preference to native, even on Safari, because it is the
+         only thing that can offer the viewer a choice of quality. It needs
+         Media Source Extensions: desktop Safari has them, and an iPhone has
+         Managed Media Source from iOS 17.1, which hls.js 1.7 drives. Below
+         that an iPhone has neither — hence the fallback rather than the
+         error this used to raise, which would have left those viewers with a
+         dead player for the sake of a control they were never going to see. */
       if (!Hls.isSupported()) {
-        // No Media Source Extensions — nothing left to try.
+        if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+          playNatively();
+          return;
+        }
         setWaiting(false);
         onMediaError?.();
         return;
       }
+
       const hls = new Hls({ enableWorker: true });
       hlsRef.current = hls;
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
         // Only fatal errors are worth surfacing; hls.js recovers from the rest
         // on its own, and reporting those would re-mint a URL for nothing.
         if (data.fatal) onMediaError?.();
       });
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        /* Highest first, so the menu reads the way people expect. Rungs
+           without a height (audio-only renditions) have nothing to label and
+           are left out. A single rung is no choice at all, so that reads as
+           empty too and the control stays hidden. */
+        const rungs = hls.levels
+          .map((level, index) => ({ index, height: level.height }))
+          .filter((rung) => rung.height > 0)
+          .sort((a, b) => b.height - a.height);
+        setLevels(rungs.length > 1 ? rungs : []);
+
+        const wanted = preferredHeight.current;
+        if (wanted != null) {
+          // Nearest rung at or below what they chose, so a ladder that lost a
+          // rung doesn't quietly promote them to a heavier one.
+          const match = rungs.find((rung) => rung.height <= wanted) ?? rungs[rungs.length - 1];
+          if (match) {
+            hls.currentLevel = match.index;
+            setLevelIndex(match.index);
+            return;
+          }
+        }
+        hls.currentLevel = -1;
+        setLevelIndex(-1);
+      });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
+        // What Auto landed on, for the readout. Not the viewer's choice —
+        // that only changes when they change it.
+        setAutoHeight(hls.levels[data.level]?.height ?? null);
+      });
+
       hls.loadSource(currentSrc);
       hls.attachMedia(videoRef.current);
     });
@@ -881,6 +955,35 @@ export function VideoPlayer({
       cancelled = true;
     };
   }, [currentSrc, onMediaError]);
+
+  /** Picks a rung, or Auto for -1. */
+  const chooseLevel = useCallback(
+    (index: number) => {
+      const hls = hlsRef.current;
+      if (!hls) return;
+      hls.currentLevel = index;
+      setLevelIndex(index);
+      preferredHeight.current = index === -1 ? null : (hls.levels[index]?.height ?? null);
+      setQualityOpen(false);
+    },
+    [],
+  );
+
+  /* Anything else the viewer does puts the menu away. The menu and its button
+     stop the event, so a click inside still lands — without that, closing on
+     pointerdown would take the item out of the DOM before its click fired. */
+  useEffect(() => {
+    if (!qualityOpen) return;
+    const close = () => setQualityOpen(false);
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [qualityOpen]);
+
+  /* No need to close the menu when the controls fade: it is rendered inside
+     the control bar, which the chrome fade already takes to opacity 0 and
+     pointer-events-none. It comes back with the bar if they never dismissed
+     it, which is what someone who opened it and then moved the mouse away
+     would expect. */
 
   useEffect(() => () => hlsRef.current?.destroy(), []);
 
@@ -1004,6 +1107,15 @@ export function VideoPlayer({
    *  Tailwind's sheet and quietly win, putting both back on a phone. */
   const stepperButton =
     "size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-150 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent";
+
+  /** What the button reads. Auto names the rung it settled on, so "Auto" is
+   *  never a figure the viewer can't see. */
+  const qualityLabel =
+    levelIndex === -1
+      ? autoHeight
+        ? `Auto ${autoHeight}p`
+        : "Auto"
+      : `${levels.find((rung) => rung.index === levelIndex)?.height ?? "?"}p`;
 
   return (
     <div
@@ -1289,6 +1401,74 @@ export function VideoPlayer({
                 <ZoomIcon className="size-[18px]" />
               </button>
             </div>
+
+            {/* Picture quality. Only where there is a real choice: an
+                adaptive manifest with more than one rung, played through
+                hls.js. Native HLS and plain files leave `levels` empty and
+                this disappears rather than offering a control that does
+                nothing. The menu is anchored inside the frame, which is what
+                lets it survive fullscreen — and capped so it can never grow
+                past the top the way a seven-row speed menu would. */}
+            {levels.length > 0 && (
+              <div className="relative flex items-center">
+                {qualityOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Picture quality"
+                    onPointerDown={(event) => event.stopPropagation()}
+                    /* The cap is the whole trick, and it is measured against
+                       the frame rather than guessed: the shell is aspect-video,
+                       so at a 375px phone width it is only ~211px tall, and the
+                       control bar and margin take ~58px of that. A 160px menu
+                       would be clipped at the top by the shell's overflow-hidden
+                       — exactly what the speed control's comment warns about.
+                       132px leaves five rows at 24px each and still clears the
+                       top; above sm there is room for more. Anything longer
+                       scrolls rather than growing. */
+                    className="absolute right-0 bottom-full mb-2 max-h-[132px] min-w-[104px] overflow-y-auto rounded-xl border border-white/15 bg-black/85 py-1 shadow-lg backdrop-blur-sm sm:max-h-[180px]"
+                  >
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={levelIndex === -1}
+                      onClick={() => chooseLevel(-1)}
+                      className={`block w-full px-3 py-1.5 text-left font-noi-grotesk text-[12px] leading-none whitespace-nowrap transition-colors duration-150 hover:bg-white/15 ${
+                        levelIndex === -1 ? "text-lime-30" : "text-white"
+                      }`}
+                    >
+                      Auto{autoHeight ? ` · ${autoHeight}p` : ""}
+                    </button>
+                    {levels.map((rung) => (
+                      <button
+                        key={rung.index}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={levelIndex === rung.index}
+                        onClick={() => chooseLevel(rung.index)}
+                        className={`block w-full px-3 py-1.5 text-left font-noi-grotesk text-[12px] leading-none tabular-nums whitespace-nowrap transition-colors duration-150 hover:bg-white/15 ${
+                          levelIndex === rung.index ? "text-lime-30" : "text-white"
+                        }`}
+                      >
+                        {rung.height}p
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  id={`${idPrefix}-quality`}
+                  type="button"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={() => setQualityOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={qualityOpen}
+                  aria-label={`Picture quality, ${qualityLabel}`}
+                  title="Picture quality"
+                  className="inline-flex h-7 shrink-0 items-center rounded-full border border-white/20 px-2.5 font-noi-grotesk text-[12px] leading-none font-medium tabular-nums whitespace-nowrap text-white transition-colors duration-150 hover:bg-white/15"
+                >
+                  {qualityLabel}
+                </button>
+              </div>
+            )}
 
             {/* Speed */}
             <div

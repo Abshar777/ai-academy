@@ -4,6 +4,7 @@ import { getRazorpayClient } from "@/lib/razorpay";
 import { sendEnrolmentAlertEmail, sendInvoiceEmail } from "@/lib/email";
 import { notifyAdminWhatsApp, notifyPaymentSuccessWhatsApp } from "@/lib/whatsapp";
 import { redeemCoupon } from "@/lib/coupons";
+import { redeemOffer } from "@/lib/offers";
 import { recordEnrollment } from "@/lib/enrollments";
 import { grantCourseAccess } from "@/lib/course-access";
 
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
     const phone = typeof notes.phone === "string" ? notes.phone : "";
     const country = typeof notes.country === "string" ? notes.country : undefined;
     const couponCode = typeof notes.couponCode === "string" ? notes.couponCode : "";
+    const offerCode = typeof notes.offerCode === "string" ? notes.offerCode : "";
     const amountMinorUnits = Number(order.amount);
     const currency = String(order.currency);
 
@@ -126,6 +128,19 @@ export async function POST(request: Request) {
       if (!redeemed) {
         console.error(
           `[coupons] Payment ${razorpay_payment_id} used coupon ${couponCode} but it could not be marked redeemed (already exhausted?) — usage count may be off.`,
+        );
+      }
+    }
+
+    // Same bookkeeping, same reasoning, for a custom-price link: the money is
+    // in, so a single-use link that someone else spent in the meantime is a
+    // counting problem to log, never a reason to fail a captured payment. The
+    // amount actually charged is on the enrollment row regardless.
+    if (offerCode) {
+      const redeemed = await redeemOffer(offerCode);
+      if (!redeemed) {
+        console.error(
+          `[offers] Payment ${razorpay_payment_id} used link ${offerCode} but it could not be marked used (already spent?) — usage count may be off.`,
         );
       }
     }

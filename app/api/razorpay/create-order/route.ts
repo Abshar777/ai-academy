@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getRazorpayClient, RazorpayNotConfiguredError } from "@/lib/razorpay";
 import { normalizeCountry, planForCountry } from "@/lib/pricing";
 import { isValidEmail, isValidName, isValidPhone } from "@/lib/contact-validation";
 import { computeDiscountedAmount, lookupCoupon } from "@/lib/coupons";
+import { lookupOffer } from "@/lib/offers";
+import { OFFER_COOKIE } from "@/lib/offer-shape";
 
 export const runtime = "nodejs";
 
@@ -19,6 +22,11 @@ export const runtime = "nodejs";
  * A coupon that fully covers the price is rejected here — Razorpay doesn't
  * support ₹0 orders, so fully-free redemptions go through
  * /api/order/free-enroll instead, never this route.
+ *
+ * A custom-price link replaces the plan outright. Its code travels in a
+ * cookie, like the country does, and like the country it only names
+ * something — the amount and currency are read from the database here, so
+ * neither the URL, the cookie nor this request body can set a price.
  */
 export async function POST(request: Request) {
   let body: { name?: unknown; email?: unknown; phone?: unknown; country?: unknown; couponCode?: unknown };
@@ -40,7 +48,30 @@ export async function POST(request: Request) {
 
   const plan = planForCountry(normalizeCountry(country));
 
-  let amount = plan.amount;
+  const offerCode = (await cookies()).get(OFFER_COOKIE)?.value?.trim() ?? "";
+  const offer = offerCode ? await lookupOffer(offerCode) : null;
+
+  /* An offer that has expired or been spent since the page was rendered stops
+     checkout rather than quietly falling back to list price. Charging more
+     than the figure on screen is the one outcome worth refusing over. */
+  if (offer && !offer.valid) {
+    return NextResponse.json({ error: offer.error }, { status: 400 });
+  }
+
+  const agreed = offer?.valid ? offer.offer : null;
+
+  /* The agreed price is already the deal — stacking a coupon on top of it is
+     nearly always a mistake, and an expensive one to find out about later. */
+  if (agreed && couponCode) {
+    return NextResponse.json(
+      { error: "This link already carries its own price — a coupon can't be added to it." },
+      { status: 400 },
+    );
+  }
+
+  const currency = agreed ? agreed.currency : plan.currency;
+
+  let amount = agreed ? agreed.amount : plan.amount;
   let appliedCoupon = "";
   if (couponCode) {
     const lookup = await lookupCoupon(couponCode);
@@ -63,9 +94,11 @@ export async function POST(request: Request) {
       // Smallest currency unit — paise for INR, fils for AED. Both are
       // hundredths, so one conversion covers every plan we sell.
       amount: Math.round(amount * 100),
-      currency: plan.currency,
+      currency,
       receipt: `order_${Date.now()}`,
-      notes: { name, email, phone, country, couponCode: appliedCoupon },
+      // offerCode rides back out through Razorpay and returns on the verify
+      // call, so the use is counted against what was actually paid for.
+      notes: { name, email, phone, country, couponCode: appliedCoupon, offerCode: agreed?.code ?? "" },
     });
 
     return NextResponse.json({

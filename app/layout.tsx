@@ -8,6 +8,7 @@ import { EpisodeProvider } from "@/components/episode-dialog";
 import { DisableContextMenu } from "@/components/disable-context-menu";
 import { SiteChrome } from "@/components/site-chrome";
 import { AcademyAuthProvider } from "@/components/academy-auth";
+import { OfferCapture } from "@/components/offer-capture";
 
 const TITLE = `${SITE_NAME} — Build AI powered applications`;
 
@@ -150,6 +151,9 @@ export default function RootLayout({
         </noscript>
 
         <DisableContextMenu />
+        {/* Catches an ?offer= code on whatever page the link pointed at, so a
+            custom price follows the visit rather than living in the URL. */}
+        <OfferCapture />
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-BCH1QGTJKD"

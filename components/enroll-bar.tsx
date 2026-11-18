@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { discountPercent, planForCountry } from "@/lib/pricing";
-import { useCountry } from "@/lib/use-country";
+import { discountPercent } from "@/lib/pricing";
+import { useActivePlan } from "@/lib/use-plan";
 import { useEnrollBarVisible } from "@/lib/use-enroll-bar-visible";
 import { PROGRAMME_NAME } from "@/lib/site";
 
@@ -20,9 +20,7 @@ import { PROGRAMME_NAME } from "@/lib/site";
 
 export function EnrollBar() {
   const visible = useEnrollBarVisible();
-  const country = useCountry();
-
-  const plan = planForCountry(country);
+  const plan = useActivePlan();
   const off = discountPercent(plan);
 
   // On checkout itself the bar is a price reminder, not a way in — "Enroll

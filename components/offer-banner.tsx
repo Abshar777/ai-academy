@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { discountPercent, planForCountry } from "@/lib/pricing";
-import { useCountry } from "@/lib/use-country";
+import { discountPercent } from "@/lib/pricing";
+import { useActivePlan } from "@/lib/use-plan";
 import {
   countdownTo,
   formatOfferDeadline,
@@ -22,7 +22,7 @@ import {
  * it.
  */
 export function OfferBanner() {
-  const country = useCountry();
+  const plan = useActivePlan();
   const [deadline, setDeadline] = useState<Date | null>(null);
   const [remaining, setRemaining] = useState<OfferCountdown | null>(null);
   // Starts true so the bar renders as the server sent it; the check runs after
@@ -52,7 +52,7 @@ export function OfferBanner() {
     return () => window.clearInterval(id);
   }, [deadline]);
 
-  const off = discountPercent(planForCountry(country));
+  const off = discountPercent(plan);
 
   // --announcement-height collapses on its own in the bar's absence (see
   // app/globals.css), so the nav and body close the gap without anything here.

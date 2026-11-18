@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   COUNTRY_OPTIONS,
   PAYMENT_METHOD_LABELS,
@@ -14,6 +14,8 @@ import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
 import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
+import { useActivePlan } from "@/lib/use-plan";
+import { useOffer } from "@/lib/use-offer";
 import { countryFromTimezone } from "@/lib/country-from-timezone";
 import { CheckIcon } from "./check-icon";
 import { AdPlayer } from "./ad-player";
@@ -153,7 +155,11 @@ export function OrderForm({
     return () => window.clearTimeout(id);
   }, []);
 
-  const plan = useMemo(() => planForCountry(country), [country]);
+  /* A custom link carries its own price and keeps it when the country
+     changes — that is the promise the link was sent on. lib/use-plan.ts
+     resolves which of the two applies, here and on every other page. */
+  const offer = useOffer();
+  const plan = useActivePlan();
 
   // Derived, not synced via an effect: switching from AE (card and Razorpay,
   // plus Abzer in some countries) to IN (Razorpay only) shouldn't leave a
@@ -410,6 +416,15 @@ export function OrderForm({
               number, while it is still the thing being weighed up. */}
           <CredentialBadges className="justify-start" />
 
+          {/* No coupon box on a custom link. The price on it is already the
+              negotiated one, and checkout refuses the two together — better
+              not to offer a field that can only produce an error. */}
+          {offer ? (
+            <p className="border-t border-neutral-90/10 pt-6 font-noi-grotesk text-[14px] leading-[1.5] tracking-[-0.015em] text-neutral-50">
+              This is your own price, held for you. Changing country below
+              changes how you pay, not what you pay.
+            </p>
+          ) : (
           <form
             onSubmit={handleApplyCoupon}
             className="flex flex-col gap-2 border-t border-neutral-90/10 pt-6"
@@ -463,6 +478,7 @@ export function OrderForm({
               </p>
             )}
           </form>
+          )}
           {/* The film, not the free episode. It is the thing that explains
               the programme in thirty seconds, and someone already on the
               checkout page does not need to be sent off to a class. Silent
@@ -595,7 +611,9 @@ export function OrderForm({
               ))}
             </select>
             <p className="font-noi-grotesk text-[13px] leading-[1.4] tracking-[-0.015em] text-neutral-50">
-              Sets your price and which payment methods are available.
+              {offer
+                ? "Sets which payment methods are available."
+                : "Sets your price and which payment methods are available."}
             </p>
           </div>
 

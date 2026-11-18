@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createAbzerOrder, AbzerNotConfiguredError } from "@/lib/abzer";
 import { createAbzerOrderRecord, generateAbzerOrderId, setAbzerRequestId } from "@/lib/abzer-orders";
 import { DEFAULT_PLAN, isAbzerCountry } from "@/lib/pricing";
 import { isValidEmail, isValidName, isValidPhone } from "@/lib/contact-validation";
 import { computeDiscountedAmount, lookupCoupon } from "@/lib/coupons";
+import { OFFER_COOKIE } from "@/lib/offer-shape";
 
 export const runtime = "nodejs";
 
@@ -43,6 +45,18 @@ export async function POST(request: Request) {
   }
   if (!isAbzerCountry(country)) {
     return NextResponse.json({ error: "Abzer Pay isn't available for this country." }, { status: 400 });
+  }
+
+  /* Custom-price links are Razorpay-only (see lib/offer-shape.ts), and this
+     route charges DEFAULT_PLAN. Reaching it while holding an offer would
+     therefore charge the list price instead of the agreed one — so it refuses
+     rather than quietly taking the wrong amount. The order form never offers
+     Abzer on an offer link; this is the guard for anything that bypasses it. */
+  if ((await cookies()).get(OFFER_COOKIE)?.value?.trim()) {
+    return NextResponse.json(
+      { error: "Your link's price is only payable by card — go back and choose Razorpay." },
+      { status: 400 },
+    );
   }
 
   let amount = DEFAULT_PLAN.amount;

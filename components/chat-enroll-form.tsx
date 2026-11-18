@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   COUNTRY_OPTIONS,
   PAYMENT_METHOD_LABELS,
@@ -13,6 +13,7 @@ import { loadContactDetails, saveContactDetails } from "@/lib/contact-storage";
 import { sendWelcomeEmailRequest } from "@/lib/send-welcome-email-request";
 import { startRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { readCountryCookie, writeCountryCookie } from "@/lib/country-cookie";
+import { useActivePlan } from "@/lib/use-plan";
 
 /**
  * The actual enrolment flow, inline in the chat — same data and same
@@ -42,7 +43,9 @@ export function ChatEnrollForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const plan = useMemo(() => planForCountry(country), [country]);
+  /* A custom link's price wins over the country plan, here as everywhere
+     else on the site — see lib/use-plan.ts. */
+  const plan = useActivePlan();
   const paymentMethod = plan.methods.includes(paymentMethodChoice)
     ? paymentMethodChoice
     : plan.methods[0];
